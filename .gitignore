@@ -127,3 +127,6 @@ $RECYCLE.BIN/
 *.rej
 tmp/
 temp/
+git status --short; 
+git ls-files .claude 
+docs openspec
