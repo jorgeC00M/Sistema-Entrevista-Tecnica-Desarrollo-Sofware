@@ -1,0 +1,74 @@
+# ==========================================================
+# Credenciales — NUNCA versionar
+# ==========================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# ==========================================================
+# Entornos virtuales
+# ==========================================================
+.venv/
+venv/
+env/
+ENV/
+
+# ==========================================================
+# Python
+# ==========================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+sdist/
+wheels/
+develop-eggs/
+
+# ==========================================================
+# Django
+# ==========================================================
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+media/
+staticfiles/
+static_root/
+local_settings.py
+*.log
+
+# Nota: las migraciones (apps/*/migrations/*.py) SÍ se versionan.
+
+# ==========================================================
+# Testing y cobertura
+# ==========================================================
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# ==========================================================
+# Linters y type checkers
+# ==========================================================
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+.pytype/
+
+# ==========================================================
+# Temporales
+# ==========================================================
+*.tmp
+*.bak
+*.orig

@@ -1,0 +1,107 @@
+"""Verifica que un fallo del proveedor de IA produzca el código HTTP correcto,
+según la tabla de traducción de errores del plan: transitorio -> 503,
+permanente -> 502, respuesta inválida -> 502.
+
+Se reemplaza `get_proveedor` (el punto de entrada al proveedor real dentro del
+orquestador) por uno que falla de la manera exacta que se quiere probar, sin
+red ni cuota.
+"""
+
+from unittest import mock
+
+from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from entrevistas.services.ia.base import ProveedorIA
+from entrevistas.services.ia.errores import ErrorPermanente, ErrorTransitorio, RespuestaIAInvalida
+from entrevistas.services.ia.fake import FakeProveedorIA
+
+Usuario = get_user_model()
+
+
+class ProveedorQueFalla(ProveedorIA):
+    nombre = "falla"
+    modelo = "falla-1"
+
+    def __init__(self, excepcion: Exception):
+        self._excepcion = excepcion
+
+    def generar_pregunta(self, *args, **kwargs):
+        raise self._excepcion
+
+    def evaluar_respuesta(self, *args, **kwargs):
+        raise self._excepcion
+
+
+class ErroresAlIniciarTest(APITestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
+        )
+        self.client.force_authenticate(self.usuario)
+
+    @mock.patch("entrevistas.services.entrevista.get_proveedor")
+    def test_error_transitorio_responde_503(self, mock_get_proveedor):
+        mock_get_proveedor.return_value = ProveedorQueFalla(ErrorTransitorio("simulado"))
+
+        respuesta = self.client.post("/api/entrevistas/", {"area": "programacion", "nivel": "basico"})
+
+        self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @mock.patch("entrevistas.services.entrevista.get_proveedor")
+    def test_error_permanente_responde_502(self, mock_get_proveedor):
+        mock_get_proveedor.return_value = ProveedorQueFalla(ErrorPermanente("simulado"))
+
+        respuesta = self.client.post("/api/entrevistas/", {"area": "programacion", "nivel": "basico"})
+
+        self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
+
+    @mock.patch("entrevistas.services.entrevista.get_proveedor")
+    def test_respuesta_invalida_responde_502(self, mock_get_proveedor):
+        mock_get_proveedor.return_value = ProveedorQueFalla(RespuestaIAInvalida("simulado"))
+
+        respuesta = self.client.post("/api/entrevistas/", {"area": "programacion", "nivel": "basico"})
+
+        self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
+
+    @mock.patch("entrevistas.services.entrevista.get_proveedor")
+    def test_fallo_al_iniciar_no_deja_entrevista_huerfana(self, mock_get_proveedor):
+        from entrevistas.models import Entrevista
+
+        mock_get_proveedor.return_value = ProveedorQueFalla(ErrorTransitorio("simulado"))
+        self.client.post("/api/entrevistas/", {"area": "programacion", "nivel": "basico"})
+
+        self.assertEqual(Entrevista.objects.count(), 0)
+
+
+class ErroresAlResponderTest(APITestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
+        )
+        self.client.force_authenticate(self.usuario)
+
+        with mock.patch(
+            "entrevistas.services.entrevista.get_proveedor", return_value=FakeProveedorIA()
+        ):
+            inicio = self.client.post(
+                "/api/entrevistas/", {"area": "programacion", "nivel": "basico"}
+            )
+        self.entrevista_id = inicio.data["entrevista"]["id"]
+
+    @mock.patch("entrevistas.services.entrevista.get_proveedor")
+    def test_error_transitorio_al_evaluar_responde_503(self, mock_get_proveedor):
+        mock_get_proveedor.return_value = ProveedorQueFalla(ErrorTransitorio("simulado"))
+
+        respuesta = self.client.post(
+            f"/api/entrevistas/{self.entrevista_id}/responder/", {"respuesta": "Mi respuesta"}
+        )
+
+        self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+if __name__ == "__main__":
+    import unittest
+
+    unittest.main()
