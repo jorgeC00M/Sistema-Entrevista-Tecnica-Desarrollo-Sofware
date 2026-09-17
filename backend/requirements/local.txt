@@ -1,0 +1,4 @@
+# Entorno de desarrollo.
+#   pip install -r requirements/local.txt
+
+-r base.txt

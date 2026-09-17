@@ -1,0 +1,22 @@
+# Dependencias comunes a todos los entornos.
+# No instalar este archivo directamente: usar local.txt o production.txt.
+
+Django==6.1.1
+djangorestframework==3.18.1
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+
+# Base de datos
+dj-database-url==3.1.2
+psycopg[binary]==3.3.5
+
+# Configuración
+python-dotenv==1.2.3
+
+# Inicio de sesión con Google
+google-auth==2.58.0
+
+# Proveedores de IA. El factory los importa de forma diferida, así que tener
+# el paquete instalado no implica usarlo ni consumir cuota.
+anthropic==1.6.0
+google-genai==2.23.0

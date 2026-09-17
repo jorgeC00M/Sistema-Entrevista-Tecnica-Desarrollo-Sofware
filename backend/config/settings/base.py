@@ -1,0 +1,175 @@
+"""Configuración común a todos los entornos.
+
+Nunca se importa directamente: `local.py` y `production.py` hacen
+`from .base import *` y sobreescriben lo que cambia entre entornos. El módulo
+activo se elige con DJANGO_SETTINGS_MODULE.
+
+Todo lo sensible se lee de variables de entorno: `.env` en desarrollo
+(cargado aquí con python-dotenv), variables reales del panel de Render en
+producción. Nunca se hardcodean credenciales.
+"""
+
+import os
+from datetime import timedelta
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+
+def variable_obligatoria(nombre: str) -> str:
+    """Lee una variable de entorno o aborta el arranque.
+
+    Se usa solo en producción: es preferible que el proceso no levante a que
+    levante con un valor por defecto inseguro.
+    """
+    valor = os.environ.get(nombre, "").strip()
+    if not valor:
+        raise ImproperlyConfigured(
+            f"Falta la variable de entorno obligatoria '{nombre}'. "
+            "Definila en el panel de Render antes de desplegar."
+        )
+    return valor
+
+
+def lista_de_entorno(nombre: str, por_defecto: str = "") -> list[str]:
+    return [v.strip() for v in os.environ.get(nombre, por_defecto).split(",") if v.strip()]
+
+
+# --- Aplicaciones -------------------------------------------------------
+APPS_DJANGO = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+]
+
+APPS_TERCEROS = [
+    "corsheaders",
+    "rest_framework",
+]
+
+APPS_PROPIAS = [
+    "apps.common",
+    "apps.usuarios",
+    "apps.catalogos",
+    "apps.entrevistas",
+    "apps.evaluaciones",
+]
+
+INSTALLED_APPS = APPS_DJANGO + APPS_TERCEROS + APPS_PROPIAS
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    # Debe ir lo más arriba posible, antes de cualquier middleware que pueda
+    # generar una respuesta (CommonMiddleware incluido).
+    "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
+
+# --- Base de datos ------------------------------------------------------
+# PostgreSQL si DATABASE_URL está definido (Postgres local o Neon); SQLite si
+# está vacío, para poder desarrollar sin instalarlo. `evaluacion_json` solo se
+# comporta como jsonb nativo en Postgres, así que no hay que dar por cerrado
+# nada que toque ese campo probándolo únicamente en SQLite.
+_database_url = os.environ.get("DATABASE_URL", "").strip()
+if _database_url:
+    DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+AUTH_USER_MODEL = "usuarios.Usuario"
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+LANGUAGE_CODE = "es"
+TIME_ZONE = "America/La_Paz"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- API (Django REST Framework + JWT) ----------------------------------
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "EXCEPTION_HANDLER": "apps.common.exceptions.manejador_de_excepciones",
+    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.PaginacionEstandar",
+    "PAGE_SIZE": 20,
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# El frontend (Vite) corre en estos puertos por defecto en desarrollo. En
+# producción se sobreescribe con el dominio real de Vercel vía variable de
+# entorno — nunca CORS_ALLOW_ALL_ORIGINS=True.
+CORS_ALLOWED_ORIGINS = lista_de_entorno(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+)
+
+# --- Proveedor de IA ----------------------------------------------------
+# `fake` por defecto: determinista y sin red, para que ninguna ejecución
+# accidental queme cuota de API.
+IA_PROVEEDOR = os.environ.get("IA_PROVEEDOR", "fake").strip() or "fake"
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+
+# --- Inicio de sesión con Google ----------------------------------------
+# El frontend obtiene un ID token con Google Identity Services y lo envía a
+# /api/auth/google; el backend lo verifica contra las claves públicas de
+# Google usando este Client ID como audiencia esperada. Se crea en Google
+# Cloud Console → APIs y servicios → Credenciales → ID de cliente de OAuth
+# (tipo "Aplicación web"). Sin esto configurado, el endpoint responde 503.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "").strip()
