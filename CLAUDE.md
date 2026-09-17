@@ -36,12 +36,13 @@ Package manager is **pnpm**, not npm (`pnpm-lock.yaml` is the committed lockfile
 
 ```powershell
 pnpm install
-pnpm run dev        # http://localhost:5173
+pnpm run dev             # http://localhost:5173
 pnpm run build
-pnpm run lint        # oxlint, not ESLint
+pnpm run lint            # oxlint, not ESLint
+pnpm exec tsc --noEmit   # type check
 ```
 
-No frontend test runner is configured.
+TypeScript is `strict` with no `allowJs` — there are zero `.js`/`.jsx` files left in `src/`. No frontend test runner is configured, so `tsc --noEmit` plus the build is the only automated check the frontend has.
 
 ### Environment
 
@@ -75,6 +76,8 @@ The dependency direction is **apps → integrations, never the reverse**. `integ
 `services.py` holds writes and orchestration; `selectors.py` holds reads. Vistas call both and do nothing else.
 
 ### Catálogos are DB tables, bridged to the AI layer by `codigo`
+
+`CatalogosPublicosView` subclasses `CatalogosView` and only swaps `permission_classes` to `AllowAny`, served at `/api/catalogos/publico/`. The authenticated route stays 401 — `test_requiere_autenticacion` asserts it — so the boundary between what the system publishes and what it hands only to users stays explicit.
 
 `Area` and `Nivel` are real tables in `apps/catalogos/`, seeded by the data migration `catalogos/0002_datos_iniciales.py`. `Entrevista.area` / `.nivel` are `ForeignKey(..., on_delete=PROTECT)`.
 

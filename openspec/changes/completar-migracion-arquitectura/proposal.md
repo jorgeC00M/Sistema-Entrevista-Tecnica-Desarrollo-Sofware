@@ -1,14 +1,15 @@
 ## Why
 
-El backend ya se reestructuró a `apps/` + `integrations/` y las áreas y niveles pasaron de ser constantes en Python a tablas reales expuestas en `GET /api/catalogos/`. Quedan dos consecuencias sin resolver: la base de datos de desarrollo en Neon conserva el historial de migraciones anterior y rechaza `migrate`, y el frontend sigue en JavaScript duplicando por su cuenta la lista de áreas, los niveles y el número de preguntas por entrevista.
+El backend ya se reestructuró a `apps/` + `integrations/` y las áreas y niveles pasaron de ser constantes en Python a tablas reales expuestas en `GET /api/catalogos/`. Quedan dos consecuencias sin resolver: la base de datos de desarrollo conserva el historial de migraciones anterior y rechaza `migrate`, y el frontend sigue en JavaScript duplicando por su cuenta la lista de áreas, los niveles y el número de preguntas por entrevista.
 
 Esa duplicación ya es un riesgo real: dar de baja un área desde el admin no la retira de la pantalla de selección, y el usuario podría iniciar una entrevista en un área que el backend rechaza con 400.
 
 ## What Changes
 
-**Base de datos de desarrollo**
+**Base de datos**
 
-- Se vacía el esquema de Neon y se vuelve a migrar desde cero. **BREAKING**: se pierden las entrevistas de prueba almacenadas. Los datos son desechables y no hay usuarios reales todavía.
+- Desarrollo pasa a PostgreSQL local administrado con pgAdmin4; Neon queda reservado para producción y se configura al desplegar.
+- Se recrea el esquema local y se vuelve a migrar desde cero. **BREAKING**: se pierden los usuarios y las entrevistas de prueba almacenados. Se toma un volcado con `pg_dump` en `backups/` antes de hacerlo.
 - La migración `catalogos.0002_datos_iniciales` deja sembradas las 4 áreas y 2 niveles sin intervención manual.
 
 **Frontend**
@@ -49,7 +50,7 @@ Esa duplicación ya es un riesgo real: dar de baja un área desde el admin no la
 
 **Base de datos**
 
-- Esquema de Neon recreado. No afecta a la suite de tests, que ya crea y destruye su propia base temporal en cada ejecución.
+- Esquema local recreado. No afecta a la suite de tests, que ya crea y destruye su propia base temporal en cada ejecución.
 
 **Sin impacto**
 

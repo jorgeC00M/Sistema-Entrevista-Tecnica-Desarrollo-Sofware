@@ -1,16 +1,42 @@
-# React + Vite
+# Frontend — Simulador de Entrevistas Técnicas
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript + Vite + Tailwind 4. Consume la API REST de Django.
 
-Currently, two official plugins are available:
+## Comandos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+El gestor de paquetes es **pnpm** (`pnpm-lock.yaml` es el archivo de bloqueo versionado).
 
-## React Compiler
+```bash
+pnpm install
+pnpm run dev        # http://localhost:5173
+pnpm run build
+pnpm run lint       # oxlint, no ESLint
+pnpm exec tsc --noEmit   # comprobación de tipos
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+No hay runner de tests configurado.
 
-## Expanding the Oxlint configuration
+## Variables de entorno
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Copiar `.env.example` a `.env`:
+
+- `VITE_API_URL` — URL del backend. En desarrollo, `http://127.0.0.1:8000`.
+- `VITE_GOOGLE_CLIENT_ID` — el mismo valor que `GOOGLE_OAUTH_CLIENT_ID` del backend. Si queda vacío, el botón de Google se oculta con un aviso en vez de romper la pantalla.
+
+## Estructura
+
+```
+src/
+├── api/          # un módulo por endpoint sobre client.ts
+├── types/        # contrato con la API, derivado de los serializers
+├── features/     # auth, seleccion, entrevista, resultados, historial
+├── components/   # ui/ y layout/: solo lo que usan varias features
+├── router/       # rutas y guard
+└── styles/
+```
+
+Regla para ubicar un componente: si lo usa una sola feature, vive dentro de ella; en cuanto lo usa una segunda, sube a `components/ui/`.
+
+`src/api/client.ts` es el único lugar que toca `fetch`. Adjunta el JWT, renueva el token y reintenta una vez ante un 401, y normaliza los errores en `ErrorAPI`.
+
+Las áreas, los niveles y el número de preguntas por entrevista se leen de `GET /api/catalogos/`. El cliente no mantiene su propia copia: dar de baja un área en el admin la retira de la interfaz.

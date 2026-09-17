@@ -6,7 +6,7 @@ pocos registros: dos peticiones para seis filas no compensan.
 
 from __future__ import annotations
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -27,3 +27,18 @@ class CatalogosView(APIView):
                 "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
             }
         )
+
+
+class CatalogosPublicosView(CatalogosView):
+    """El mismo catálogo, sin exigir sesión, para la landing.
+
+    Hereda el cuerpo del `get` y solo cambia el permiso: así no hay dos
+    construcciones de la respuesta que mantener sincronizadas. Se sirve en una
+    ruta aparte en lugar de abrir la de arriba, para que siga siendo explícito
+    qué publica el sistema y qué entrega solo a usuarios autenticados.
+
+    No expone nada que la landing no muestre: ni conteos, ni usuarios, ni
+    entrevistas.
+    """
+
+    permission_classes = [AllowAny]

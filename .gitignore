@@ -116,7 +116,12 @@ $RECYCLE.BIN/
 # ==========================================================
 # Claude Code — configuración local del equipo
 # ==========================================================
+.claude/
 .claude/settings.local.json
+
+# Documentación y especificaciones locales
+docs/
+openspec/
 
 # ==========================================================
 # Temporales
@@ -127,6 +132,10 @@ $RECYCLE.BIN/
 *.rej
 tmp/
 temp/
-git status --short; 
-git ls-files .claude 
-docs openspec
+
+# ==========================================================
+# Volcados de base de datos — contienen correos y hashes
+# ==========================================================
+backups/
+*.sql
+*.dump

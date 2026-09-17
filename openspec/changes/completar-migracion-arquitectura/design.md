@@ -73,11 +73,17 @@ Regla para decidir dónde va un componente: si lo usa una sola feature, vive den
 
 Hoy es una *layout route* con `<Outlet/>` que decide el acceso y además renderiza el shell autenticado. Se conserva así y no se añade un `LayoutPrivado` aparte: separarlos duplicaría la jerarquía de rutas sin cambiar nada observable.
 
-### El reset de Neon se hace recreando el esquema, no con `flush`
+### Desarrollo contra PostgreSQL local, Neon solo en producción
 
-`manage.py flush` borra filas pero conserva las tablas y el historial de `django_migrations`, que es justo lo que está inconsistente. Hace falta eliminar el esquema.
+La base de desarrollo es PostgreSQL local administrado con pgAdmin4. Neon queda para producción y se configura al desplegar.
 
-Se prefiere la función de reset de rama de Neon si está disponible, porque deja la operación registrada en su consola y es reversible desde allí. Si no, se ejecuta el DDL equivalente por `manage.py dbshell`.
+Separar los dos entornos evita que una prueba de desarrollo escriba en la base que sostiene la demostración, y quita la dependencia de red para trabajar. El riesgo que introduce es la divergencia entre ambos motores; se acota usando la misma versión mayor de PostgreSQL en los dos lados, que es lo que hace que `JSONField` se comporte igual.
+
+### El esquema se recrea, no se vacía con `flush`
+
+`manage.py flush` borra filas pero conserva las tablas y el historial de `django_migrations`, que es justo lo que está inconsistente tras mover `Evaluacion` de app y convertir `area` en clave foránea. Hace falta eliminar el esquema entero con `DROP SCHEMA public CASCADE`.
+
+Antes de recrearlo se toma un volcado con `pg_dump`. El volcado queda en el esquema viejo, así que no sirve para restaurar sobre el esquema nuevo — sirve para consultar datos que se quieran recuperar a mano. Por eso `backups/` se añade al `.gitignore`: contiene correos y hashes de contraseña.
 
 ## Risks / Trade-offs
 
@@ -87,19 +93,20 @@ Se prefiere la función de reset de rama de Neon si está disponible, porque dej
 
 **Fusionar Historial y Progreso rompe enlaces existentes a `/progreso`** → Mitigación: la ruta comodín ya redirige a `/`; se añade además una redirección explícita de `/progreso` a `/historial` para que un marcador guardado no aterrice en la pantalla equivocada.
 
-**El vaciado de Neon es irreversible** → Se pierden las entrevistas de prueba. Mitigación: es una decisión ya tomada y los datos son desechables; no hay usuarios reales. El catálogo se resiembra solo por migración de datos, así que la base queda utilizable sin pasos manuales.
+**Recrear el esquema local es irreversible en sitio** → Se pierden los usuarios y las entrevistas de prueba que hubiera. Mitigación: se toma un volcado con `pg_dump` antes de tocar nada y se guarda en `backups/`, fuera del control de versiones. El catálogo se resiembra solo por migración de datos, así que la base queda utilizable sin pasos manuales.
 
 **La aplicación queda a medio tipar durante la migración** → Mientras haya `.jsx` conviviendo con `.tsx`, `pnpm run build` no garantiza cobertura de tipos. Mitigación: el orden de migración va de la raíz del contrato hacia las hojas (tipos → cliente → api → features), de modo que lo más valioso queda tipado primero; y el paso final elimina `allowJs`.
 
 ## Migration Plan
 
-**Fase 1 — Base de datos (antes de tocar el frontend)**
+**Fase 1 — Base de datos local (antes de tocar el frontend)**
 
-1. Confirmar que `DATABASE_URL` apunta a la base de desarrollo y no a producción.
-2. Recrear el esquema: reset de rama en la consola de Neon, o `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` vía `manage.py dbshell`.
-3. `python manage.py migrate` — debe aplicar las migraciones de las cinco apps y sembrar el catálogo.
-4. `python manage.py createsuperuser` para recuperar acceso al admin.
-5. Verificar con `python manage.py test` que los 94 tests siguen en verde.
+1. Confirmar que `DATABASE_URL` apunta a la base local y no a una remota.
+2. Respaldar con `pg_dump` y dejar el volcado fuera del control de versiones.
+3. Recrear el esquema con `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`.
+4. `python manage.py migrate` — aplica las migraciones de las cinco apps y siembra el catálogo.
+5. `python manage.py createsuperuser` para recuperar acceso al admin.
+6. Verificar con `python manage.py test` que los 94 tests siguen en verde.
 
 **Fase 2 — Frontend, de la raíz del contrato hacia las hojas**
 
@@ -115,7 +122,7 @@ Cada paso deja la aplicación compilando y usable:
 
 **Rollback**
 
-Todo el árbol está commiteado. Revertir el frontend es `git revert` del commit correspondiente. La base de datos no se revierte: se vuelve a aplicar `migrate` sobre un esquema limpio, que es el mismo procedimiento de la Fase 1.
+Todo el árbol está commiteado. Revertir el frontend es `git revert` del commit correspondiente. La base de datos no se revierte: se vuelve a aplicar `migrate` sobre un esquema limpio, que es el mismo procedimiento de la Fase 1. El volcado previo queda en `backups/` para consultar datos a mano.
 
 ## Open Questions
 
