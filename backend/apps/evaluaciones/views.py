@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .services import calcular_estadisticas
+from .services import calcular_estadisticas, calcular_retroalimentacion
 
 
 class EstadisticasView(APIView):
@@ -12,3 +12,10 @@ class EstadisticasView(APIView):
 
     def get(self, request):
         return Response(calcular_estadisticas(request.user))
+
+
+class RetroalimentacionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(calcular_retroalimentacion(request.user))

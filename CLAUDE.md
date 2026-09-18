@@ -117,6 +117,12 @@ This is backed by real constraints — `Intercambio` has `UniqueConstraint(entre
 
 Email/password goes through simplejwt's stock `TokenObtainPairView` (works out of the box because `Usuario.USERNAME_FIELD = "email"`). Google goes through a custom view that verifies an ID token via `google-auth` against `GOOGLE_OAUTH_CLIENT_ID`, then finds-or-creates a `Usuario` by email (new accounts get `set_unusable_password()`). Both paths end up issuing the same access/refresh JWT pair, so the rest of the app never needs to know which one was used.
 
+### Retroalimentación acumulada counts more than the stats do
+
+`apps/evaluaciones/services.py::calcular_retroalimentacion()` (served at `/api/estadisticas/retroalimentacion/`) deliberately does **not** filter by `estado=FINALIZADA`, unlike `calcular_estadisticas`. An average only compares across complete interviews, but a weakness found in question 3 of an abandoned one is still a real weakness. Unanswered questions drop out by construction — it queries `Evaluacion`, and an ungraded intercambio has no row.
+
+Band counts are grouped in SQL with a range filter built from `rubricas.BANDAS`, so the thresholds stay in one place. The textual observations are returned raw, capped at `MAXIMO_OBSERVACIONES`; nothing is summarized, which would mean a fresh AI call per view.
+
 ### Statistics are computed in the database, not in Python
 
 `apps/evaluaciones/services.py::calcular_estadisticas()` uses Django's `Avg`/`Count` directly on `Evaluacion` rows (weighted per answer), not by averaging each interview's already-averaged score — deliberate, since the latter would misweight interviews with different numbers of scored answers.

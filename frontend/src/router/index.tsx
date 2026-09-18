@@ -5,7 +5,9 @@ import RegistroPage from '@/features/auth/pages/RegistroPage'
 import EntrevistaPage from '@/features/entrevista/pages/EntrevistaPage'
 import HistorialPage from '@/features/historial/pages/HistorialPage'
 import EntradaRaiz from '@/features/landing/pages/EntradaRaiz'
+import PerfilPage from '@/features/perfil/pages/PerfilPage'
 import ResultadosPage from '@/features/resultados/pages/ResultadosPage'
+import RetroalimentacionPage from '@/features/retroalimentacion/pages/RetroalimentacionPage'
 import SeleccionAreaPage from '@/features/seleccion/pages/SeleccionAreaPage'
 import RutaProtegida from '@/router/RutaProtegida'
 
@@ -25,6 +27,8 @@ export default function Rutas() {
         <Route path="/entrevista/:id" element={<EntrevistaPage />} />
         <Route path="/entrevista/:id/resultados" element={<ResultadosPage />} />
         <Route path="/historial" element={<HistorialPage />} />
+        <Route path="/retroalimentacion" element={<RetroalimentacionPage />} />
+        <Route path="/perfil" element={<PerfilPage />} />
       </Route>
 
       {/* El progreso se fusionó dentro del historial: un marcador guardado a

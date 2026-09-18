@@ -47,3 +47,42 @@ export interface Estadisticas {
   promedio_por_area: PromedioPorArea[]
   evolucion: PuntoDeEvolucion[]
 }
+
+/** Cuántas respuestas del usuario cayeron en cada banda, dentro de un área. */
+export type ConteoPorBanda = Record<BandaDeRubrica, number>
+
+export interface RepartoPorArea {
+  area: string
+  area_display: string
+  total_respuestas: number
+  promedio: number
+  bandas: ConteoPorBanda
+}
+
+export interface Observacion {
+  entrevista_id: number
+  area: string
+  area_display: string
+  /** Número de la pregunta dentro de su entrevista. */
+  numero: number
+  pregunta: string
+  puntuacion: number
+  banda: BandaDeRubrica
+  debilidades: string
+  sugerencias: string
+  fecha: FechaISO
+}
+
+/**
+ * Retroalimentación acumulada de todas las entrevistas del usuario.
+ *
+ * A diferencia de `Estadisticas`, cuenta también las respuestas de entrevistas
+ * abandonadas: una media necesita entrevistas completas para ser comparable,
+ * pero una debilidad detectada a mitad sigue siendo una debilidad real.
+ */
+export interface RetroalimentacionAcumulada {
+  total_respuestas_evaluadas: number
+  por_area: RepartoPorArea[]
+  /** Acotadas a las más recientes por el backend, de más nueva a más antigua. */
+  observaciones: Observacion[]
+}
