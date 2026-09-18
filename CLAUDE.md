@@ -127,6 +127,14 @@ Band counts are grouped in SQL with a range filter built from `rubricas.BANDAS`,
 
 `apps/evaluaciones/services.py::calcular_estadisticas()` uses Django's `Avg`/`Count` directly on `Evaluacion` rows (weighted per answer), not by averaging each interview's already-averaged score — deliberate, since the latter would misweight interviews with different numbers of scored answers.
 
+### Authenticated shell: dark sidebar, header names the section
+
+`router/RutaProtegida.tsx` renders a fixed `Header` (`h-16`, always light) across the full width at the top, and below it — anchored at `top-16`, never beside it — `components/layout/Sidebar.tsx`, either as a fixed rail on desktop (collapsible to an icon-only strip) or a `role="dialog"` drawer on mobile. Both share the same `bg-slate-900` and the same `Sidebar` component; `components/layout/destinos.ts` is the single list of nav items both render, so adding a section is one edit, not two.
+
+The dark theme is not a second brand color: `slate-900`/`slate-800` are the same neutral scale already used for text and borders elsewhere in the app, just at its dark end. The only accent remains `indigo-600` — reused as the active item's solid pill fill instead of introducing a new hue. That solid fill (plus `aria-current="page"`) is what distinguishes the active destination now; the earlier `bg-indigo-50` + side-accent-bar combo is gone because a filled pill is already enough contrast against `slate-900`.
+
+`Header.tsx` no longer repeats the app's name — the sidebar has its own brand block (reusing the same `IconoNav` `marca` path as `features/landing/components/Icono.tsx::marca`, so the mark looks identical in the landing and the app). Instead the header shows the current section's name, resolved by `components/layout/titulosDeRuta.ts::resolverTitulo()` from a static route → title map, not from each page declaring its own — a route that forgets to register can't leave the header blank, it falls back to a default. That label is a `<p>`, not an `<h1>`: every page under `RutaProtegida` already owns its own `<h1>`, and a second one in the header would break the one-`h1`-per-page hierarchy.
+
 ### Naming convention
 
 Domain code (models, fields, function names — `Usuario`, `Entrevista`, `Intercambio`, `Evaluacion`, `puntuacion`, `respuesta`) is Spanish throughout, matching the thesis document. Project scaffolding and technical folder names (`apps/`, `integrations/`, `views.py`, `tests/`) follow standard Django/English convention. This split is intentional, not inconsistent.

@@ -34,7 +34,7 @@ export default function RutaProtegida() {
       {/* Barra fija en escritorio, debajo del encabezado. El ancho cambia al
           plegar, con transición. */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-10 hidden border-r border-slate-200 bg-white transition-[width] duration-200 ease-out lg:block ${
+        className={`fixed top-16 bottom-0 left-0 z-10 hidden border-r border-slate-800 bg-slate-900 transition-[width] duration-200 ease-out lg:block ${
           plegado ? 'w-[76px]' : 'w-64'
         }`}
       >
@@ -59,14 +59,14 @@ export default function RutaProtegida() {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed top-16 bottom-0 left-0 z-30 w-72 border-r border-slate-200 bg-white shadow-xl lg:hidden"
+            className="fixed top-16 bottom-0 left-0 z-30 w-72 border-r border-slate-800 bg-slate-900 shadow-xl lg:hidden"
           >
             <div className="flex justify-end p-2">
               <button
                 type="button"
                 onClick={cerrar}
                 aria-label="Cerrar menú"
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors duration-150 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
                 <IconoNav nombre="cerrar" />
               </button>
