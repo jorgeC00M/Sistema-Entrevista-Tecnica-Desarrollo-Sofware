@@ -26,10 +26,12 @@ export default function RutaProtegida() {
 
   return (
     <div className="min-h-screen bg-tinta-50">
-      {/* Barra fija en escritorio: flotante, con margen de 12px respecto a la
-          ventana y al contenido. El ancho cambia al plegar, con transición. */}
+      {/* Barra fija en escritorio: panel de borde completo, toca los 3 bordes
+          de la ventana (arriba, izquierda, abajo) sin margen ni radio — el
+          header arranca justo en su esquina superior derecha. El ancho
+          cambia al plegar, con transición. */}
       <aside
-        className={`fixed top-3 bottom-3 left-3 z-10 hidden rounded-superficie bg-tinta-950 transition-[width] duration-200 ease-out lg:block ${
+        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-tinta-950 transition-[width] duration-200 ease-out lg:block ${
           plegado ? 'w-[72px]' : 'w-64'
         }`}
       >
@@ -41,7 +43,7 @@ export default function RutaProtegida() {
         />
       </aside>
 
-      {/* Cajón en pantallas estrechas, con el mismo estilo flotante. */}
+      {/* Cajón en pantallas estrechas, con el mismo estilo de borde completo. */}
       {abierto && (
         <>
           <div
@@ -54,7 +56,7 @@ export default function RutaProtegida() {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed top-3 bottom-3 left-3 z-30 w-72 rounded-superficie bg-tinta-950 shadow-xl lg:hidden"
+            className="fixed top-0 bottom-0 left-0 z-30 w-72 bg-tinta-950 lg:hidden"
           >
             <div className="flex justify-end p-2">
               <BotonIcono
@@ -76,12 +78,13 @@ export default function RutaProtegida() {
         </>
       )}
 
-      {/* Contenido: header + main comparten el mismo margen izquierdo, que dejó
-          libre el sidebar flotante (su ancho + los 12px a cada lado). En
-          móvil no hay margen — el sidebar no está en flujo, es el cajón. */}
+      {/* Contenido: header + main comparten el mismo margen izquierdo, igual
+          al ancho exacto del sidebar — sin hueco de por medio, porque ya no
+          es flotante. En móvil no hay margen — el sidebar no está en flujo,
+          es el cajón. */}
       <div
         className={`transition-[padding] duration-200 ease-out ${
-          plegado ? 'lg:pl-24' : 'lg:pl-[17.5rem]'
+          plegado ? 'lg:pl-[72px]' : 'lg:pl-64'
         }`}
       >
         <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />

@@ -32,9 +32,9 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
   const { titulo, subtitulo } = resolverTitulo(pathname)
 
   return (
-    // Altura fija (h-16 = 64px) a propósito: el sidebar y el cajón se anclan
-    // a este mismo valor (top-16) para quedar debajo del encabezado, nunca a
-    // su lado.
+    // Altura fija (h-16 = 64px): el sidebar es un panel de borde completo,
+    // independiente en altura (top-0 a bottom-0) — este header vive dentro
+    // de la columna de contenido, a la derecha del sidebar, no debajo.
     <header className="sticky top-0 z-40 h-16 border-b border-tinta-100 bg-white/90 backdrop-blur">
       <div className="flex h-full items-center gap-3 px-4">
         <button
