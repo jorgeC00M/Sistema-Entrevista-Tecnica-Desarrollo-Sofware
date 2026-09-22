@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import Boton from '@/components/ui/Boton'
-import Icono from '@/features/landing/components/Icono'
+import Icono from '@/components/ui/Icono'
 
 const SECCIONES = [
   { href: '#como-funciona', etiqueta: 'Cómo funciona' },
@@ -21,10 +21,10 @@ const SECCIONES = [
  */
 export default function HeaderLanding() {
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-tinta-100 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/" className="flex shrink-0 items-center gap-2 text-slate-900">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+        <Link to="/" className="flex shrink-0 items-center gap-2 text-tinta-950">
+          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-iris-600 text-white">
             <Icono nombre="marca" className="h-5 w-5" />
           </span>
           <span className="text-sm font-semibold sm:text-base">Entrevistas Técnicas</span>
@@ -37,7 +37,7 @@ export default function HeaderLanding() {
             <a
               key={s.href}
               href={s.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-control px-3 py-2 text-sm font-medium text-tinta-500 transition hover:bg-tinta-100 hover:text-tinta-950"
             >
               {s.etiqueta}
             </a>

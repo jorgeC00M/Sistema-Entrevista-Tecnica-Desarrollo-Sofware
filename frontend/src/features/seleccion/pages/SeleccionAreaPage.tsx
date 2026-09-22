@@ -41,8 +41,8 @@ export default function SeleccionAreaPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-1 text-lg font-semibold text-slate-900">Nueva entrevista</h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <h1 className="mb-1 text-2xl font-semibold text-tinta-950">Nueva entrevista</h1>
+      <p className="mb-6 text-base text-tinta-500">
         Elige un área técnica y un nivel de dificultad. La entrevista consta de {total}{' '}
         {total === 1 ? 'pregunta' : 'preguntas'}.
       </p>
@@ -51,7 +51,7 @@ export default function SeleccionAreaPage() {
 
       <div className="mt-4 space-y-6">
         <fieldset>
-          <legend className="mb-2 text-sm font-medium text-slate-700">Área técnica</legend>
+          <legend className="mb-2 text-sm font-medium text-tinta-700">Área técnica</legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {catalogos.areas.map((a) => (
               <TarjetaArea key={a.codigo} activo={area === a.codigo} onClick={() => setArea(a.codigo)}>

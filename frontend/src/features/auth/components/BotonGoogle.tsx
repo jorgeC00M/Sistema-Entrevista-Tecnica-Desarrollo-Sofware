@@ -100,7 +100,7 @@ export default function BotonGoogle({ onCredential }: Props) {
 
   if (!CLIENT_ID) {
     return (
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-center text-xs text-slate-400 ring-1 ring-slate-200">
+      <p className="rounded-control bg-tinta-50 px-3 py-2 text-center text-xs text-tinta-500 ring-1 ring-tinta-100">
         Inicio de sesión con Google no está configurado.
       </p>
     )
@@ -108,7 +108,7 @@ export default function BotonGoogle({ onCredential }: Props) {
 
   if (error) {
     return (
-      <p className="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-600 ring-1 ring-amber-200">
+      <p className="rounded-control bg-progreso-fondo px-3 py-2 text-center text-xs text-progreso-texto ring-1 ring-progreso-texto/20">
         No se pudo cargar el inicio de sesión con Google.
       </p>
     )

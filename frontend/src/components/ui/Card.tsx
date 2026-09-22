@@ -7,6 +7,8 @@ interface Props {
 
 export default function Card({ children, className = '' }: Props) {
   return (
-    <div className={`rounded-lg bg-white p-4 ring-1 ring-slate-200 ${className}`}>{children}</div>
+    <div className={`rounded-superficie border border-tinta-100 bg-white p-4 ${className}`}>
+      {children}
+    </div>
   )
 }

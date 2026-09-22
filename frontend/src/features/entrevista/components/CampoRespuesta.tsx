@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 
 import Boton from '@/components/ui/Boton'
+import Textarea from '@/components/ui/Textarea'
 
 interface Props {
   onEnviar: (texto: string) => void
@@ -22,15 +23,15 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
   return (
     <form
       onSubmit={manejarEnvio}
-      className="flex flex-col gap-2 border-t border-slate-200 bg-white p-3 sm:flex-row sm:items-end"
+      className="flex flex-col gap-2 border-t border-tinta-100 bg-white p-3 sm:flex-row sm:items-end"
     >
-      <textarea
+      <Textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
         disabled={deshabilitado}
         rows={3}
         placeholder="Escribe tu respuesta…"
-        className="w-full flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none disabled:bg-slate-50"
+        className="flex-1"
         onKeyDown={(evento) => {
           // Enter envía; Shift+Enter hace salto de línea.
           if (evento.key === 'Enter' && !evento.shiftKey) {

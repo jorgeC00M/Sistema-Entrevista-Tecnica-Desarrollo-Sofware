@@ -34,29 +34,29 @@ export default function RegistroPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-tinta-50 px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-center text-xl font-semibold text-slate-900">Crear cuenta</h1>
-        <p className="mb-6 text-center text-sm text-slate-500">
+        <h1 className="mb-1 text-center text-2xl font-semibold text-tinta-950">Crear cuenta</h1>
+        <p className="mb-6 text-center text-sm text-tinta-500">
           Para egresados de Ingeniería de Sistemas
         </p>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <div className="rounded-superficie bg-white p-6 shadow-sm ring-1 ring-tinta-100">
           <Alerta tipo="error">{error}</Alerta>
 
           <FormularioRegistro onEnviar={manejarEnvio} />
 
-          <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-            <div className="h-px flex-1 bg-slate-200" />o
-            <div className="h-px flex-1 bg-slate-200" />
+          <div className="my-5 flex items-center gap-3 text-xs text-tinta-500">
+            <div className="h-px flex-1 bg-tinta-100" />o
+            <div className="h-px flex-1 bg-tinta-100" />
           </div>
 
           <BotonGoogle onCredential={manejarGoogle} />
         </div>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-tinta-500">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="font-medium text-indigo-600 hover:underline">
+          <Link to="/login" className="font-medium text-iris-600 hover:underline">
             Inicia sesión
           </Link>
         </p>

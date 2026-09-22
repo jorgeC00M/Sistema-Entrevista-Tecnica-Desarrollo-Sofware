@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { resolverTitulo } from '@/components/layout/titulosDeRuta'
-import IconoNav from '@/components/ui/IconoNav'
+import Icono from '@/components/ui/Icono'
 
 interface Props {
   onAbrirMenu: () => void
@@ -31,9 +31,10 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
   const { titulo, subtitulo } = resolverTitulo(pathname)
 
   return (
-    // Altura fija (h-16) a propósito: el sidebar y el cajón se anclan a este
-    // mismo valor (top-16) para quedar debajo del encabezado, nunca a su lado.
-    <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
+    // Altura fija (h-16 = 64px) a propósito: el sidebar y el cajón se anclan
+    // a este mismo valor (top-16) para quedar debajo del encabezado, nunca a
+    // su lado.
+    <header className="sticky top-0 z-40 h-16 border-b border-tinta-100 bg-white/90 backdrop-blur">
       <div className="flex h-full items-center gap-3 px-4">
         <button
           ref={disparadorRef}
@@ -41,9 +42,9 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
           onClick={onAbrirMenu}
           aria-expanded={menuAbierto}
           aria-label="Abrir menú de navegación"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-tinta-500 transition-colors duration-150 hover:bg-tinta-100 hover:text-tinta-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 lg:hidden"
         >
-          <IconoNav nombre="menu" />
+          <Icono nombre="menu" />
         </button>
 
         {/*
@@ -53,8 +54,8 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
           página. Esto es una etiqueta de la interfaz (chrome), no contenido.
         */}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-900">{titulo}</p>
-          {subtitulo && <p className="truncate text-xs text-slate-500">{subtitulo}</p>}
+          <p className="truncate text-lg font-semibold text-tinta-950">{titulo}</p>
+          {subtitulo && <p className="truncate text-xs text-tinta-500">{subtitulo}</p>}
         </div>
       </div>
     </header>

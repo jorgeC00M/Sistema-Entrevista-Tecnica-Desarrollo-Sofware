@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
 
+// error y exito son los semánticos del sistema; info no expresa un estado de
+// puntaje ni de proceso, así que se queda en la escala neutra en vez de
+// inventar un cuarto semántico solo para esto.
 const ESTILOS = {
-  error: 'bg-red-50 text-red-700 ring-1 ring-red-200',
-  exito: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  info: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
+  error: 'bg-error-fondo text-error-texto ring-1 ring-error-texto/20',
+  exito: 'bg-exito-fondo text-exito-texto ring-1 ring-exito-texto/20',
+  info: 'bg-tinta-100 text-tinta-700 ring-1 ring-tinta-300',
 } as const
 
 export type TipoDeAlerta = keyof typeof ESTILOS
@@ -17,7 +20,7 @@ export default function Alerta({ tipo = 'error', children }: Props) {
   if (!children) return null
   return (
     <div
-      className={`rounded-lg px-4 py-3 text-sm ${ESTILOS[tipo]}`}
+      className={`rounded-control px-4 py-3 text-sm ${ESTILOS[tipo]}`}
       role={tipo === 'error' ? 'alert' : 'status'}
     >
       {children}

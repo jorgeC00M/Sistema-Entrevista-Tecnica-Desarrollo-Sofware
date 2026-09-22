@@ -5,6 +5,7 @@ import { ErrorAPI } from '@/api/client'
 import { obtenerHistorial } from '@/api/entrevistas'
 import { obtenerEstadisticas } from '@/api/evaluaciones'
 import Alerta from '@/components/ui/Alerta'
+import EstadoVacio from '@/components/ui/EstadoVacio'
 import Spinner from '@/components/ui/Spinner'
 import ComparativaAreas from '@/features/historial/components/ComparativaAreas'
 import GraficoProgreso from '@/features/historial/components/GraficoProgreso'
@@ -44,13 +45,11 @@ export default function HistorialPage() {
 
   if (entrevistas.length === 0) {
     return (
-      <div className="mx-auto max-w-lg text-center text-sm text-slate-500">
-        Todavía no realizaste ninguna entrevista.{' '}
-        <Link to="/nueva-entrevista" className="font-medium text-indigo-600 hover:underline">
+      <EstadoVacio icono="historial" titulo="Todavía no realizaste ninguna entrevista.">
+        <Link to="/nueva-entrevista" className="font-medium text-iris-600 hover:underline">
           Empieza la primera
         </Link>
-        .
-      </div>
+      </EstadoVacio>
     )
   }
 
@@ -59,15 +58,15 @@ export default function HistorialPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">Historial y progreso</h1>
+        <h1 className="text-2xl font-semibold text-tinta-950">Historial y progreso</h1>
         {completadas > 0 && estadisticas.promedio_general !== null ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-tinta-500">
             {completadas} entrevista{completadas === 1 ? '' : 's'} completada
             {completadas === 1 ? '' : 's'} · promedio general{' '}
-            {Math.round(estadisticas.promedio_general)}
+            <span className="font-mono">{Math.round(estadisticas.promedio_general)}</span>
           </p>
         ) : (
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-tinta-500">
             Tu progreso aparecerá aquí cuando completes la primera entrevista.
           </p>
         )}
@@ -81,7 +80,7 @@ export default function HistorialPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-sm font-medium text-slate-700">Tus entrevistas</h2>
+        <h2 className="mb-3 text-lg font-semibold text-tinta-950">Tus entrevistas</h2>
         <ListaEntrevistas entrevistas={entrevistas} />
       </div>
     </div>

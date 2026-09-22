@@ -8,7 +8,7 @@ interface Props {
 
 export default function ChatEntrevista({ mensajes, evaluando }: Props) {
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto rounded-xl bg-slate-100 p-4">
+    <div className="flex-1 space-y-3 overflow-y-auto rounded-superficie bg-tinta-100 p-4">
       {mensajes.map((mensaje, indice) => (
         // El índice sirve de clave porque la lista solo crece por el final:
         // nunca se reordena ni se inserta en medio.
@@ -18,10 +18,10 @@ export default function ChatEntrevista({ mensajes, evaluando }: Props) {
       ))}
 
       {evaluando && (
-        <div className="flex items-center gap-2 px-2 text-sm text-slate-500" role="status">
-          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
+        <div className="flex items-center gap-2 px-2 text-sm text-tinta-500" role="status">
+          <span className="h-2 w-2 animate-bounce rounded-full bg-tinta-300 [animation-delay:-0.3s]" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-tinta-300 [animation-delay:-0.15s]" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-tinta-300" />
           <span>Evaluando tu respuesta…</span>
         </div>
       )}

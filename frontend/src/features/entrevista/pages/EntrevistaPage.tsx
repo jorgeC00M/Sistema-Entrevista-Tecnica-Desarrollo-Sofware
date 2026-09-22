@@ -30,7 +30,7 @@ export default function EntrevistaPage() {
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
 
       {error && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-control bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
           <span>{error}</span>
           <button
             type="button"

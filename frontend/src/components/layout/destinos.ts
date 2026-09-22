@@ -1,9 +1,9 @@
-import type { NombreDeIconoNav } from '@/components/ui/IconoNav'
+import type { NombreDeIcono } from '@/components/ui/Icono'
 
 export interface Destino {
   ruta: string
   etiqueta: string
-  icono: NombreDeIconoNav
+  icono: NombreDeIcono
 }
 
 /**
