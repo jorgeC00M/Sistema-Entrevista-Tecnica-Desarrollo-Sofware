@@ -15,7 +15,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
  */
 export default function RutaProtegida() {
   const { usuario, cargando } = useAuth()
-  const { plegado, alternarPlegado, entrevistaEnCurso, cajon } = useSidebar()
+  const { plegado, alternarPlegado, entrevistaEnCurso, ultimaFinalizada, cajon } = useSidebar()
   // Desestructurado aparte: oxlint no reconoce una ref accedida como
   // propiedad de un objeto anidado (`cajon.cajonRef`) y la marca como lectura
   // de `.current` en render, aunque pasar la ref misma a `ref={}` es correcto.
@@ -37,6 +37,7 @@ export default function RutaProtegida() {
           plegado={plegado}
           onAlternarPlegado={alternarPlegado}
           entrevistaEnCurso={entrevistaEnCurso}
+          ultimaFinalizada={ultimaFinalizada}
         />
       </aside>
 
@@ -67,6 +68,7 @@ export default function RutaProtegida() {
               <Sidebar
                 plegado={false}
                 entrevistaEnCurso={entrevistaEnCurso}
+                ultimaFinalizada={ultimaFinalizada}
                 onNavegar={cerrar}
               />
             </div>

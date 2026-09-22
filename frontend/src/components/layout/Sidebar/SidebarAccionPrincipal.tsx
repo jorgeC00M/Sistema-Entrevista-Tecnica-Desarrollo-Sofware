@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 
 import Icono from '@/components/ui/Icono'
 import Tooltip from '@/components/ui/Tooltip'
-import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
+import type { EntrevistaEnCurso } from '@/components/layout/useDestinosDisponibles'
 
 interface Props {
   plegado: boolean

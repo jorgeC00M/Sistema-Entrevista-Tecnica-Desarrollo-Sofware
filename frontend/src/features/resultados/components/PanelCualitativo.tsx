@@ -1,7 +1,7 @@
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
 import type { Intercambio } from '@/types/entrevista'
-
-import ListaRetroalimentacion from './ListaRetroalimentacion'
 
 interface Props {
   intercambio: Intercambio
@@ -14,8 +14,8 @@ export default function PanelCualitativo({ intercambio }: Props) {
   return (
     <article className="rounded-superficie bg-white p-4 ring-1 ring-tinta-100 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <h3 className="text-sm font-medium text-tinta-500">Pregunta {numero}</h3>
-        <ChipPuntaje puntuacion={evaluacion.puntuacion} banda={evaluacion.banda} />
+        <EtiquetaMono tono="suelto">Pregunta {String(numero).padStart(2, '0')}</EtiquetaMono>
+        <ChipPuntaje puntuacion={evaluacion.puntuacion} banda={evaluacion.banda} conEtiqueta />
       </div>
 
       <p className="mb-3 text-sm font-medium text-tinta-800">{pregunta}</p>

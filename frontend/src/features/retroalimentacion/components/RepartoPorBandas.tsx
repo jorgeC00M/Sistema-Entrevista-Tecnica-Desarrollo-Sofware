@@ -13,8 +13,10 @@ export default function RepartoPorBandas({ areas }: Props) {
 
   return (
     <div className="rounded-superficie bg-white p-4 ring-1 ring-tinta-100 sm:p-5">
-      <h2 className="text-sm font-medium text-tinta-700">Cómo se reparten tus respuestas</h2>
-      <p className="mt-1 text-xs text-tinta-500">
+      <h2 className="text-headline-sm font-semibold text-tinta-950">
+        Cómo se reparten tus respuestas
+      </h2>
+      <p className="mt-1 text-body-sm text-tinta-500">
         Por área, cuántas de tus respuestas cayeron en cada nivel de la rúbrica.
       </p>
 
@@ -25,7 +27,7 @@ export default function RepartoPorBandas({ areas }: Props) {
               <span className="font-medium text-tinta-800">{area.area_display}</span>
               <span className="text-xs text-tinta-500">
                 {area.total_respuestas} respuesta{area.total_respuestas === 1 ? '' : 's'} · promedio{' '}
-                {Math.round(area.promedio)}
+                <span className="font-mono">{Math.round(area.promedio)}</span>
               </span>
             </div>
 

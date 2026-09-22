@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { resolverTitulo } from '@/components/layout/titulosDeRuta'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
 
 interface Props {
@@ -49,13 +50,22 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
 
         {/*
           No es un <h1>: cada página ya tiene el suyo en su contenido
-          (SeleccionAreaPage, HistorialPage, RetroalimentacionPage, PerfilPage).
+          (SeleccionAreaPage, EntrevistaPage, ResultadosPage, HistorialPage,
+          RetroalimentacionPage, PerfilPage).
           Un segundo <h1> aquí rompería la jerarquía de encabezados de la
           página. Esto es una etiqueta de la interfaz (chrome), no contenido.
         */}
         <div className="min-w-0">
-          <p className="truncate text-lg font-semibold text-tinta-950">{titulo}</p>
-          {subtitulo && <p className="truncate text-xs text-tinta-500">{subtitulo}</p>}
+          <p className="flex items-center gap-1.5 truncate">
+            <EtiquetaMono tono="suelto">Simulador técnico</EtiquetaMono>
+            <span aria-hidden="true" className="text-tinta-500">
+              /
+            </span>
+            <span className="truncate text-headline-sm font-semibold text-tinta-950">
+              {titulo}
+            </span>
+          </p>
+          {subtitulo && <p className="truncate text-body-sm text-tinta-500">{subtitulo}</p>}
         </div>
       </div>
     </header>

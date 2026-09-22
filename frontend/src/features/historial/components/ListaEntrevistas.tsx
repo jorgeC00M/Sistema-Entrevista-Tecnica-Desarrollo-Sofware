@@ -2,15 +2,9 @@ import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 
 import Badge from '@/components/ui/Badge'
-import type { TonoDeBadge } from '@/components/ui/Badge'
 import Divisor from '@/components/ui/Divisor'
-import type { Entrevista, EstadoEntrevista } from '@/types/entrevista'
-
-const TONO_POR_ESTADO: Record<EstadoEntrevista, TonoDeBadge> = {
-  finalizada: 'exito',
-  en_progreso: 'progreso',
-  abandonada: 'neutro',
-}
+import { TONO_POR_ESTADO } from '@/lib/estados'
+import type { Entrevista } from '@/types/entrevista'
 
 interface Props {
   entrevistas: Entrevista[]

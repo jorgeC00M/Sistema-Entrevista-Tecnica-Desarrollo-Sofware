@@ -1,3 +1,4 @@
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
 function formatearFecha(iso: string): string {
@@ -24,16 +25,16 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold text-tinta-950">Mi perfil</h1>
+      <h1 className="text-headline-xl font-semibold text-tinta-950">Mi perfil</h1>
       <p className="mt-1 text-base text-tinta-500">
         Estos son los datos de tu cuenta. Por ahora son de solo lectura.
       </p>
 
       <dl className="mt-6 divide-y divide-tinta-100 rounded-superficie bg-white ring-1 ring-tinta-100">
         {campos.map((campo) => (
-          <div key={campo.etiqueta} className="flex flex-col gap-1 p-4 sm:flex-row sm:gap-4">
-            <dt className="text-sm font-medium text-tinta-500 sm:w-48 sm:shrink-0">
-              {campo.etiqueta}
+          <div key={campo.etiqueta} className="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:gap-4">
+            <dt className="sm:w-48 sm:shrink-0">
+              <EtiquetaMono tono="suelto">{campo.etiqueta}</EtiquetaMono>
             </dt>
             <dd className="text-sm text-tinta-950">{campo.valor}</dd>
           </div>

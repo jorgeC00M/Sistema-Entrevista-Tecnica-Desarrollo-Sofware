@@ -6,6 +6,7 @@ import { obtenerHistorial } from '@/api/entrevistas'
 import { obtenerEstadisticas } from '@/api/evaluaciones'
 import Alerta from '@/components/ui/Alerta'
 import EstadoVacio from '@/components/ui/EstadoVacio'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import ComparativaAreas from '@/features/historial/components/ComparativaAreas'
 import GraficoProgreso from '@/features/historial/components/GraficoProgreso'
@@ -58,12 +59,18 @@ export default function HistorialPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-tinta-950">Historial y progreso</h1>
+        <EtiquetaMono tono="suelto">
+          {entrevistas.length} entrevista{entrevistas.length === 1 ? '' : 's'} registrada
+          {entrevistas.length === 1 ? '' : 's'}
+        </EtiquetaMono>
+        <h1 className="text-headline-xl font-semibold text-tinta-950">Historial y progreso</h1>
         {completadas > 0 && estadisticas.promedio_general !== null ? (
           <p className="text-base text-tinta-500">
             {completadas} entrevista{completadas === 1 ? '' : 's'} completada
             {completadas === 1 ? '' : 's'} · promedio general{' '}
-            <span className="font-mono">{Math.round(estadisticas.promedio_general)}</span>
+            <span className="font-mono text-metric-counter">
+              {Math.round(estadisticas.promedio_general)}
+            </span>
           </p>
         ) : (
           <p className="text-base text-tinta-500">
@@ -80,7 +87,7 @@ export default function HistorialPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-tinta-950">Tus entrevistas</h2>
+        <h2 className="mb-3 text-headline-md font-semibold text-tinta-950">Tus entrevistas</h2>
         <ListaEntrevistas entrevistas={entrevistas} />
       </div>
     </div>

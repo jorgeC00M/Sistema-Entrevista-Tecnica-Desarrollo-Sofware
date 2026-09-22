@@ -4,6 +4,8 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import Boton from '@/components/ui/Boton'
 import Textarea from '@/components/ui/Textarea'
 
+const MAXIMO_CARACTERES = 1000
+
 interface Props {
   onEnviar: (texto: string) => void
   deshabilitado: boolean
@@ -23,25 +25,34 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
   return (
     <form
       onSubmit={manejarEnvio}
-      className="flex flex-col gap-2 border-t border-tinta-100 bg-white p-3 sm:flex-row sm:items-end"
+      className="flex flex-col gap-2 border-t border-tinta-100 bg-white p-3"
     >
-      <Textarea
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        disabled={deshabilitado}
-        rows={3}
-        placeholder="Escribe tu respuesta…"
-        className="flex-1"
-        onKeyDown={(evento) => {
-          // Enter envía; Shift+Enter hace salto de línea.
-          if (evento.key === 'Enter' && !evento.shiftKey) {
-            manejarEnvio(evento)
-          }
-        }}
-      />
-      <Boton type="submit" cargando={deshabilitado} disabled={!texto.trim()}>
-        {deshabilitado ? 'Evaluando…' : 'Enviar'}
-      </Boton>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <Textarea
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          disabled={deshabilitado}
+          rows={3}
+          maxLength={MAXIMO_CARACTERES}
+          maximoCaracteres={MAXIMO_CARACTERES}
+          placeholder="Escribe tu respuesta…"
+          className="flex-1"
+          onKeyDown={(evento) => {
+            // Enter envía; Shift+Enter hace salto de línea.
+            if (evento.key === 'Enter' && !evento.shiftKey) {
+              manejarEnvio(evento)
+            }
+          }}
+        />
+        <Boton type="submit" cargando={deshabilitado} disabled={!texto.trim()}>
+          {deshabilitado ? 'Evaluando…' : 'Enviar'}
+        </Boton>
+      </div>
+
+      <p className="text-body-sm text-tinta-500">
+        Atajo: <span className="font-mono text-tinta-700">Enter</span> envía ·{' '}
+        <span className="font-mono text-tinta-700">Shift + Enter</span> salto de línea
+      </p>
     </form>
   )
 }

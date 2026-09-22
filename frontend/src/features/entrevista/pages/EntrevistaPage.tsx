@@ -1,5 +1,7 @@
 import { useParams } from 'react-router-dom'
 
+import Cronometro from '@/components/ui/Cronometro'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import BarraProgreso from '@/features/entrevista/components/BarraProgreso'
 import CampoRespuesta from '@/features/entrevista/components/CampoRespuesta'
@@ -12,6 +14,8 @@ export default function EntrevistaPage() {
     mensajes,
     numeroActual,
     totalPreguntas,
+    areaDisplay,
+    nivelDisplay,
     cargandoInicial,
     enviando,
     error,
@@ -23,8 +27,29 @@ export default function EntrevistaPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
-      <div className="mb-4">
-        <BarraProgreso actual={numeroActual} total={totalPreguntas} />
+      <div className="mb-4 rounded-superficie bg-white p-4 ring-1 ring-tinta-100">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-headline-sm font-semibold text-tinta-950">
+              Entrevista · {areaDisplay}
+            </h1>
+            <EtiquetaMono tono="suelto">Nivel {nivelDisplay}</EtiquetaMono>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-label-mono text-tinta-500 uppercase">Pregunta</p>
+              <p className="font-mono text-metric-counter text-tinta-950">
+                {String(numeroActual).padStart(2, '0')} / {String(totalPreguntas).padStart(2, '0')}
+              </p>
+            </div>
+            <Cronometro />
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <BarraProgreso actual={numeroActual} total={totalPreguntas} />
+        </div>
       </div>
 
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />

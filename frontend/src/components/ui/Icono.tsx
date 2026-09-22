@@ -35,6 +35,10 @@ const TRAZOS = {
   cerrar: 'M18 6l-12 12M6 6l12 12',
   plegar: 'M11 7l-5 5l5 5M17 7l-5 5l5 5',
   desplegar: 'M7 7l5 5l-5 5M13 7l5 5l-5 5',
+  terminal:
+    'M8 9l3 3l-3 3M13 15l3 0M3 6a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -12',
+  resultados: 'M4 19l16 0M4 15l4 -6l4 2l4 -5l4 4',
+  reloj: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M12 7v5l3 3',
   // Logotipo del producto — no es un icono de Tabler, ver docstring.
   marca:
     'M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3',
@@ -51,7 +55,13 @@ const TRAZOS = {
     'M12 9v4M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0M12 16h.01',
   sugerencia:
     'M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3M9.7 17l4.6 0',
+  // `area` es el trazo `code` de Tabler: sirve de icono genérico de área y,
+  // en la selección, de icono específico de Programación.
   area: 'M7 8l-4 4l4 4M17 8l4 4l-4 4M14 4l-4 16',
+  datos: 'M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0M4 6v6a8 3 0 0 0 16 0v-6M4 12v6a8 3 0 0 0 16 0v-6',
+  arbol:
+    'M6 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M11 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M21 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M5.058 18.306l2.88 -4.606M10.061 10.303l2.877 -4.604M10.065 13.705l2.876 4.6M15.063 5.7l2.881 4.61',
+  web: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18',
 } as const
 
 export type NombreDeIcono = keyof typeof TRAZOS

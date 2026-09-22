@@ -15,6 +15,11 @@ export default function SidebarNavItem({ destino, plegado, onNavegar }: Props) {
   const enlace = (
     <NavLink
       to={destino.ruta}
+      // Sin esto, `/entrevista/:id` marcaría "activo" también estando en
+      // `/entrevista/:id/resultados` (coincidencia por prefijo): ambos
+      // pueden convivir en el menú a la vez desde que existen los destinos
+      // condicionales.
+      end
       onClick={onNavegar}
       title={plegado ? destino.etiqueta : undefined}
       className={({ isActive }) =>

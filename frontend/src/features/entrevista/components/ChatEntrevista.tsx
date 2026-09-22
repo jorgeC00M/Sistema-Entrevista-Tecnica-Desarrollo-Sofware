@@ -1,3 +1,4 @@
+import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import BurbujaPregunta from '@/features/entrevista/components/BurbujaPregunta'
 import type { MensajeDeChat } from '@/features/entrevista/hooks/useEntrevista'
 
@@ -12,9 +13,22 @@ export default function ChatEntrevista({ mensajes, evaluando }: Props) {
       {mensajes.map((mensaje, indice) => (
         // El índice sirve de clave porque la lista solo crece por el final:
         // nunca se reordena ni se inserta en medio.
-        <BurbujaPregunta key={indice} autor={mensaje.autor}>
-          {mensaje.texto}
-        </BurbujaPregunta>
+        <div key={indice} className="flex flex-col gap-1.5">
+          <BurbujaPregunta autor={mensaje.autor}>{mensaje.texto}</BurbujaPregunta>
+
+          {/* Retroalimentación en línea: aparece tras la respuesta que
+              califica, sin esperar a la pantalla de resultados. */}
+          {mensaje.evaluacion && (
+            <div className="flex max-w-[85%] flex-col gap-1.5 self-end rounded-superficie bg-white px-4 py-3 ring-1 ring-tinta-100 sm:max-w-[75%]">
+              <ChipPuntaje
+                puntuacion={mensaje.evaluacion.puntuacion}
+                banda={mensaje.evaluacion.banda}
+                conEtiqueta
+              />
+              <p className="text-sm text-tinta-500">{mensaje.evaluacion.fortalezas}</p>
+            </div>
+          )}
+        </div>
       ))}
 
       {evaluando && (

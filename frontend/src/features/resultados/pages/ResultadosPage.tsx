@@ -4,11 +4,14 @@ import { Link, useParams } from 'react-router-dom'
 import { ErrorAPI } from '@/api/client'
 import { obtenerResultados } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
+import Badge from '@/components/ui/Badge'
 import Boton from '@/components/ui/Boton'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import PanelCualitativo from '@/features/resultados/components/PanelCualitativo'
 import TablaPuntuaciones from '@/features/resultados/components/TablaPuntuaciones'
 import TarjetaResumen from '@/features/resultados/components/TarjetaResumen'
+import { formatearDuracion, TONO_POR_ESTADO } from '@/lib/estados'
 import type { RespuestaResultados } from '@/types/entrevista'
 
 export default function ResultadosPage() {
@@ -39,9 +42,28 @@ export default function ResultadosPage() {
   if (!datos) return <Spinner texto="Cargando resultados…" />
 
   const { entrevista, intercambios } = datos
+  const duracion = formatearDuracion(entrevista.fecha_inicio, entrevista.fecha_fin)
 
   return (
     <div className="mx-auto max-w-2xl">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <EtiquetaMono tono="suelto">
+            Sesión #{entrevista.id} · {entrevista.area_display}
+          </EtiquetaMono>
+          <h1 className="text-headline-xl font-semibold text-tinta-950">
+            Reporte de evaluación técnica
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Badge tono={TONO_POR_ESTADO[entrevista.estado]}>{entrevista.estado_display}</Badge>
+          {duracion && (
+            <span className="font-mono text-code-inline text-tinta-500">{duracion}</span>
+          )}
+        </div>
+      </div>
+
       <TarjetaResumen entrevista={entrevista} />
       <TablaPuntuaciones intercambios={intercambios} />
 
