@@ -24,10 +24,21 @@ const TAMANOS = {
 
 export type TamanoDeBoton = keyof typeof TAMANOS
 
+// El radio de control (8px) es el de todo el sistema; 'pildora' es una
+// excepción puntual (hoy solo auth, inspirada en el mockup de login) — por
+// eso es una forma explícita, no el radio por defecto.
+const FORMAS = {
+  control: 'rounded-control',
+  pildora: 'rounded-full',
+} as const
+
+export type FormaDeBoton = keyof typeof FORMAS
+
 interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
   children: ReactNode
   variante?: VarianteDeBoton
   tamano?: TamanoDeBoton
+  forma?: FormaDeBoton
   cargando?: boolean
   /** Icono al inicio del botón; puramente decorativo, la etiqueta ya dice qué hace. */
   icono?: NombreDeIcono
@@ -38,6 +49,7 @@ export default function Boton({
   children,
   variante = 'primario',
   tamano = 'md',
+  forma = 'control',
   cargando = false,
   icono,
   disabled,
@@ -46,7 +58,7 @@ export default function Boton({
 }: Props) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-control font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTES[variante]} ${TAMANOS[tamano]} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTES[variante]} ${TAMANOS[tamano]} ${FORMAS[forma]} ${className}`}
       disabled={disabled || cargando}
       {...props}
     >

@@ -95,6 +95,12 @@ export default function BotonGoogle({ onCredential }: Props) {
       width: 320,
       text: 'continue_with',
       locale: 'es',
+      // Botón nativo de Google: estas son las únicas opciones de forma que
+      // Google Identity Services permite. No es posible igualarlo al píxel
+      // a un botón propio en píldora — 'shape: pill' es lo más cerca que
+      // se puede llegar sin dejar de usar el botón nativo.
+      shape: 'pill',
+      logo_alignment: 'center',
     })
   }, [listo, onCredential])
 

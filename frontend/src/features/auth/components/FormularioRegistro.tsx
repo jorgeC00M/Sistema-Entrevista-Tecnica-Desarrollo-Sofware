@@ -18,13 +18,23 @@ export default function FormularioRegistro({ onEnviar }: Props) {
     nombreCompleto: '',
     carnet: '',
   })
+  // Solo para comparar contra `password` en el navegador: nunca viaja a
+  // `DatosDeRegistro` ni a `onEnviar`, el backend no la conoce.
+  const [confirmarPassword, setConfirmarPassword] = useState('')
+  // Igual que "Recordarme" en el login: no hay campo real que lo respalde
+  // (ni en el modelo ni en `DatosDeRegistro`), así que no bloquea el envío
+  // ni se manda al backend — es puramente visual, como en el diseño.
+  const [aceptaTerminos, setAceptaTerminos] = useState(false)
   const [cargando, setCargando] = useState(false)
 
   const actualizar = (campo: keyof Campos) => (evento: ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [campo]: evento.target.value }))
 
+  const noCoincide = confirmarPassword.length > 0 && confirmarPassword !== form.password
+
   const manejarEnvio = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault()
+    if (form.password !== confirmarPassword) return
     setCargando(true)
     try {
       await onEnviar(form)
@@ -38,6 +48,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
       <Input
         id="nombreCompleto"
         etiqueta="Nombre completo"
+        icono="usuario"
         autoComplete="name"
         required
         value={form.nombreCompleto}
@@ -47,6 +58,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         id="email"
         etiqueta="Correo electrónico"
         type="email"
+        icono="correo"
         autoComplete="email"
         required
         value={form.email}
@@ -56,6 +68,8 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         id="password"
         etiqueta="Contraseña"
         type="password"
+        icono="candado"
+        conAlternarPassword
         autoComplete="new-password"
         required
         minLength={8}
@@ -63,14 +77,57 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         value={form.password}
         onChange={actualizar('password')}
       />
+      <div>
+        <Input
+          id="confirmarPassword"
+          etiqueta="Confirmar contraseña"
+          type="password"
+          icono="candado"
+          conAlternarPassword
+          autoComplete="new-password"
+          required
+          value={confirmarPassword}
+          onChange={(e) => setConfirmarPassword(e.target.value)}
+        />
+        {noCoincide && (
+          <p className="mt-1 text-xs text-error-texto">Las contraseñas no coinciden.</p>
+        )}
+      </div>
       <Input
         id="carnet"
         etiqueta="Carnet de identidad"
+        icono="usuario"
         opcional
         value={form.carnet}
         onChange={actualizar('carnet')}
       />
-      <Boton type="submit" cargando={cargando} className="w-full">
+
+      <label className="flex items-start gap-2 text-sm text-tinta-700">
+        <input
+          type="checkbox"
+          checked={aceptaTerminos}
+          onChange={(e) => setAceptaTerminos(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-tinta-300 accent-iris-600"
+        />
+        <span>
+          Acepto los{' '}
+          <a href="#" className="font-medium text-iris-600 hover:underline">
+            Términos
+          </a>{' '}
+          y la{' '}
+          <a href="#" className="font-medium text-iris-600 hover:underline">
+            Política de privacidad
+          </a>
+        </span>
+      </label>
+
+      <Boton
+        type="submit"
+        forma="pildora"
+        cargando={cargando}
+        disabled={form.password !== confirmarPassword}
+        className="w-full"
+      >
         Crear cuenta
       </Boton>
     </form>
