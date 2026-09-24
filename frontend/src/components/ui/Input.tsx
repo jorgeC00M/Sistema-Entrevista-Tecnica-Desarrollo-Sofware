@@ -15,6 +15,12 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'clas
   icono?: NombreDeIcono
   /** Solo tiene efecto con `type="password"`: agrega un botón de ojo para alternar visibilidad. */
   conAlternarPassword?: boolean
+  /**
+   * `'linea'` (por defecto) es el campo actual: borde sin relleno. `'relleno'`
+   * agrega un fondo blanco translúcido — pensado para superficies de vidrio
+   * (login/registro), donde un borde solo no se distingue de la tarjeta.
+   */
+  variante?: 'linea' | 'relleno'
 }
 
 export default function Input({
@@ -24,6 +30,7 @@ export default function Input({
   opcional = false,
   icono,
   conAlternarPassword = false,
+  variante = 'linea',
   type,
   ...props
 }: Props) {
@@ -46,8 +53,8 @@ export default function Input({
           id={id}
           type={alternable ? (mostrar ? 'text' : 'password') : type}
           className={`w-full rounded-control border border-tinta-300 py-2 text-sm text-tinta-950 focus:border-iris-600 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 ${
-            icono ? 'pl-9' : 'pl-3'
-          } ${alternable ? 'pr-10' : 'pr-3'}`}
+            variante === 'relleno' ? 'bg-white/70' : ''
+          } ${icono ? 'pl-9' : 'pl-3'} ${alternable ? 'pr-10' : 'pr-3'}`}
           {...props}
         />
         {alternable && (

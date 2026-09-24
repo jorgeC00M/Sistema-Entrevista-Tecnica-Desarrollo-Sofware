@@ -33,6 +33,7 @@ export default function FormularioLogin({ onEnviar }: Props) {
         etiqueta="Correo electrónico"
         type="email"
         icono="correo"
+        variante="relleno"
         autoComplete="email"
         required
         value={email}
@@ -43,6 +44,7 @@ export default function FormularioLogin({ onEnviar }: Props) {
         etiqueta="Contraseña"
         type="password"
         icono="candado"
+        variante="relleno"
         conAlternarPassword
         autoComplete="current-password"
         required

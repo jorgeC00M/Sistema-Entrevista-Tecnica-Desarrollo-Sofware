@@ -49,6 +49,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         id="nombreCompleto"
         etiqueta="Nombre completo"
         icono="usuario"
+        variante="relleno"
         autoComplete="name"
         required
         value={form.nombreCompleto}
@@ -59,6 +60,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         etiqueta="Correo electrónico"
         type="email"
         icono="correo"
+        variante="relleno"
         autoComplete="email"
         required
         value={form.email}
@@ -69,6 +71,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         etiqueta="Contraseña"
         type="password"
         icono="candado"
+        variante="relleno"
         conAlternarPassword
         autoComplete="new-password"
         required
@@ -83,6 +86,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
           etiqueta="Confirmar contraseña"
           type="password"
           icono="candado"
+          variante="relleno"
           conAlternarPassword
           autoComplete="new-password"
           required
@@ -96,7 +100,8 @@ export default function FormularioRegistro({ onEnviar }: Props) {
       <Input
         id="carnet"
         etiqueta="Carnet de identidad"
-        icono="usuario"
+        icono="identificacion"
+        variante="relleno"
         opcional
         value={form.carnet}
         onChange={actualizar('carnet')}
