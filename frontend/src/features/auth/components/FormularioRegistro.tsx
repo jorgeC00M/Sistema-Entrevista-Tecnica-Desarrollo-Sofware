@@ -5,7 +5,7 @@ import Boton from '@/components/ui/Boton'
 import Input from '@/components/ui/Input'
 import type { DatosDeRegistro } from '@/types/usuario'
 
-type Campos = Omit<DatosDeRegistro, 'carnet'> & { carnet: string }
+type Campos = Omit<DatosDeRegistro, 'carnet'>
 
 interface Props {
   onEnviar: (datos: DatosDeRegistro) => Promise<void>
@@ -16,7 +16,6 @@ export default function FormularioRegistro({ onEnviar }: Props) {
     email: '',
     password: '',
     nombreCompleto: '',
-    carnet: '',
   })
   // Solo para comparar contra `password` en el navegador: nunca viaja a
   // `DatosDeRegistro` ni a `onEnviar`, el backend no la conoce.
@@ -97,16 +96,6 @@ export default function FormularioRegistro({ onEnviar }: Props) {
           <p className="mt-1 text-xs text-error-texto">Las contraseñas no coinciden.</p>
         )}
       </div>
-      <Input
-        id="carnet"
-        etiqueta="Carnet de identidad"
-        icono="identificacion"
-        variante="relleno"
-        opcional
-        value={form.carnet}
-        onChange={actualizar('carnet')}
-      />
-
       <label className="flex items-start gap-2 text-sm text-tinta-700">
         <input
           type="checkbox"
