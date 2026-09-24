@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { IconoGoogleAuth } from '@/features/auth/components/iconosAuth'
+
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const SRC_SCRIPT_GOOGLE = 'https://accounts.google.com/gsi/client'
 
@@ -51,16 +53,25 @@ function cargarScriptGoogle(): Promise<void> {
 
 interface Props {
   onCredential: (idToken: string) => void
+  /** Cambia el texto (real y de respaldo) entre "Continuar" y "Registrarse". */
+  modo: 'login' | 'registro'
+  /** Solo para el botón de respaldo cuando Google no está disponible. */
+  etiquetaRespaldo: string
 }
+
+const CLASE_BOTON_RESPALDO =
+  "flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-[rgba(255,255,255,0.72)] font-['Figtree'] text-[0.88rem] text-[#1c2f5e] opacity-60"
 
 /**
  * Botón "Continuar con Google" usando Google Identity Services.
  *
  * Se degrada de forma controlada si VITE_GOOGLE_CLIENT_ID no está
  * configurado (espejo del 503 del backend cuando falta
- * GOOGLE_OAUTH_CLIENT_ID) en vez de romper la pantalla de login.
+ * GOOGLE_OAUTH_CLIENT_ID), o si el script no carga — en ambos casos
+ * muestra un botón con el estilo del diseño, deshabilitado, en vez de un
+ * simple texto de aviso.
  */
-export default function BotonGoogle({ onCredential }: Props) {
+export default function BotonGoogle({ onCredential, modo, etiquetaRespaldo }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null)
   const [listo, setListo] = useState(false)
   const [error, setError] = useState(false)
@@ -93,30 +104,23 @@ export default function BotonGoogle({ onCredential }: Props) {
       theme: 'outline',
       size: 'large',
       width: 320,
-      text: 'continue_with',
+      // Botón nativo de Google: estas son las únicas opciones de forma y
+      // texto que Google Identity Services permite. No es posible igualarlo
+      // al píxel al botón del mockup — esto es lo más cerca que se puede
+      // llegar sin dejar de usar el botón nativo real.
+      text: modo === 'login' ? 'signin_with' : 'signup_with',
       locale: 'es',
-      // Botón nativo de Google: estas son las únicas opciones de forma que
-      // Google Identity Services permite. No es posible igualarlo al píxel
-      // a un botón propio en píldora — 'shape: pill' es lo más cerca que
-      // se puede llegar sin dejar de usar el botón nativo.
       shape: 'pill',
       logo_alignment: 'center',
     })
-  }, [listo, onCredential])
+  }, [listo, onCredential, modo])
 
-  if (!CLIENT_ID) {
+  if (!CLIENT_ID || error) {
     return (
-      <p className="rounded-control bg-tinta-50 px-3 py-2 text-center text-xs text-tinta-500 ring-1 ring-tinta-100">
-        Inicio de sesión con Google no está configurado.
-      </p>
-    )
-  }
-
-  if (error) {
-    return (
-      <p className="rounded-control bg-progreso-fondo px-3 py-2 text-center text-xs text-progreso-texto ring-1 ring-progreso-texto/20">
-        No se pudo cargar el inicio de sesión con Google.
-      </p>
+      <button type="button" disabled aria-disabled="true" className={CLASE_BOTON_RESPALDO}>
+        <IconoGoogleAuth className="h-[18px] w-[18px]" />
+        {etiquetaRespaldo}
+      </button>
     )
   }
 

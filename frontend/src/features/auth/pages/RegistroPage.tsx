@@ -38,6 +38,8 @@ export default function RegistroPage() {
       subtitulo="Para egresados de Ingeniería de Sistemas"
       error={error}
       onCredentialGoogle={manejarGoogle}
+      modoGoogle="registro"
+      etiquetaGoogle="Registrarse con Google"
       pregunta="¿Ya tienes cuenta?"
       textoEnlace="Inicia sesión"
       rutaEnlace="/login"

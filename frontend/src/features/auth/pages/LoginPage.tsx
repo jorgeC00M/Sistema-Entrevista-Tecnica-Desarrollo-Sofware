@@ -38,6 +38,8 @@ export default function LoginPage() {
       subtitulo="Inicia sesión para continuar"
       error={error}
       onCredentialGoogle={manejarGoogle}
+      modoGoogle="login"
+      etiquetaGoogle="Continuar con Google"
       pregunta="¿No tienes cuenta?"
       textoEnlace="Regístrate"
       rutaEnlace="/registro"

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
-import Boton from '@/components/ui/Boton'
-import Input from '@/components/ui/Input'
+import CampoAuth from '@/features/auth/components/CampoAuth'
+import { IconoCandadoAuth, IconoCorreoAuth } from '@/features/auth/components/iconosAuth'
 
 interface Props {
   onEnviar: (credenciales: { email: string; password: string }) => Promise<void>
@@ -27,24 +27,22 @@ export default function FormularioLogin({ onEnviar }: Props) {
   }
 
   return (
-    <form onSubmit={manejarEnvio} className="mt-4 flex flex-col gap-4">
-      <Input
-        id="email"
-        etiqueta="Correo electrónico"
+    <form onSubmit={manejarEnvio} className="text-left">
+      <CampoAuth
+        icono={<IconoCorreoAuth />}
+        ariaLabel="Correo electrónico"
+        placeholder="Correo electrónico"
         type="email"
-        icono="correo"
-        variante="relleno"
         autoComplete="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <Input
-        id="password"
-        etiqueta="Contraseña"
+      <CampoAuth
+        icono={<IconoCandadoAuth />}
+        ariaLabel="Contraseña"
+        placeholder="Contraseña"
         type="password"
-        icono="candado"
-        variante="relleno"
         conAlternarPassword
         autoComplete="current-password"
         required
@@ -52,27 +50,34 @@ export default function FormularioLogin({ onEnviar }: Props) {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-tinta-700">
+      <div className="mt-1 mb-6 flex items-center justify-between text-[0.88rem]">
+        <label className="flex cursor-pointer items-center gap-2 text-left text-[#4a5572]">
           <input
             type="checkbox"
             checked={recordarme}
             onChange={(e) => setRecordarme(e.target.checked)}
-            className="h-4 w-4 rounded border-tinta-300 accent-iris-600"
+            className="h-[17px] w-[17px] shrink-0 accent-[#2b55a3]"
           />
           Recordarme
         </label>
         {/* Sin destino real todavía: no hay flujo de recuperación de
             contraseña en el backend. Queda visible como en el diseño, sin
             prometer una funcionalidad que no existe. */}
-        <a href="#" className="font-medium text-iris-600 hover:underline">
+        <a href="#" className="font-medium text-[#2b55a3] no-underline hover:underline">
           ¿Olvidaste tu contraseña?
         </a>
       </div>
 
-      <Boton type="submit" forma="pildora" cargando={cargando} className="w-full">
-        Entrar
-      </Boton>
+      <button
+        type="submit"
+        disabled={cargando}
+        className="flex h-[50px] w-full items-center justify-center rounded-full bg-[#2b55a3] text-[1.05rem] font-semibold text-white transition-colors hover:bg-[#234889] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {cargando && (
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        )}
+        Iniciar sesión
+      </button>
     </form>
   )
 }

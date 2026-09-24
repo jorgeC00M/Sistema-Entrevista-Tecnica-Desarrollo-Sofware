@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 
-import Boton from '@/components/ui/Boton'
-import Input from '@/components/ui/Input'
+import CampoAuth from '@/features/auth/components/CampoAuth'
+import {
+  IconoCandadoAuth,
+  IconoCandadoCheckAuth,
+  IconoCorreoAuth,
+  IconoUsuarioAuth,
+} from '@/features/auth/components/iconosAuth'
 import type { DatosDeRegistro } from '@/types/usuario'
 
 type Campos = Omit<DatosDeRegistro, 'carnet'>
@@ -43,87 +48,91 @@ export default function FormularioRegistro({ onEnviar }: Props) {
   }
 
   return (
-    <form onSubmit={manejarEnvio} className="mt-4 flex flex-col gap-4">
-      <Input
-        id="nombreCompleto"
-        etiqueta="Nombre completo"
-        icono="usuario"
-        variante="relleno"
+    <form onSubmit={manejarEnvio} className="text-left">
+      <CampoAuth
+        icono={<IconoUsuarioAuth />}
+        ariaLabel="Nombre completo"
+        placeholder="Nombre completo"
         autoComplete="name"
         required
         value={form.nombreCompleto}
         onChange={actualizar('nombreCompleto')}
       />
-      <Input
-        id="email"
-        etiqueta="Correo electrónico"
+      <CampoAuth
+        icono={<IconoCorreoAuth />}
+        ariaLabel="Correo electrónico"
+        placeholder="Correo electrónico"
         type="email"
-        icono="correo"
-        variante="relleno"
         autoComplete="email"
         required
         value={form.email}
         onChange={actualizar('email')}
       />
-      <Input
-        id="password"
-        etiqueta="Contraseña"
+      <CampoAuth
+        icono={<IconoCandadoAuth />}
+        ariaLabel="Contraseña"
+        placeholder="Contraseña"
         type="password"
-        icono="candado"
-        variante="relleno"
         conAlternarPassword
         autoComplete="new-password"
         required
         minLength={8}
-        ayuda="Mínimo 8 caracteres."
         value={form.password}
         onChange={actualizar('password')}
       />
-      <div>
-        <Input
-          id="confirmarPassword"
-          etiqueta="Confirmar contraseña"
-          type="password"
-          icono="candado"
-          variante="relleno"
-          conAlternarPassword
-          autoComplete="new-password"
-          required
-          value={confirmarPassword}
-          onChange={(e) => setConfirmarPassword(e.target.value)}
-        />
-        {noCoincide && (
-          <p className="mt-1 text-xs text-error-texto">Las contraseñas no coinciden.</p>
-        )}
-      </div>
-      <label className="flex items-start gap-2 text-sm text-tinta-700">
-        <input
-          type="checkbox"
-          checked={aceptaTerminos}
-          onChange={(e) => setAceptaTerminos(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-tinta-300 accent-iris-600"
-        />
-        <span>
-          Acepto los{' '}
-          <a href="#" className="font-medium text-iris-600 hover:underline">
-            Términos
-          </a>{' '}
-          y la{' '}
-          <a href="#" className="font-medium text-iris-600 hover:underline">
-            Política de privacidad
-          </a>
-        </span>
-      </label>
+      <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-[#8a93a8]">Mínimo 8 caracteres.</p>
 
-      <Boton
+      <CampoAuth
+        icono={<IconoCandadoCheckAuth />}
+        ariaLabel="Confirmar contraseña"
+        placeholder="Confirmar contraseña"
+        type="password"
+        conAlternarPassword
+        autoComplete="new-password"
+        required
+        value={confirmarPassword}
+        onChange={(e) => setConfirmarPassword(e.target.value)}
+      />
+      {noCoincide && (
+        // El mockup no define un color de error (es estático, sin estados de
+        // validación); se reutiliza el semántico de error del proyecto en
+        // vez de inventar un rojo nuevo fuera de las variables pedidas.
+        <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-error-texto">
+          Las contraseñas no coinciden.
+        </p>
+      )}
+
+      <div className="mt-1 mb-6 text-[0.85rem] leading-[1.4]">
+        <label className="flex cursor-pointer items-start gap-2 text-left text-[#4a5572]">
+          <input
+            type="checkbox"
+            checked={aceptaTerminos}
+            onChange={(e) => setAceptaTerminos(e.target.checked)}
+            className="mt-0.5 h-[17px] w-[17px] shrink-0 accent-[#2b55a3]"
+          />
+          <span>
+            Acepto los{' '}
+            <a href="#" className="font-medium text-[#2b55a3] no-underline hover:underline">
+              Términos
+            </a>{' '}
+            y la{' '}
+            <a href="#" className="font-medium text-[#2b55a3] no-underline hover:underline">
+              Política de privacidad
+            </a>
+          </span>
+        </label>
+      </div>
+
+      <button
         type="submit"
-        forma="pildora"
-        cargando={cargando}
-        disabled={form.password !== confirmarPassword}
-        className="w-full"
+        disabled={cargando || form.password !== confirmarPassword}
+        className="flex h-[50px] w-full items-center justify-center rounded-full bg-[#2b55a3] text-[1.05rem] font-semibold text-white transition-colors hover:bg-[#234889] disabled:cursor-not-allowed disabled:opacity-60"
       >
+        {cargando && (
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        )}
         Crear cuenta
-      </Boton>
+      </button>
     </form>
   )
 }
