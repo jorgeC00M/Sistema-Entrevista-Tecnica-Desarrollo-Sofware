@@ -75,6 +75,10 @@ export default function BotonGoogle({ onCredential, modo, etiquetaRespaldo }: Pr
   const contenedorRef = useRef<HTMLDivElement>(null)
   const [listo, setListo] = useState(false)
   const [error, setError] = useState(false)
+  // Evita que StrictMode (que en desarrollo monta cada efecto dos veces)
+  // llame a initialize()/renderButton() dos veces: la bandera sobrevive al
+  // doble montaje porque los refs no se reinician entre esas dos pasadas.
+  const inicializadoRef = useRef(false)
 
   useEffect(() => {
     if (!CLIENT_ID) return
@@ -95,6 +99,8 @@ export default function BotonGoogle({ onCredential, modo, etiquetaRespaldo }: Pr
 
   useEffect(() => {
     if (!listo || !contenedorRef.current || !window.google) return
+    if (inicializadoRef.current) return
+    inicializadoRef.current = true
 
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
