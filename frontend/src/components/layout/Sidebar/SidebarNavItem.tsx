@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 
-import Divisor from '@/components/ui/Divisor'
 import Icono from '@/components/ui/Icono'
 import Tooltip from '@/components/ui/Tooltip'
 import type { Destino } from '@/components/layout/destinos'
@@ -24,12 +23,12 @@ export default function SidebarNavItem({ destino, plegado, onNavegar }: Props) {
       title={plegado ? destino.etiqueta : undefined}
       className={({ isActive }) =>
         [
-          'group flex items-center gap-3 rounded-control border-l-[3px] text-sm font-medium transition-colors duration-150',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-500',
+          'group flex items-center gap-3 rounded-control text-sm font-medium transition-colors duration-150',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
           plegado ? 'justify-center p-2.5' : 'px-3 py-2.5',
           isActive
-            ? 'border-l-iris-600 bg-tinta-800 text-white'
-            : 'border-l-transparent text-tinta-300 hover:bg-tinta-900 hover:text-white',
+            ? 'bg-white/[0.12] text-white'
+            : 'text-vidrio-sidebar-muted hover:bg-white/[0.08] hover:text-white',
         ].join(' ')
       }
     >
@@ -37,7 +36,7 @@ export default function SidebarNavItem({ destino, plegado, onNavegar }: Props) {
         <>
           <span
             className={`flex h-5 w-5 shrink-0 items-center justify-center ${
-              isActive ? 'text-iris-400' : 'text-tinta-400 group-hover:text-white'
+              isActive ? 'text-white' : 'text-vidrio-sidebar-muted group-hover:text-white'
             }`}
           >
             <Icono nombre={destino.icono} />
@@ -49,10 +48,5 @@ export default function SidebarNavItem({ destino, plegado, onNavegar }: Props) {
     </NavLink>
   )
 
-  return (
-    <li>
-      {plegado ? <Tooltip texto={destino.etiqueta}>{enlace}</Tooltip> : enlace}
-      <Divisor tono="oscuro" className="mt-1" />
-    </li>
-  )
+  return <li>{plegado ? <Tooltip texto={destino.etiqueta}>{enlace}</Tooltip> : enlace}</li>
 }

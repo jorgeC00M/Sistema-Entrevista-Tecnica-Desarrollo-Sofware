@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 const ESTILOS = {
   error: 'bg-error-fondo text-error-texto ring-1 ring-error-texto/20',
   exito: 'bg-exito-fondo text-exito-texto ring-1 ring-exito-texto/20',
-  info: 'bg-tinta-100 text-tinta-700 ring-1 ring-tinta-300',
+  info: 'bg-vidrio-field text-vidrio-texto ring-1 ring-vidrio-linea',
 } as const
 
 export type TipoDeAlerta = keyof typeof ESTILOS

@@ -9,15 +9,14 @@
       name="description"
       content="Simulador de entrevistas técnicas para egresados de Ingeniería de Sistemas. Un entrevistador con IA te pregunta, evalúa tus respuestas y te dice qué mejorar."
     />
-    <!-- Fraunces + Figtree: solo para login/registro (TarjetaAuth.tsx), que
-         replican un mockup con su propia identidad tipográfica, separada de
-         IBM Plex Sans/Mono del resto del sistema. Cargarlas aquí no cambia
-         nada visualmente en ninguna otra pantalla: ningún otro componente
-         referencia estas familias. -->
+    <!-- Fraunces + Figtree + JetBrains Mono: el sistema "vidrio" (auth y el
+         dashboard completo), separado de IBM Plex Sans/Mono del resto del
+         sistema (landing). Cargarlas aquí no cambia nada visualmente donde
+         no se referencian estas familias explícitamente. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
   </head>

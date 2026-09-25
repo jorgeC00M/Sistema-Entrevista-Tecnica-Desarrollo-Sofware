@@ -6,8 +6,12 @@ const CONFIG = {
     acento: 'border-t-progreso-texto',
   },
   // Sugerencias no es un estado de evaluación — es una recomendación, así
-  // que usa iris (el color de acción/marca) y no un semántico.
-  sugerencias: { etiqueta: 'Sugerencias', texto: 'text-iris-600', acento: 'border-t-iris-600' },
+  // que usa el acento del producto y no un semántico.
+  sugerencias: {
+    etiqueta: 'Sugerencias',
+    texto: 'text-vidrio-acento',
+    acento: 'border-t-vidrio-acento',
+  },
 } as const
 
 interface Props {
@@ -23,9 +27,9 @@ interface Props {
 export default function ListaRetroalimentacion({ variante, texto }: Props) {
   const { etiqueta, texto: colorTexto, acento } = CONFIG[variante]
   return (
-    <div className={`flex flex-col gap-1.5 rounded-control border-t-2 bg-tinta-50 p-3 ${acento}`}>
+    <div className={`flex flex-col gap-1.5 rounded-vidrio border-t-2 bg-vidrio-field p-3 ${acento}`}>
       <dt className={`text-label-mono uppercase ${colorTexto}`}>{etiqueta}</dt>
-      <dd className="text-sm text-tinta-700">{texto}</dd>
+      <dd className="text-sm text-vidrio-texto">{texto}</dd>
     </div>
   )
 }

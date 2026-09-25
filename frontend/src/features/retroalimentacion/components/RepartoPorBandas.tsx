@@ -12,11 +12,11 @@ export default function RepartoPorBandas({ areas }: Props) {
   if (areas.length === 0) return null
 
   return (
-    <div className="rounded-superficie bg-white p-4 ring-1 ring-tinta-100 sm:p-5">
-      <h2 className="text-headline-sm font-semibold text-tinta-950">
+    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5">
+      <h2 className="text-headline-sm font-semibold text-vidrio-ink">
         Cómo se reparten tus respuestas
       </h2>
-      <p className="mt-1 text-body-sm text-tinta-500">
+      <p className="mt-1 text-body-sm text-vidrio-texto">
         Por área, cuántas de tus respuestas cayeron en cada nivel de la rúbrica.
       </p>
 
@@ -24,14 +24,14 @@ export default function RepartoPorBandas({ areas }: Props) {
         {areas.map((area) => (
           <div key={area.area}>
             <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-medium text-tinta-800">{area.area_display}</span>
-              <span className="text-xs text-tinta-500">
+              <span className="font-medium text-vidrio-ink">{area.area_display}</span>
+              <span className="text-xs text-vidrio-muted">
                 {area.total_respuestas} respuesta{area.total_respuestas === 1 ? '' : 's'} · promedio{' '}
-                <span className="font-mono">{Math.round(area.promedio)}</span>
+                <span className="font-mono-vidrio">{Math.round(area.promedio)}</span>
               </span>
             </div>
 
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-tinta-100">
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-vidrio-field">
               {ORDEN.map((banda) => {
                 const cuantas = area.bandas[banda]
                 if (cuantas === 0) return null
@@ -46,7 +46,7 @@ export default function RepartoPorBandas({ areas }: Props) {
               })}
             </div>
 
-            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-tinta-500">
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-vidrio-muted">
               {ORDEN.map((banda) => {
                 const cuantas = area.bandas[banda]
                 if (cuantas === 0) return null

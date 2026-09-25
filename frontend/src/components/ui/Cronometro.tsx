@@ -36,8 +36,8 @@ export default function Cronometro() {
   }, [])
 
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-control bg-tinta-950 px-3 py-1.5 font-mono text-metric-counter text-white">
-      <Icono nombre="reloj" className="h-4 w-4 text-tinta-300" />
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-vidrio-ink px-3 py-1.5 font-mono-vidrio text-metric-counter text-white">
+      <Icono nombre="reloj" className="h-4 w-4 text-vidrio-sidebar-muted" />
       <span>{formatear(transcurrido)}</span>
       {/* El punto de "en vivo" es puramente decorativo: el reloj ya comunica
           que la sesión está activa, así que se apaga con movimiento reducido. */}

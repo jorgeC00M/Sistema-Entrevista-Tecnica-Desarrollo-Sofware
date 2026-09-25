@@ -35,7 +35,7 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
     // Altura fija (h-16 = 64px): el sidebar es un panel de borde completo,
     // independiente en altura (top-0 a bottom-0) — este header vive dentro
     // de la columna de contenido, a la derecha del sidebar, no debajo.
-    <header className="sticky top-0 z-40 h-16 border-b border-tinta-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 h-16 border-b border-vidrio-linea bg-vidrio-bg/80 backdrop-blur-md">
       <div className="flex h-full items-center gap-3 px-4">
         <button
           ref={disparadorRef}
@@ -43,7 +43,7 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
           onClick={onAbrirMenu}
           aria-expanded={menuAbierto}
           aria-label="Abrir menú de navegación"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-tinta-500 transition-colors duration-150 hover:bg-tinta-100 hover:text-tinta-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-vidrio-muted transition-colors duration-150 hover:bg-vidrio-field hover:text-vidrio-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento lg:hidden"
         >
           <Icono nombre="menu" />
         </button>
@@ -58,14 +58,12 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate">
             <EtiquetaMono tono="suelto">Simulador técnico</EtiquetaMono>
-            <span aria-hidden="true" className="text-tinta-500">
+            <span aria-hidden="true" className="text-vidrio-muted">
               /
             </span>
-            <span className="truncate text-headline-sm font-semibold text-tinta-950">
-              {titulo}
-            </span>
+            <span className="truncate text-base font-semibold text-vidrio-ink">{titulo}</span>
           </p>
-          {subtitulo && <p className="truncate text-body-sm text-tinta-500">{subtitulo}</p>}
+          {subtitulo && <p className="truncate text-body-sm text-vidrio-muted">{subtitulo}</p>}
         </div>
       </div>
     </header>

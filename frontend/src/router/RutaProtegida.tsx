@@ -21,17 +21,21 @@ export default function RutaProtegida() {
   // de `.current` en render, aunque pasar la ref misma a `ref={}` es correcto.
   const { abierto, alternar, cerrar, cajonRef, disparadorRef } = cajon
 
-  if (cargando) return <Spinner texto="Verificando sesión…" />
+  if (cargando) return <Spinner texto="Verificando sesión…" tono="vidrio" />
   if (!usuario) return <Navigate to="/login" replace />
 
   return (
-    <div className="min-h-screen bg-tinta-50">
+    // Sistema "vidrio": fondo y tipografía propios de todo el dashboard,
+    // fijados una sola vez aquí — el resto del árbol hereda por cascada,
+    // igual que TarjetaAuth.tsx en login/registro. tinta/iris no aparecen
+    // en ningún hijo de este nodo.
+    <div className="min-h-screen bg-vidrio-bg font-['Figtree'] text-vidrio-texto">
       {/* Barra fija en escritorio: panel de borde completo, toca los 3 bordes
           de la ventana (arriba, izquierda, abajo) sin margen ni radio — el
           header arranca justo en su esquina superior derecha. El ancho
           cambia al plegar, con transición. */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-tinta-950 transition-[width] duration-200 ease-out lg:block ${
+        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-vidrio-ink transition-[width] duration-200 ease-out lg:block ${
           plegado ? 'w-[72px]' : 'w-64'
         }`}
       >
@@ -47,7 +51,7 @@ export default function RutaProtegida() {
       {abierto && (
         <>
           <div
-            className="fixed inset-0 z-20 bg-tinta-950/40 lg:hidden"
+            className="fixed inset-0 z-20 bg-vidrio-ink/40 lg:hidden"
             onClick={cerrar}
             aria-hidden="true"
           />
@@ -56,7 +60,7 @@ export default function RutaProtegida() {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed top-0 bottom-0 left-0 z-30 w-72 bg-tinta-950 lg:hidden"
+            className="fixed top-0 bottom-0 left-0 z-30 w-72 bg-vidrio-ink lg:hidden"
           >
             <div className="flex justify-end p-2">
               <BotonIcono

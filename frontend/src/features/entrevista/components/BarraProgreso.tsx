@@ -17,10 +17,10 @@ export default function BarraProgreso({ actual, total }: Props) {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={`Progreso de la entrevista: pregunta ${actual} de ${total}`}
-      className="h-1.5 w-full overflow-hidden rounded-full bg-tinta-100"
+      className="h-1.5 w-full overflow-hidden rounded-full bg-vidrio-field"
     >
       <div
-        className="h-full rounded-full bg-iris-600 transition-all"
+        className="h-full rounded-full bg-vidrio-acento transition-all"
         style={{ width: `${porcentaje}%` }}
       />
     </div>

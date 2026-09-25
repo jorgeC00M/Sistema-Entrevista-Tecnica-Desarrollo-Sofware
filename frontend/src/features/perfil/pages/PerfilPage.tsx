@@ -25,18 +25,18 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-headline-xl font-semibold text-tinta-950">Mi perfil</h1>
-      <p className="mt-1 text-base text-tinta-500">
+      <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">Mi perfil</h1>
+      <p className="mt-1 text-base text-vidrio-texto">
         Estos son los datos de tu cuenta. Por ahora son de solo lectura.
       </p>
 
-      <dl className="mt-6 divide-y divide-tinta-100 rounded-superficie bg-white ring-1 ring-tinta-100">
+      <dl className="mt-6 divide-y divide-vidrio-linea rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
         {campos.map((campo) => (
           <div key={campo.etiqueta} className="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:gap-4">
             <dt className="sm:w-48 sm:shrink-0">
               <EtiquetaMono tono="suelto">{campo.etiqueta}</EtiquetaMono>
             </dt>
-            <dd className="text-sm text-tinta-950">{campo.valor}</dd>
+            <dd className="text-sm text-vidrio-ink">{campo.valor}</dd>
           </div>
         ))}
       </dl>

@@ -14,8 +14,8 @@ export default function ListaObservaciones({ observaciones }: Props) {
 
   return (
     <div>
-      <h2 className="text-headline-sm font-semibold text-tinta-950">Lo que te han señalado</h2>
-      <p className="mt-1 text-body-sm text-tinta-500">
+      <h2 className="text-headline-sm font-semibold text-vidrio-ink">Lo que te han señalado</h2>
+      <p className="mt-1 text-body-sm text-vidrio-texto">
         De la más reciente a la más antigua, incluidas las entrevistas que dejaste a medias.
       </p>
 
@@ -23,7 +23,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
         {observaciones.map((o) => (
           <li
             key={`${o.entrevista_id}-${o.numero}`}
-            className="rounded-superficie bg-white p-4 ring-1 ring-tinta-100 sm:p-5"
+            className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <EtiquetaMono tono="suelto">
@@ -33,7 +33,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
               <ChipPuntaje puntuacion={o.puntuacion} banda={o.banda} conEtiqueta />
             </div>
 
-            <p className="mt-2 text-sm font-medium text-tinta-800">{o.pregunta}</p>
+            <p className="mt-2 text-sm font-medium text-vidrio-ink">{o.pregunta}</p>
 
             <dl className="mt-3 grid gap-3 sm:grid-cols-2">
               <ListaRetroalimentacion variante="debilidades" texto={o.debilidades} />
@@ -42,7 +42,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
 
             <Link
               to={`/entrevista/${o.entrevista_id}/resultados`}
-              className="mt-3 inline-block rounded text-xs font-medium text-iris-600 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600"
+              className="mt-3 inline-block rounded text-xs font-medium text-vidrio-acento underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
             >
               Ver la entrevista completa
             </Link>

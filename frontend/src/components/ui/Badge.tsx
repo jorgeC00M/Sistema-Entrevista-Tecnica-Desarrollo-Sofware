@@ -6,7 +6,7 @@ const TONOS = {
   exito: 'bg-exito-fondo text-exito-texto',
   progreso: 'bg-progreso-fondo text-progreso-texto',
   error: 'bg-error-fondo text-error-texto',
-  neutro: 'bg-tinta-100 text-tinta-500',
+  neutro: 'bg-vidrio-field text-vidrio-muted',
 } as const
 
 export type TonoDeBadge = keyof typeof TONOS

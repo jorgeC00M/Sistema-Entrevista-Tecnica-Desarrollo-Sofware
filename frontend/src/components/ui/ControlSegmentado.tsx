@@ -25,8 +25,8 @@ export default function ControlSegmentado({
 }: Props) {
   return (
     <fieldset className={className}>
-      <legend className="mb-2 text-sm font-medium text-tinta-700">{etiqueta}</legend>
-      <div className="flex gap-2">
+      <legend className="mb-2 text-sm font-medium text-vidrio-ink">{etiqueta}</legend>
+      <div className="flex gap-1 rounded-full bg-vidrio-field p-1">
         {opciones.map((opcion) => {
           const activo = seleccionado === opcion.valor
           return (
@@ -35,10 +35,10 @@ export default function ControlSegmentado({
               type="button"
               onClick={() => onSeleccionar(opcion.valor)}
               aria-pressed={activo}
-              className={`flex-1 rounded-control border px-4 py-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 ${
+              className={`flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento ${
                 activo
-                  ? 'border-iris-600 bg-iris-50 text-iris-700'
-                  : 'border-tinta-100 bg-white text-tinta-700 hover:border-tinta-300'
+                  ? 'bg-vidrio-acento text-white shadow-sm'
+                  : 'text-vidrio-texto hover:text-vidrio-ink'
               }`}
             >
               {opcion.etiqueta}

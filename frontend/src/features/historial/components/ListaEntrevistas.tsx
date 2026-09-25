@@ -12,7 +12,7 @@ interface Props {
 
 export default function ListaEntrevistas({ entrevistas }: Props) {
   return (
-    <div className="rounded-superficie border border-tinta-100 bg-white">
+    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
       {entrevistas.map((entrevista, indice) => {
         // Una entrevista a medias se retoma; una terminada lleva a resultados.
         const destino =
@@ -25,19 +25,19 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
             {indice > 0 && <Divisor />}
             <Link
               to={destino}
-              className="flex items-center justify-between gap-3 px-4 py-4 transition hover:bg-tinta-50"
+              className="flex items-center justify-between gap-3 px-4 py-4 transition hover:bg-vidrio-field"
             >
               <div>
-                <p className="text-sm font-medium text-tinta-800">
+                <p className="text-sm font-medium text-vidrio-ink">
                   {entrevista.area_display} · {entrevista.nivel_display}
                 </p>
-                <p className="text-xs text-tinta-500">
+                <p className="text-xs text-vidrio-muted">
                   {new Date(entrevista.fecha_inicio).toLocaleString('es-BO')}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 {entrevista.puntuacion_promedio !== null && (
-                  <span className="font-mono text-sm font-semibold text-tinta-700">
+                  <span className="font-mono-vidrio text-sm font-semibold text-vidrio-ink">
                     {entrevista.puntuacion_promedio}
                   </span>
                 )}

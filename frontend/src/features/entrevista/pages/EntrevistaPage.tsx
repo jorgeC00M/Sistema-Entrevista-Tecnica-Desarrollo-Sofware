@@ -23,14 +23,14 @@ export default function EntrevistaPage() {
     reintentar,
   } = useEntrevista(id ?? '')
 
-  if (cargandoInicial) return <Spinner texto="Cargando entrevista…" />
+  if (cargandoInicial) return <Spinner texto="Cargando entrevista…" tono="vidrio" />
 
   return (
     <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
-      <div className="mb-4 rounded-superficie bg-white p-4 ring-1 ring-tinta-100">
+      <div className="mb-4 rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-headline-sm font-semibold text-tinta-950">
+            <h1 className="truncate font-serif text-headline-sm font-semibold text-vidrio-ink">
               Entrevista · {areaDisplay}
             </h1>
             <EtiquetaMono tono="suelto">Nivel {nivelDisplay}</EtiquetaMono>
@@ -38,8 +38,8 @@ export default function EntrevistaPage() {
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-label-mono text-tinta-500 uppercase">Pregunta</p>
-              <p className="font-mono text-metric-counter text-tinta-950">
+              <p className="text-label-mono text-vidrio-muted uppercase">Pregunta</p>
+              <p className="font-mono-vidrio text-metric-counter text-vidrio-ink">
                 {String(numeroActual).padStart(2, '0')} / {String(totalPreguntas).padStart(2, '0')}
               </p>
             </div>
@@ -55,7 +55,7 @@ export default function EntrevistaPage() {
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
 
       {error && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-control bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
           <span>{error}</span>
           <button
             type="button"

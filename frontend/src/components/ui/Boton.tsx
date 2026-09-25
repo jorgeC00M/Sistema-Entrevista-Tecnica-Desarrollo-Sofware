@@ -9,10 +9,17 @@ import type { NombreDeIcono } from '@/components/ui/Icono'
 const VARIANTES = {
   primario: 'bg-iris-600 text-white hover:bg-iris-700',
   secundario: 'bg-white text-tinta-700 ring-1 ring-tinta-700 hover:bg-tinta-50',
-  // tinta-300 solo cumple AA sobre fondos oscuros (tinta-900/950, como el
-  // sidebar): sobre blanco cae a ~2.3:1. No usar fantasma sobre superficies
-  // claras sin revisar el contraste.
-  fantasma: 'text-tinta-300 hover:bg-tinta-900 hover:text-white',
+  // vidrio-sidebar-muted solo cumple AA sobre el sidebar oscuro (vidrio-ink),
+  // su único consumidor hoy (SidebarPerfil). No usar fantasma sobre
+  // superficies claras sin revisar el contraste.
+  fantasma: 'text-vidrio-sidebar-muted hover:bg-white/10 hover:text-white',
+  // Acento del sistema "vidrio" (dashboard): variante propia en vez de
+  // reemplazar `primario`, porque Boton también lo usa la landing pública,
+  // que se queda en iris.
+  vidrio: 'bg-vidrio-acento text-white hover:bg-vidrio-acento-hover',
+  // Equivalente "vidrio" de `secundario` (mismo motivo: `secundario` lo usa
+  // también la landing).
+  'vidrio-secundario': 'bg-white text-vidrio-ink ring-1 ring-vidrio-linea hover:bg-vidrio-field',
 } as const
 
 export type VarianteDeBoton = keyof typeof VARIANTES

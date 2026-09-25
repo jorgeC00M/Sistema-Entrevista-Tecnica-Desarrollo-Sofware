@@ -15,10 +15,10 @@ export default function TablaPuntuaciones({ intercambios }: Props) {
   if (calificados.length === 0) return null
 
   return (
-    <div className="mb-6 rounded-superficie bg-white ring-1 ring-tinta-100">
+    <div className="mb-6 rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
       <div className="flex items-baseline justify-between p-4 pb-3 sm:px-5 sm:pt-5">
-        <h2 className="text-headline-sm font-semibold text-tinta-950">Desglose por pregunta</h2>
-        <span className="text-body-sm text-tinta-500">
+        <h2 className="text-headline-sm font-semibold text-vidrio-ink">Desglose por pregunta</h2>
+        <span className="text-body-sm text-vidrio-muted">
           {calificados.length} enunciado{calificados.length === 1 ? '' : 's'} evaluado
           {calificados.length === 1 ? '' : 's'}
         </span>
@@ -31,12 +31,12 @@ export default function TablaPuntuaciones({ intercambios }: Props) {
           <Fragment key={i.numero}>
             {indice > 0 && <Divisor />}
             <div className="flex flex-wrap items-center gap-3 p-4 sm:px-5">
-              <span className="font-mono text-body-sm text-tinta-500">
+              <span className="font-mono-vidrio text-body-sm text-vidrio-muted">
                 {String(i.numero).padStart(2, '0')}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-tinta-800">{i.pregunta}</p>
-                <p className="text-body-sm text-tinta-500">
+                <p className="truncate text-sm font-medium text-vidrio-ink">{i.pregunta}</p>
+                <p className="text-body-sm text-vidrio-muted">
                   {estilo.etiqueta}
                   {i.tiempo_respuesta !== null && (
                     <> · {formatearSegundosCompacto(i.tiempo_respuesta)}</>

@@ -42,12 +42,13 @@ export default function HistorialPage() {
   }, [])
 
   if (error) return <Alerta tipo="error">{error}</Alerta>
-  if (!entrevistas || !estadisticas) return <Spinner texto="Cargando tu historial…" />
+  if (!entrevistas || !estadisticas)
+    return <Spinner texto="Cargando tu historial…" tono="vidrio" />
 
   if (entrevistas.length === 0) {
     return (
       <EstadoVacio icono="historial" titulo="Todavía no realizaste ninguna entrevista.">
-        <Link to="/nueva-entrevista" className="font-medium text-iris-600 hover:underline">
+        <Link to="/nueva-entrevista" className="font-medium text-vidrio-acento hover:underline">
           Empieza la primera
         </Link>
       </EstadoVacio>
@@ -63,17 +64,19 @@ export default function HistorialPage() {
           {entrevistas.length} entrevista{entrevistas.length === 1 ? '' : 's'} registrada
           {entrevistas.length === 1 ? '' : 's'}
         </EtiquetaMono>
-        <h1 className="text-headline-xl font-semibold text-tinta-950">Historial y progreso</h1>
+        <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
+          Historial y progreso
+        </h1>
         {completadas > 0 && estadisticas.promedio_general !== null ? (
-          <p className="text-base text-tinta-500">
+          <p className="text-base text-vidrio-texto">
             {completadas} entrevista{completadas === 1 ? '' : 's'} completada
             {completadas === 1 ? '' : 's'} · promedio general{' '}
-            <span className="font-mono text-metric-counter">
+            <span className="font-mono-vidrio text-metric-counter">
               {Math.round(estadisticas.promedio_general)}
             </span>
           </p>
         ) : (
-          <p className="text-base text-tinta-500">
+          <p className="text-base text-vidrio-texto">
             Tu progreso aparecerá aquí cuando completes la primera entrevista.
           </p>
         )}
@@ -87,7 +90,7 @@ export default function HistorialPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-headline-md font-semibold text-tinta-950">Tus entrevistas</h2>
+        <h2 className="mb-3 text-headline-md font-semibold text-vidrio-ink">Tus entrevistas</h2>
         <ListaEntrevistas entrevistas={entrevistas} />
       </div>
     </div>

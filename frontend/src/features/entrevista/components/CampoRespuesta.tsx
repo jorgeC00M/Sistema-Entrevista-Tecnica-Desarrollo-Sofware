@@ -25,7 +25,7 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
   return (
     <form
       onSubmit={manejarEnvio}
-      className="flex flex-col gap-2 border-t border-tinta-100 bg-white p-3"
+      className="flex flex-col gap-2 border-t border-vidrio-linea bg-vidrio-bg p-3"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <Textarea
@@ -44,14 +44,24 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
             }
           }}
         />
-        <Boton type="submit" cargando={deshabilitado} disabled={!texto.trim()}>
+        <Boton
+          type="submit"
+          variante="vidrio"
+          forma="pildora"
+          cargando={deshabilitado}
+          disabled={!texto.trim()}
+        >
           {deshabilitado ? 'Evaluando…' : 'Enviar'}
         </Boton>
       </div>
 
-      <p className="text-body-sm text-tinta-500">
-        Atajo: <span className="font-mono text-tinta-700">Enter</span> envía ·{' '}
-        <span className="font-mono text-tinta-700">Shift + Enter</span> salto de línea
+      <p className="text-body-sm text-vidrio-muted">
+        Atajo: <kbd className="rounded-full bg-vidrio-field px-2 py-0.5 font-mono-vidrio text-xs text-vidrio-texto">Enter</kbd>{' '}
+        envía ·{' '}
+        <kbd className="rounded-full bg-vidrio-field px-2 py-0.5 font-mono-vidrio text-xs text-vidrio-texto">
+          Shift + Enter
+        </kbd>{' '}
+        salto de línea
       </p>
     </form>
   )

@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 
 const TONOS = {
   /** Metadato sobre superficie clara: fase, área, tema. */
-  neutro: 'bg-tinta-100 text-tinta-500',
+  neutro: 'bg-vidrio-field text-vidrio-muted',
   /** Metadato que pertenece al producto: estado seleccionado, marca. */
-  marca: 'bg-iris-50 text-iris-700',
+  marca: 'bg-vidrio-acento-suave text-vidrio-acento',
   /** Metadato sobre el sidebar u otra superficie oscura. */
-  oscuro: 'bg-tinta-800 text-tinta-300',
+  oscuro: 'bg-white/10 text-vidrio-sidebar-muted',
   /** Sin relleno, para rótulos de sección que no necesitan cápsula. */
-  suelto: 'text-tinta-500',
+  suelto: 'text-vidrio-muted',
 } as const
 
 export type TonoDeEtiqueta = keyof typeof TONOS
@@ -30,7 +30,7 @@ export default function EtiquetaMono({ children, tono = 'neutro', className = ''
   const relleno = tono === 'suelto' ? '' : 'rounded-chip px-2 py-0.5'
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono text-label-mono uppercase ${relleno} ${TONOS[tono]} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-mono-vidrio text-label-mono uppercase ${relleno} ${TONOS[tono]} ${className}`}
     >
       {children}
     </span>

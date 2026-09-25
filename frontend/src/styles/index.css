@@ -17,6 +17,13 @@
     'IBM Plex Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
     'Courier New', monospace;
 
+  /* Tipografía exclusiva del sistema "vidrio" (dashboard + login/registro):
+     Fraunces para títulos, JetBrains Mono para datos exactos ahí — aparte
+     de --font-sans/--font-mono, que siguen siendo IBM Plex en el resto
+     del sistema (landing). `font-serif` no lo usa nada hoy: cero colisión. */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-mono-vidrio: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
   /* Escala neutra del producto: superficies, texto, bordes. tinta-950 es el
      fondo del sidebar; tinta-50 el fondo general de la aplicación. */
   --color-tinta-50: #f6f7fb;
@@ -44,6 +51,25 @@
   --color-error-texto: #b91c1c;
   --color-error-fondo: #fee2e2;
 
+  /* Sistema "vidrio": paleta propia del dashboard y de login/registro,
+     réplica valor por valor de sus mockups de referencia. Familia nueva y
+     autocontenida, no un reemplazo de tinta/iris — esos siguen siendo la
+     paleta real de la landing pública, que no usa este sistema. */
+  --color-vidrio-acento: #2b55a3;
+  --color-vidrio-acento-hover: #234889;
+  --color-vidrio-acento-suave: rgba(43, 85, 163, 0.1);
+  --color-vidrio-ink: #1c2f5e;
+  --color-vidrio-texto: #4a5572;
+  --color-vidrio-muted: #8a93a8;
+  --color-vidrio-bg: #e8edf5;
+  --color-vidrio-card: rgba(255, 255, 255, 0.55);
+  --color-vidrio-field: rgba(255, 255, 255, 0.72);
+  --color-vidrio-linea: rgba(28, 47, 94, 0.12);
+  --color-vidrio-borde: rgba(255, 255, 255, 0.8);
+  /* Solo para texto atenuado sobre el sidebar oscuro (--ink) — distinto de
+     vidrio-muted, que es para superficies claras. */
+  --color-vidrio-sidebar-muted: #9fb0cf;
+
   /* superficie: tarjetas, el sidebar, modales. control: botones, inputs,
      campos. chip: etiquetas de metadato y badges de puntaje.
      superficie y control coinciden hoy en 8px y aun así se mantienen
@@ -52,6 +78,9 @@
   --radius-superficie: 8px;
   --radius-control: 8px;
   --radius-chip: 4px;
+  /* Radio de tarjetas/paneles del sistema "vidrio" — distinto de
+     radius-superficie, que sigue en 8px para lo que no usa este sistema. */
+  --radius-vidrio: 18px;
 
   /* Escala nominal del sistema de diseño. Se nombra por el papel que cumple
      el texto, no por su tamaño, para que `label-mono` sea una clase en vez de

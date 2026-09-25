@@ -7,7 +7,7 @@ interface Props {
 export default function Divisor({ tono = 'claro', className = '' }: Props) {
   return (
     <hr
-      className={`border-t ${tono === 'oscuro' ? 'border-tinta-800' : 'border-tinta-100'} ${className}`}
+      className={`border-t ${tono === 'oscuro' ? 'border-white/10' : 'border-vidrio-linea'} ${className}`}
     />
   )
 }

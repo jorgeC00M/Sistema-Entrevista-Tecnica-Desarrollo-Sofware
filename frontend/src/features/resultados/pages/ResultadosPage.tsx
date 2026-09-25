@@ -39,7 +39,7 @@ export default function ResultadosPage() {
   }, [id])
 
   if (error) return <Alerta tipo="error">{error}</Alerta>
-  if (!datos) return <Spinner texto="Cargando resultados…" />
+  if (!datos) return <Spinner texto="Cargando resultados…" tono="vidrio" />
 
   const { entrevista, intercambios } = datos
   const duracion = formatearDuracion(entrevista.fecha_inicio, entrevista.fecha_fin)
@@ -51,7 +51,7 @@ export default function ResultadosPage() {
           <EtiquetaMono tono="suelto">
             Sesión #{entrevista.id} · {entrevista.area_display}
           </EtiquetaMono>
-          <h1 className="text-headline-xl font-semibold text-tinta-950">
+          <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
             Reporte de evaluación técnica
           </h1>
         </div>
@@ -59,7 +59,9 @@ export default function ResultadosPage() {
         <div className="flex items-center gap-2">
           <Badge tono={TONO_POR_ESTADO[entrevista.estado]}>{entrevista.estado_display}</Badge>
           {duracion && (
-            <span className="font-mono text-code-inline text-tinta-500">{duracion}</span>
+            <span className="font-mono-vidrio text-code-inline text-vidrio-muted">
+              {duracion}
+            </span>
           )}
         </div>
       </div>
@@ -75,10 +77,14 @@ export default function ResultadosPage() {
 
       <div className="mt-6 flex justify-center gap-3">
         <Link to="/nueva-entrevista">
-          <Boton variante="secundario">Nueva entrevista</Boton>
+          <Boton variante="vidrio-secundario" forma="pildora">
+            Nueva entrevista
+          </Boton>
         </Link>
         <Link to="/historial">
-          <Boton>Ver historial</Boton>
+          <Boton variante="vidrio" forma="pildora">
+            Ver historial
+          </Boton>
         </Link>
       </div>
     </div>

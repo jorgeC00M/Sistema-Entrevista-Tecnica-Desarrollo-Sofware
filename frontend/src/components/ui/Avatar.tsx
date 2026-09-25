@@ -23,7 +23,7 @@ export default function Avatar({ nombre, tamano = 'md', tono = 'claro' }: Props)
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${TAMANOS[tamano]} ${
-        tono === 'oscuro' ? 'bg-iris-400/20 text-iris-400' : 'bg-iris-50 text-iris-700'
+        tono === 'oscuro' ? 'bg-white/15 text-white' : 'bg-iris-50 text-iris-700'
       }`}
     >
       {iniciales(nombre)}

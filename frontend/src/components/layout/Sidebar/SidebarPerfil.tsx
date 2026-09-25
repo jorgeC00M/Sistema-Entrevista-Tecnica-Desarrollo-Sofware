@@ -33,7 +33,9 @@ export default function SidebarPerfil({ plegado }: Props) {
             <span className="block truncate text-sm font-medium text-white">
               {usuario.nombre_completo}
             </span>
-            <span className="block truncate text-xs text-tinta-300">{usuario.email}</span>
+            <span className="block truncate text-xs text-vidrio-sidebar-muted">
+              {usuario.email}
+            </span>
           </span>
         </div>
       )}

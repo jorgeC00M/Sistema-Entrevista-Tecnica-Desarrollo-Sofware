@@ -21,18 +21,18 @@ export default function Textarea({
   return (
     <div className={className}>
       {etiqueta && (
-        <label htmlFor={id} className="mb-1 block text-sm font-medium text-tinta-700">
+        <label htmlFor={id} className="mb-1 block text-sm font-medium text-vidrio-ink">
           {etiqueta}
         </label>
       )}
       <textarea
         id={id}
         value={value}
-        className="w-full resize-none rounded-control border border-tinta-300 px-3 py-2 text-sm text-tinta-950 focus:border-iris-600 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris-600 disabled:bg-tinta-50"
+        className="w-full resize-none rounded-vidrio border border-vidrio-linea bg-vidrio-field px-3 py-2 text-sm text-vidrio-ink focus:border-vidrio-acento focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento disabled:opacity-60"
         {...props}
       />
       {maximoCaracteres !== undefined && (
-        <p className="mt-1 text-right font-mono text-xs text-tinta-500">
+        <p className="mt-1 text-right font-mono-vidrio text-xs text-vidrio-muted">
           {longitud} / {maximoCaracteres}
         </p>
       )}

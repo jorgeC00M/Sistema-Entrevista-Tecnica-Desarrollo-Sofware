@@ -24,14 +24,16 @@ export default function TarjetaArea({
       type="button"
       onClick={onClick}
       aria-pressed={activo}
-      className={`flex flex-col gap-3 rounded-superficie border bg-white p-4 text-left transition ${
-        activo ? 'border-iris-600 ring-2 ring-iris-600' : 'border-tinta-100 hover:border-tinta-300'
+      className={`flex flex-col gap-3 rounded-vidrio border bg-vidrio-card p-4 text-left backdrop-blur-[18px] transition ${
+        activo
+          ? 'border-2 border-vidrio-acento shadow-[0_0_0_4px_var(--color-vidrio-acento-suave)]'
+          : 'border-vidrio-borde hover:border-vidrio-acento/40'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <span
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-control ${
-            activo ? 'bg-iris-50 text-iris-600' : 'bg-tinta-100 text-tinta-500'
+            activo ? 'bg-vidrio-acento-suave text-vidrio-acento' : 'bg-vidrio-field text-vidrio-muted'
           }`}
         >
           <Icono nombre={icono} className="h-6 w-6" />
@@ -41,12 +43,12 @@ export default function TarjetaArea({
 
       <div>
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-headline-md font-semibold text-tinta-950">{nombre}</h3>
+          <h3 className="text-headline-md font-semibold text-vidrio-ink">{nombre}</h3>
           <EtiquetaMono>
             {totalPreguntas} pregunta{totalPreguntas === 1 ? '' : 's'}
           </EtiquetaMono>
         </div>
-        <p className="mt-1 text-sm leading-relaxed text-tinta-500">{descripcion}</p>
+        <p className="mt-1 text-sm leading-relaxed text-vidrio-texto">{descripcion}</p>
       </div>
     </button>
   )

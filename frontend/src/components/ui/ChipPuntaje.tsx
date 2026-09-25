@@ -27,7 +27,7 @@ export default function ChipPuntaje({
   const estilo = ESTILO_DE_BANDA[banda]
   return (
     <span
-      className={`inline-flex items-center rounded-chip font-mono font-medium uppercase ${estilo.fondoSuave} ${estilo.texto} ${TAMANOS[tamano]}`}
+      className={`inline-flex items-center rounded-full font-mono-vidrio font-medium uppercase ${estilo.fondoSuave} ${estilo.texto} ${TAMANOS[tamano]}`}
     >
       <span>
         {puntuacion} / 100

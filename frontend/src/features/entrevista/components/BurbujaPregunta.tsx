@@ -19,12 +19,12 @@ export default function BurbujaPregunta({ autor, children }: Props) {
         </EtiquetaMono>
       )}
       <div
-        className={`max-w-[85%] rounded-superficie px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap sm:max-w-[75%] ${
-          // El acento iris es solo para acción: la burbuja del candidato usa la
-          // tinta oscura del texto principal, no el color de marca.
+        className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap sm:max-w-[75%] ${
+          // Esquina asimétrica hacia el autor, al estilo del mockup: da la
+          // sensación de burbuja de conversación real.
           esSistema
-            ? 'bg-white text-tinta-800 ring-1 ring-tinta-100'
-            : 'bg-tinta-900 text-white'
+            ? 'rounded-2xl rounded-tl-sm border border-vidrio-borde bg-vidrio-field text-vidrio-ink backdrop-blur-[18px]'
+            : 'rounded-2xl rounded-tr-sm bg-vidrio-acento text-white'
         }`}
       >
         {children}

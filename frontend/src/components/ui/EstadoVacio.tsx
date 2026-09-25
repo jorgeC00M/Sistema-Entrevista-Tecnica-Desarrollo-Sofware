@@ -14,12 +14,12 @@ export default function EstadoVacio({ icono, titulo, children }: Props) {
   return (
     <div className="mx-auto max-w-lg py-8 text-center">
       {icono && (
-        <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-tinta-100 text-tinta-500">
+        <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-vidrio-field text-vidrio-muted">
           <Icono nombre={icono} />
         </span>
       )}
-      <p className="text-sm text-tinta-500">{titulo}</p>
-      {children && <div className="mt-2 text-sm text-tinta-500">{children}</div>}
+      <p className="text-sm text-vidrio-muted">{titulo}</p>
+      {children && <div className="mt-2 text-sm text-vidrio-muted">{children}</div>}
     </div>
   )
 }
