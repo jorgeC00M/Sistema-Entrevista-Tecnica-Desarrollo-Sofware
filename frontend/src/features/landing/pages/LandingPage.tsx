@@ -17,7 +17,11 @@ export default function LandingPage() {
   const hayAreas = (catalogos?.areas.length ?? 0) > 0
 
   return (
-    <div className="min-h-screen bg-white">
+    // Sistema "vidrio": fondo y tipografía propios de toda la landing,
+    // fijados una sola vez aquí — el resto del árbol hereda por cascada,
+    // igual que RutaProtegida.tsx en el dashboard y TarjetaAuth.tsx en
+    // login/registro. tinta/iris no aparecen en ningún hijo de este nodo.
+    <div className="min-h-screen bg-vidrio-bg font-['Figtree'] text-vidrio-texto">
       <a href="#contenido" className="salto-al-contenido">
         Saltar al contenido
       </a>

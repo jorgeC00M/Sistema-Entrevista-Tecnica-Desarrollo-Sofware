@@ -32,12 +32,12 @@ export default function ComoFunciona({ totalPreguntas }: Props) {
   ]
 
   return (
-    <section id="como-funciona" ref={ref} className="scroll-mt-20 bg-tinta-50">
+    <section id="como-funciona" ref={ref} className="scroll-mt-20">
       <div className={`mx-auto max-w-5xl px-4 py-16 sm:py-20 ${clasesRevelado(visible)}`}>
-        <h2 className="text-center text-2xl font-bold text-tinta-950 sm:text-3xl">
+        <h2 className="text-center font-serif text-2xl font-semibold text-vidrio-ink sm:text-3xl">
           Cómo funciona
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-tinta-500">
+        <p className="mx-auto mt-3 max-w-xl text-center text-vidrio-texto">
           Tres pasos, sin instalar nada y sin coordinar horarios con nadie.
         </p>
 
@@ -45,16 +45,16 @@ export default function ComoFunciona({ totalPreguntas }: Props) {
           {pasos.map((paso, indice) => (
             <li
               key={paso.titulo}
-              className="rounded-superficie bg-white p-6 ring-1 ring-tinta-100"
+              className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-6 shadow-[0_8px_24px_-12px_rgba(28,47,94,0.18)] backdrop-blur-[18px]"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-iris-50 text-iris-600">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-vidrio-acento-suave text-vidrio-acento">
                   <Icono nombre={paso.icono} />
                 </span>
-                <span className="text-sm font-medium text-tinta-500">Paso {indice + 1}</span>
+                <span className="text-sm font-medium text-vidrio-muted">Paso {indice + 1}</span>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-tinta-950">{paso.titulo}</h3>
-              <p className="mt-2 text-sm text-tinta-500">{paso.texto}</p>
+              <h3 className="mt-4 text-base font-semibold text-vidrio-ink">{paso.titulo}</h3>
+              <p className="mt-2 text-sm text-vidrio-texto">{paso.texto}</p>
             </li>
           ))}
         </ol>

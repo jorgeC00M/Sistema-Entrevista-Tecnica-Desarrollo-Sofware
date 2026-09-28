@@ -21,10 +21,10 @@ const SECCIONES = [
  */
 export default function HeaderLanding() {
   return (
-    <header className="sticky top-0 z-20 border-b border-tinta-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-vidrio-linea bg-vidrio-bg/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/" className="flex shrink-0 items-center gap-2 text-tinta-950">
-          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-iris-600 text-white">
+        <Link to="/" className="flex shrink-0 items-center gap-2 text-vidrio-ink">
+          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-vidrio-acento text-white">
             <Icono nombre="marca" className="h-5 w-5" />
           </span>
           <span className="text-sm font-semibold sm:text-base">Entrevistas Técnicas</span>
@@ -37,7 +37,7 @@ export default function HeaderLanding() {
             <a
               key={s.href}
               href={s.href}
-              className="rounded-control px-3 py-2 text-sm font-medium text-tinta-500 transition hover:bg-tinta-100 hover:text-tinta-950"
+              className="rounded-control px-3 py-2 text-sm font-medium text-vidrio-texto transition hover:bg-vidrio-field hover:text-vidrio-ink"
             >
               {s.etiqueta}
             </a>
@@ -46,10 +46,14 @@ export default function HeaderLanding() {
 
         <div className="flex shrink-0 items-center gap-2">
           <Link to="/login">
-            <Boton variante="secundario">Iniciar sesión</Boton>
+            <Boton variante="vidrio-secundario" forma="pildora">
+              Iniciar sesión
+            </Boton>
           </Link>
           <Link to="/registro" className="hidden sm:block">
-            <Boton>Crear cuenta</Boton>
+            <Boton variante="vidrio" forma="pildora">
+              Crear cuenta
+            </Boton>
           </Link>
         </div>
       </div>

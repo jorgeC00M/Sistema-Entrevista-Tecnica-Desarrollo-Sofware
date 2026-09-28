@@ -145,7 +145,7 @@ body {
 }
 
 .salto-al-contenido:focus {
-  @apply not-sr-only fixed top-3 left-3 z-50 rounded-control bg-iris-600 px-4 py-2 text-sm font-medium text-white;
+  @apply not-sr-only fixed top-3 left-3 z-50 rounded-control bg-vidrio-acento px-4 py-2 text-sm font-medium text-white;
 }
 
 /* El revelado al entrar en pantalla desaparece por completo si el sistema
