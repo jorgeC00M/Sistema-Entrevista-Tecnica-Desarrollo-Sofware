@@ -19,7 +19,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from . import services
 from .models import Usuario
 from .serializers import GoogleLoginSerializer, PerfilSerializer, RegistroSerializer
 
@@ -31,9 +33,20 @@ def _tokens_para(usuario: Usuario) -> dict[str, str]:
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
 
 
+class LoginView(TokenObtainPairView):
+    """Igual que la vista de simplejwt, solo añade el ámbito de límite.
+
+    Es pública y compara contraseñas, así que sin límite adivinar una a
+    fuerza bruta no cuesta nada.
+    """
+
+    throttle_scope = "login"
+
+
 class RegistroView(generics.CreateAPIView):
     serializer_class = RegistroSerializer
     permission_classes = [AllowAny]
+    throttle_scope = "registro"
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -61,6 +74,8 @@ class GoogleLoginView(APIView):
     """
 
     permission_classes = [AllowAny]
+    # Misma tasa que el login por contraseña: es la otra puerta pública.
+    throttle_scope = "login"
 
     def post(self, request):
         entrada = GoogleLoginSerializer(data=request.data)
@@ -94,14 +109,7 @@ class GoogleLoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        email = payload["email"]
-        nombre = payload.get("name") or email.split("@")[0]
-
-        usuario, creado = Usuario.objects.get_or_create(
-            email=email, defaults={"nombre_completo": nombre}
+        usuario = services.usuario_de_google(
+            email=payload["email"], nombre=payload.get("name")
         )
-        if creado:
-            usuario.set_unusable_password()
-            usuario.save(update_fields=["password"])
-
         return Response(_tokens_para(usuario), status=status.HTTP_200_OK)

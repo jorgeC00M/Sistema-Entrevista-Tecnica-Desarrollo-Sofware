@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { Link } from 'react-router-dom'
 
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
@@ -21,10 +22,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
 
       <ul className="mt-4 space-y-3">
         {observaciones.map((o) => (
-          <li
-            key={`${o.entrevista_id}-${o.numero}`}
-            className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5"
-          >
+          <Tarjeta como="li" key={`${o.entrevista_id}-${o.numero}`} className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <EtiquetaMono tono="suelto">
                 {o.area_display} · Pregunta {String(o.numero).padStart(2, '0')} ·{' '}
@@ -46,7 +44,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
             >
               Ver la entrevista completa
             </Link>
-          </li>
+          </Tarjeta>
         ))}
       </ul>
     </div>

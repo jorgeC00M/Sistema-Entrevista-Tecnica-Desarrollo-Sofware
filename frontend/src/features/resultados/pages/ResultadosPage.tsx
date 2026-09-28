@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
-import { obtenerResultados } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
 import Badge from '@/components/ui/Badge'
 import Boton from '@/components/ui/Boton'
@@ -11,35 +8,15 @@ import Spinner from '@/components/ui/Spinner'
 import PanelCualitativo from '@/features/resultados/components/PanelCualitativo'
 import TablaPuntuaciones from '@/features/resultados/components/TablaPuntuaciones'
 import TarjetaResumen from '@/features/resultados/components/TarjetaResumen'
+import { useResultados } from '@/features/resultados/hooks/useResultados'
 import { formatearDuracion, TONO_POR_ESTADO } from '@/lib/estados'
-import type { RespuestaResultados } from '@/types/entrevista'
 
 export default function ResultadosPage() {
   const { id } = useParams<{ id: string }>()
-  const [datos, setDatos] = useState<RespuestaResultados | null>(null)
-  const [error, setError] = useState('')
+  const { datos, cargando, error } = useResultados(id)
 
-  useEffect(() => {
-    if (!id) return
-    let cancelado = false
-
-    obtenerResultados(id)
-      .then((res) => {
-        if (!cancelado) setDatos(res)
-      })
-      .catch((err: unknown) => {
-        if (!cancelado) {
-          setError(err instanceof ErrorAPI ? err.message : 'No se pudieron cargar los resultados.')
-        }
-      })
-
-    return () => {
-      cancelado = true
-    }
-  }, [id])
-
-  if (error) return <Alerta tipo="error">{error}</Alerta>
-  if (!datos) return <Spinner texto="Cargando resultados…" tono="vidrio" />
+  if (error) return <Alerta>{error}</Alerta>
+  if (cargando || !datos) return <Spinner texto="Cargando resultados…" />
 
   const { entrevista, intercambios } = datos
   const duracion = formatearDuracion(entrevista.fecha_inicio, entrevista.fecha_fin)

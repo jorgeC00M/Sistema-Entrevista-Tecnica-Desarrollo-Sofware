@@ -1,5 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { LimiteDeErrorDeRuta } from '@/components/LimiteDeError'
+
 import Sidebar, { useSidebar } from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import BotonIcono from '@/components/ui/BotonIcono'
@@ -21,7 +23,7 @@ export default function RutaProtegida() {
   // de `.current` en render, aunque pasar la ref misma a `ref={}` es correcto.
   const { abierto, alternar, cerrar, cajonRef, disparadorRef } = cajon
 
-  if (cargando) return <Spinner texto="Verificando sesión…" tono="vidrio" />
+  if (cargando) return <Spinner texto="Verificando sesión…" />
   if (!usuario) return <Navigate to="/login" replace />
 
   return (
@@ -29,7 +31,7 @@ export default function RutaProtegida() {
     // fijados una sola vez aquí — el resto del árbol hereda por cascada,
     // igual que TarjetaAuth.tsx en login/registro. tinta/iris no aparecen
     // en ningún hijo de este nodo.
-    <div className="min-h-screen bg-vidrio-bg font-['Figtree'] text-vidrio-texto">
+    <div className="min-h-screen bg-vidrio-bg text-vidrio-texto">
       {/* Barra fija en escritorio: panel de borde completo, toca los 3 bordes
           de la ventana (arriba, izquierda, abajo) sin margen ni radio — el
           header arranca justo en su esquina superior derecha. El ancho
@@ -66,7 +68,6 @@ export default function RutaProtegida() {
               <BotonIcono
                 icono="cerrar"
                 aria-label="Cerrar menú"
-                variante="oscuro"
                 onClick={cerrar}
               />
             </div>
@@ -96,8 +97,13 @@ export default function RutaProtegida() {
             muestra (angosto para conversar/leer, más ancho para tablas y
             tarjetas de datos) — un tope único dejaba mucho espacio vacío en
             pantallas grandes. */}
+        {/* Dentro del layout, no envolviéndolo: si una pantalla revienta, la
+            barra lateral y la cabecera siguen en pie y el usuario puede irse a
+            otra sección en vez de quedarse sin navegación. */}
         <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
+          <LimiteDeErrorDeRuta>
+            <Outlet />
+          </LimiteDeErrorDeRuta>
         </main>
       </div>
     </div>

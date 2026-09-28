@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -12,7 +13,7 @@ interface Props {
 
 export default function ListaEntrevistas({ entrevistas }: Props) {
   return (
-    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
+    <Tarjeta>
       {entrevistas.map((entrevista, indice) => {
         // Una entrevista a medias se retoma; una terminada lleva a resultados.
         const destino =
@@ -38,7 +39,7 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
               <div className="flex items-center gap-3">
                 {entrevista.puntuacion_promedio !== null && (
                   <span className="font-mono-vidrio text-sm font-semibold text-vidrio-ink">
-                    {entrevista.puntuacion_promedio}
+                    {Math.round(entrevista.puntuacion_promedio)}
                   </span>
                 )}
                 <Badge tono={TONO_POR_ESTADO[entrevista.estado]}>{entrevista.estado_display}</Badge>
@@ -47,6 +48,6 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
           </Fragment>
         )
       })}
-    </div>
+    </Tarjeta>
   )
 }

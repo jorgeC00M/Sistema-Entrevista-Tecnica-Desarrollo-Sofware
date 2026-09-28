@@ -1,10 +1,11 @@
 /**
  * Todos los iconos del sistema, en un solo módulo.
  *
- * Antes había dos sets paralelos (`IconoNav.tsx` para el sidebar,
- * `features/landing/components/Icono.tsx` para la landing), con trazos y
- * grosor distintos. Se funden aquí para que "mismo grosor y tamaño en todo
- * el sistema" sea literal.
+ * Antes había tres sets paralelos (`IconoNav.tsx` para el sidebar,
+ * `features/landing/components/Icono.tsx` para la landing y
+ * `features/auth/components/iconosAuth.tsx` para login/registro), con trazos
+ * y grosor distintos —auth iba a 1.6 y el resto a 2—. Se funden aquí para que
+ * "mismo grosor y tamaño en todo el sistema" sea literal.
  *
  * Trazos reales de Tabler Icons (MIT), descargados de
  * https://unpkg.com/@tabler/icons — no aproximados a mano — copiados en
@@ -15,6 +16,8 @@
  *
  * La excepción es `marca`: no es un icono de interfaz, es el logotipo del
  * producto, así que conserva su propio trazo en vez de tomar uno de Tabler.
+ * El logo de Google vive aparte, en `IconoGoogle.tsx`: es multicolor y de
+ * marca ajena, no puede pintarse con `currentColor` como el resto.
  *
  * Todos son decorativos —acompañan a una etiqueta que ya dice lo mismo—
  * así que llevan `aria-hidden` y no se anuncian dos veces al lector de
@@ -46,6 +49,8 @@ const TRAZOS = {
     'M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -10M7 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M15 8l2 0M15 12l2 0M7 16l10 0',
   candado:
     'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0M8 11v-4a4 4 0 1 1 8 0v4',
+  'candado-check':
+    'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6M8 11v-4a4 4 0 1 1 8 0v4M9.5 16l1.8 1.8l3.2 -3.3',
   ojo: 'M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6',
   'ojo-cerrado':
     'M10.585 10.587a2 2 0 0 0 2.829 2.828M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87M3 3l18 18',
@@ -72,6 +77,13 @@ const TRAZOS = {
   arbol:
     'M6 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M11 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M21 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M5.058 18.306l2.88 -4.606M10.061 10.303l2.877 -4.604M10.065 13.705l2.876 4.6M15.063 5.7l2.881 4.61',
   web: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18',
+
+  // Landing (rediseño): flecha de los botones "Crear cuenta ↗", chevrons del
+  // carrusel de áreas, ícono de información de la nota sobre la IA.
+  'flecha-diagonal': 'M7 17 17 7M8 7h9v9',
+  'chevron-izquierda': 'm15 6-6 6 6 6',
+  'chevron-derecha': 'm9 6 6 6-6 6',
+  info: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18M12 8h.01M11 12h1v4h1',
 } as const
 
 export type NombreDeIcono = keyof typeof TRAZOS

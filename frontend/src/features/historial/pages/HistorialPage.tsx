@@ -1,9 +1,5 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
-import { obtenerHistorial } from '@/api/entrevistas'
-import { obtenerEstadisticas } from '@/api/evaluaciones'
 import Alerta from '@/components/ui/Alerta'
 import EstadoVacio from '@/components/ui/EstadoVacio'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
@@ -11,39 +7,14 @@ import Spinner from '@/components/ui/Spinner'
 import ComparativaAreas from '@/features/historial/components/ComparativaAreas'
 import GraficoProgreso from '@/features/historial/components/GraficoProgreso'
 import ListaEntrevistas from '@/features/historial/components/ListaEntrevistas'
-import type { Entrevista } from '@/types/entrevista'
-import type { Estadisticas } from '@/types/evaluacion'
+import { useHistorial } from '@/features/historial/hooks/useHistorial'
 
 export default function HistorialPage() {
-  const [entrevistas, setEntrevistas] = useState<Entrevista[] | null>(null)
-  const [estadisticas, setEstadisticas] = useState<Estadisticas | null>(null)
-  const [error, setError] = useState('')
+  const { entrevistas, estadisticas, cargando, error } = useHistorial()
 
-  useEffect(() => {
-    let cancelado = false
-
-    // En paralelo: son dos endpoints independientes y encadenarlos solo
-    // duplicaría la espera.
-    Promise.all([obtenerHistorial(), obtenerEstadisticas()])
-      .then(([historial, stats]) => {
-        if (cancelado) return
-        setEntrevistas(historial)
-        setEstadisticas(stats)
-      })
-      .catch((err: unknown) => {
-        if (!cancelado) {
-          setError(err instanceof ErrorAPI ? err.message : 'No se pudo cargar tu historial.')
-        }
-      })
-
-    return () => {
-      cancelado = true
-    }
-  }, [])
-
-  if (error) return <Alerta tipo="error">{error}</Alerta>
-  if (!entrevistas || !estadisticas)
-    return <Spinner texto="Cargando tu historial…" tono="vidrio" />
+  if (error) return <Alerta>{error}</Alerta>
+  if (cargando || !entrevistas || !estadisticas)
+    return <Spinner texto="Cargando tu historial…" />
 
   if (entrevistas.length === 0) {
     return (

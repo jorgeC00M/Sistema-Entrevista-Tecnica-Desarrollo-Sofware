@@ -38,7 +38,6 @@ export default function SidebarMarca({ plegado, onAlternarPlegado }: Props) {
           icono={plegado ? 'desplegar' : 'plegar'}
           aria-label={plegado ? 'Expandir menú' : 'Colapsar menú'}
           aria-expanded={!plegado}
-          variante="oscuro"
           onClick={onAlternarPlegado}
           className="shrink-0"
         />

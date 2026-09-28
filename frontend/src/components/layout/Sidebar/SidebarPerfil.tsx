@@ -28,7 +28,7 @@ export default function SidebarPerfil({ plegado }: Props) {
 
       {!plegado && usuario && (
         <div className="flex items-center gap-3 px-1">
-          <Avatar nombre={usuario.nombre_completo} tono="oscuro" />
+          <Avatar nombre={usuario.nombre_completo} />
           <span className="min-w-0">
             <span className="block truncate text-sm font-medium text-white">
               {usuario.nombre_completo}

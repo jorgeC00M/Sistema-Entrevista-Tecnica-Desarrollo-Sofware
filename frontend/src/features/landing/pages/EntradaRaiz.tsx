@@ -15,7 +15,7 @@ import LandingPage from '@/features/landing/pages/LandingPage'
 export default function EntradaRaiz() {
   const { usuario, cargando } = useAuth()
 
-  if (cargando) return <Spinner texto="Verificando sesión…" tono="vidrio" />
+  if (cargando) return <Spinner texto="Verificando sesión…" />
   if (usuario) return <Navigate to="/nueva-entrevista" replace />
 
   return <LandingPage />

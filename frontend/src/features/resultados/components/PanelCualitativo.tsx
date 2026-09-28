@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
@@ -12,7 +13,7 @@ export default function PanelCualitativo({ intercambio }: Props) {
   if (!evaluacion) return null
 
   return (
-    <article className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5">
+    <Tarjeta como="article" className="p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <EtiquetaMono tono="suelto">Pregunta {String(numero).padStart(2, '0')}</EtiquetaMono>
         <ChipPuntaje puntuacion={evaluacion.puntuacion} banda={evaluacion.banda} conEtiqueta />
@@ -28,6 +29,6 @@ export default function PanelCualitativo({ intercambio }: Props) {
         <ListaRetroalimentacion variante="debilidades" texto={evaluacion.debilidades} />
         <ListaRetroalimentacion variante="sugerencias" texto={evaluacion.sugerencias} />
       </dl>
-    </article>
+    </Tarjeta>
   )
 }

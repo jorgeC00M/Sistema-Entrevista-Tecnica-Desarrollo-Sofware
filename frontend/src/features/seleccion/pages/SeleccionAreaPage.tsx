@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -7,25 +8,11 @@ import Alerta from '@/components/ui/Alerta'
 import Boton from '@/components/ui/Boton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
-import type { NombreDeIcono } from '@/components/ui/Icono'
 import Spinner from '@/components/ui/Spinner'
 import SelectorNivel from '@/features/seleccion/components/SelectorNivel'
 import TarjetaArea from '@/features/seleccion/components/TarjetaArea'
-import { useCatalogos } from '@/features/seleccion/hooks/useCatalogos'
-
-/**
- * `codigo` es texto libre de una tabla (ver `types/catalogos.ts`), no una
- * unión cerrada: un área nueva dada de alta en el admin no tiene por qué
- * tener entrada aquí, así que siempre cae al icono por defecto en vez de
- * romper.
- */
-const ICONO_POR_AREA: Record<string, NombreDeIcono> = {
-  programacion: 'area',
-  bases_de_datos: 'datos',
-  estructuras_de_datos: 'arbol',
-  desarrollo_web: 'web',
-}
-const ICONO_POR_DEFECTO: NombreDeIcono = 'area'
+import { useCatalogos } from '@/hooks/useCatalogos'
+import { ICONO_POR_AREA, ICONO_POR_DEFECTO } from '@/lib/iconosPorArea'
 
 export default function SeleccionAreaPage() {
   const navigate = useNavigate()
@@ -51,8 +38,8 @@ export default function SeleccionAreaPage() {
 
   // Un fallo al cargar el catálogo se muestra como error, nunca como una lista
   // vacía: sin opciones no hay nada que elegir y el usuario merece saber por qué.
-  if (errorCatalogo) return <Alerta tipo="error">{errorCatalogo}</Alerta>
-  if (cargandoCatalogo || !catalogos) return <Spinner texto="Cargando opciones…" tono="vidrio" />
+  if (errorCatalogo) return <Alerta>{errorCatalogo}</Alerta>
+  if (cargandoCatalogo || !catalogos) return <Spinner texto="Cargando opciones…" />
 
   const total = catalogos.preguntas_por_entrevista
   const areaElegida = catalogos.areas.find((a) => a.codigo === area)
@@ -70,7 +57,7 @@ export default function SeleccionAreaPage() {
         {total === 1 ? 'pregunta' : 'preguntas'}.
       </p>
 
-      <Alerta tipo="error">{error}</Alerta>
+      <Alerta>{error}</Alerta>
 
       <div className="mt-4 space-y-6">
         <fieldset>
@@ -92,7 +79,7 @@ export default function SeleccionAreaPage() {
 
         <SelectorNivel niveles={catalogos.niveles} seleccionado={nivel} onSeleccionar={setNivel} />
 
-        <div className="flex items-start gap-3 rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 shadow-[0_8px_24px_-12px_rgba(28,47,94,0.18)] backdrop-blur-[18px]">
+        <Tarjeta className="flex items-start gap-3 p-4 shadow-[0_8px_24px_-12px_rgba(28,47,94,0.18)]">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-vidrio-acento-suave text-vidrio-acento">
             <Icono nombre="reloj" className="h-5 w-5" />
           </span>
@@ -104,7 +91,7 @@ export default function SeleccionAreaPage() {
               retroalimentación inmediata de la IA tras cada respuesta.
             </p>
           </div>
-        </div>
+        </Tarjeta>
 
         <div className="flex flex-col items-center justify-between gap-3 pt-1 sm:flex-row">
           <p className="flex items-center gap-1.5 text-sm text-vidrio-muted">

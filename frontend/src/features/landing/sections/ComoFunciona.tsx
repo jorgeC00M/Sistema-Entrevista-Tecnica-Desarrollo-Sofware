@@ -1,5 +1,8 @@
+import { CLASES_TARJETA_ELEVADA } from '@/components/ui/Tarjeta'
 import Icono from '@/components/ui/Icono'
 import type { NombreDeIcono } from '@/components/ui/Icono'
+import EncabezadoSeccion from '@/features/landing/components/EncabezadoSeccion'
+import Wrap from '@/features/landing/components/Wrap'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
 
 interface Props {
@@ -32,33 +35,49 @@ export default function ComoFunciona({ totalPreguntas }: Props) {
   ]
 
   return (
-    <section id="como-funciona" ref={ref} className="scroll-mt-20">
-      <div className={`mx-auto max-w-5xl px-4 py-16 sm:py-20 ${clasesRevelado(visible)}`}>
-        <h2 className="text-center font-serif text-2xl font-semibold text-vidrio-ink sm:text-3xl">
-          Cómo funciona
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-vidrio-texto">
-          Tres pasos, sin instalar nada y sin coordinar horarios con nadie.
-        </p>
+    <section id="como-funciona" ref={ref} className="scroll-mt-24 py-[clamp(64px,8vw,100px)]">
+      <Wrap className={clasesRevelado(visible)}>
+        <EncabezadoSeccion
+          indice="01"
+          titulo="Cómo funciona"
+          descripcion="Tres pasos, sin instalar nada y sin coordinar horarios con nadie."
+        />
 
-        <ol className="mt-10 grid gap-6 md:grid-cols-3">
-          {pasos.map((paso, indice) => (
-            <li
-              key={paso.titulo}
-              className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-6 shadow-[0_8px_24px_-12px_rgba(28,47,94,0.18)] backdrop-blur-[18px]"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-vidrio-acento-suave text-vidrio-acento">
+        <div className="relative">
+          {/* Línea conectora entre los 3 pasos, se llena al entrar en pantalla. */}
+          <div
+            aria-hidden="true"
+            className="absolute top-[44px] right-[8%] left-[8%] hidden h-0.5 overflow-hidden rounded-full bg-vidrio-linea md:block"
+          >
+            <span
+              className={`block h-full bg-vidrio-acento transition-[width] duration-[1600ms] ease-[cubic-bezier(.2,.7,.2,1)] ${
+                visible ? 'w-full' : 'w-0'
+              }`}
+            />
+          </div>
+
+          <ol className="grid gap-6 md:grid-cols-3">
+            {pasos.map((paso, indice) => (
+              <li
+                key={paso.titulo}
+                className={`relative ${CLASES_TARJETA_ELEVADA}`}
+              >
+                <div
+                  className="mb-[22px] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-vidrio-acento text-sm font-semibold text-white"
+                  style={{ boxShadow: '0 0 0 6px var(--color-vidrio-bg)' }}
+                >
+                  {indice + 1}
+                </div>
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-control bg-vidrio-acento-suave text-vidrio-acento">
                   <Icono nombre={paso.icono} />
                 </span>
-                <span className="text-sm font-medium text-vidrio-muted">Paso {indice + 1}</span>
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-vidrio-ink">{paso.titulo}</h3>
-              <p className="mt-2 text-sm text-vidrio-texto">{paso.texto}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
+                <h3 className="text-base font-semibold text-vidrio-ink">{paso.titulo}</h3>
+                <p className="mt-2 text-sm text-vidrio-texto">{paso.texto}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </Wrap>
     </section>
   )
 }

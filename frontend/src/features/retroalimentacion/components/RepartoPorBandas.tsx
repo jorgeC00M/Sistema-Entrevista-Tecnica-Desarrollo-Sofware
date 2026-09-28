@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { ESTILO_DE_BANDA } from '@/lib/puntajes'
 import type { BandaDeRubrica, RepartoPorArea } from '@/types/evaluacion'
 
@@ -12,7 +13,7 @@ export default function RepartoPorBandas({ areas }: Props) {
   if (areas.length === 0) return null
 
   return (
-    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5">
+    <Tarjeta className="p-4 sm:p-5">
       <h2 className="text-headline-sm font-semibold text-vidrio-ink">
         Cómo se reparten tus respuestas
       </h2>
@@ -64,6 +65,6 @@ export default function RepartoPorBandas({ areas }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </Tarjeta>
   )
 }

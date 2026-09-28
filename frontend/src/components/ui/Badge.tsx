@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 
-// Los mismos tres semánticos que el resto del sistema, más "neutro" para un
-// estado que no es ni positivo ni negativo (por ejemplo, "abandonada").
+// Los tonos que `TONO_POR_ESTADO` puede producir, y nada más: una entrevista
+// solo está finalizada, en progreso o abandonada. Había un `error` que ningún
+// estado sabía pedir.
 const TONOS = {
   exito: 'bg-exito-fondo text-exito-texto',
   progreso: 'bg-progreso-fondo text-progreso-texto',
-  error: 'bg-error-fondo text-error-texto',
   neutro: 'bg-vidrio-field text-vidrio-muted',
 } as const
 

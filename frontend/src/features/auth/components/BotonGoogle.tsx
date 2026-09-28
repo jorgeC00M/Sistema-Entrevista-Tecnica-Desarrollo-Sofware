@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { IconoGoogleAuth } from '@/features/auth/components/iconosAuth'
+import IconoGoogle from '@/components/ui/IconoGoogle'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const SRC_SCRIPT_GOOGLE = 'https://accounts.google.com/gsi/client'
@@ -60,7 +60,7 @@ interface Props {
 }
 
 const CLASE_BOTON_RESPALDO =
-  "flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-[rgba(255,255,255,0.72)] font-['Figtree'] text-[0.88rem] text-[#1c2f5e] opacity-60"
+  "flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-vidrio-field font-sans text-[0.88rem] text-vidrio-ink opacity-60"
 
 /**
  * Botón "Continuar con Google" usando Google Identity Services.
@@ -124,7 +124,7 @@ export default function BotonGoogle({ onCredential, modo, etiquetaRespaldo }: Pr
   if (!CLIENT_ID || error) {
     return (
       <button type="button" disabled aria-disabled="true" className={CLASE_BOTON_RESPALDO}>
-        <IconoGoogleAuth className="h-[18px] w-[18px]" />
+        <IconoGoogle className="h-[18px] w-[18px]" />
         {etiquetaRespaldo}
       </button>
     )

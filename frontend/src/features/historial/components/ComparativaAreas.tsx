@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import type { PromedioPorArea } from '@/types/evaluacion'
 
 interface Props {
@@ -8,7 +9,7 @@ export default function ComparativaAreas({ areas }: Props) {
   if (areas.length === 0) return null
 
   return (
-    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5">
+    <Tarjeta className="p-4 sm:p-5">
       <h3 className="mb-3 text-sm font-medium text-vidrio-ink">Promedio por área</h3>
       <div className="space-y-3">
         {areas.map((area) => (
@@ -33,6 +34,6 @@ export default function ComparativaAreas({ areas }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </Tarjeta>
   )
 }

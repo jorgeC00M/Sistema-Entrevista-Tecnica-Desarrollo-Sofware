@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { Fragment } from 'react'
 
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
@@ -15,7 +16,7 @@ export default function TablaPuntuaciones({ intercambios }: Props) {
   if (calificados.length === 0) return null
 
   return (
-    <div className="mb-6 rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
+    <Tarjeta className="mb-6">
       <div className="flex items-baseline justify-between p-4 pb-3 sm:px-5 sm:pt-5">
         <h2 className="text-headline-sm font-semibold text-vidrio-ink">Desglose por pregunta</h2>
         <span className="text-body-sm text-vidrio-muted">
@@ -48,6 +49,6 @@ export default function TablaPuntuaciones({ intercambios }: Props) {
           </Fragment>
         )
       })}
-    </div>
+    </Tarjeta>
   )
 }

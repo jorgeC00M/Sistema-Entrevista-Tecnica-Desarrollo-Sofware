@@ -96,8 +96,31 @@ class AbandonoTest(TestCase):
         entrevista_ajena.refresh_from_db()
         self.assertEqual(entrevista_ajena.estado, Entrevista.Estado.EN_PROGRESO)
 
+    def test_el_coste_no_crece_con_el_numero_de_entrevistas(self):
+        """Candado contra el N+1: `marcar_abandonadas` corre en cada consulta
+        del historial, así que su número de consultas debe ser constante y no
+        depender de cuántas entrevistas en progreso tenga el usuario."""
+        self._crear_en_progreso_antiguas(1)
+        with self.assertNumQueries(1):
+            servicio.marcar_abandonadas(self.usuario)
 
-if __name__ == "__main__":
-    import unittest
+        self._crear_en_progreso_antiguas(5)
+        with self.assertNumQueries(1):
+            servicio.marcar_abandonadas(self.usuario)
 
-    unittest.main()
+    def _crear_en_progreso_antiguas(self, cuantas: int) -> None:
+        for _ in range(cuantas):
+            entrevista = Entrevista.objects.create(
+                usuario=self.usuario,
+                area=area_de(AreaTecnica.PROGRAMACION),
+                nivel=nivel_de(Nivel.BASICO),
+            )
+            entrevista.intercambios.create(
+                numero=1,
+                pregunta="p",
+                respuesta="r",
+                respondido_en=timezone.now() - timedelta(minutes=45),
+            )
+            Entrevista.objects.filter(pk=entrevista.pk).update(
+                fecha_inicio=timezone.now() - timedelta(minutes=45)
+            )

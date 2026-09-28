@@ -7,7 +7,6 @@ export interface Usuario {
   /** Cadena vacía cuando no se indicó: el campo es opcional pero no nulo. */
   carnet: string
   date_joined: FechaISO
-  last_login: FechaISO | null
 }
 
 export interface ParDeTokens {
@@ -15,11 +14,12 @@ export interface ParDeTokens {
   refresh: string
 }
 
+// El carnet no se pide al registrarse: es un dato opcional del perfil, que
+// el formulario dejó de solicitar para no alargar el alta.
 export interface DatosDeRegistro {
   email: string
   password: string
   nombreCompleto: string
-  carnet?: string
 }
 
 export interface Credenciales {

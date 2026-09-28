@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
-function prefiereMovimientoReducido(): boolean {
+/** Compartida con el resto de piezas animadas de la landing (contadores,
+ * carrusel, demo del hero) para no repetir el `matchMedia` en cada una. */
+export function prefiereMovimientoReducido(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 

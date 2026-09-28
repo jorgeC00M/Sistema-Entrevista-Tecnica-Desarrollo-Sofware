@@ -10,9 +10,9 @@ import { useRetroalimentacion } from '@/features/retroalimentacion/hooks/useRetr
 export default function RetroalimentacionPage() {
   const { datos, cargando, error } = useRetroalimentacion()
 
-  if (error) return <Alerta tipo="error">{error}</Alerta>
+  if (error) return <Alerta>{error}</Alerta>
   if (cargando || !datos)
-    return <Spinner texto="Cargando tu retroalimentación…" tono="vidrio" />
+    return <Spinner texto="Cargando tu retroalimentación…" />
 
   if (datos.total_respuestas_evaluadas === 0) {
     return (

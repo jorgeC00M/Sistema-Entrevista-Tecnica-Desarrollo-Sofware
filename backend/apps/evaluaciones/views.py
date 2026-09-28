@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .services import calcular_estadisticas, calcular_retroalimentacion
+from .selectors import calcular_estadisticas, calcular_retroalimentacion
 
 
 class EstadisticasView(APIView):

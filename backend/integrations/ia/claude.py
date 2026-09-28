@@ -13,24 +13,17 @@ tendría efecto — la API no avisa, simplemente no cachea.
 
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
 import anthropic
 
-from .base import ProveedorIA
-from .exceptions import ErrorPermanente, ErrorTransitorio, RespuestaIAInvalida
-from .prompts import entrevistador, evaluador
-from .prompts.schemas import (
-    PREGUNTAS_POR_ENTREVISTA,
-    AreaTecnica,
-    Evaluacion,
-    Nivel,
-    Pregunta,
-    TemaEvaluado,
-    parsear_evaluacion,
-    parsear_pregunta,
+from .base import ProveedorIAporJSON
+from .exceptions import (
+    ErrorPermanente,
+    ErrorTransitorio,
+    ProveedorNoConfigurado,
+    RespuestaIAInvalida,
 )
 
 MODELO_POR_DEFECTO = "claude-haiku-4-5-20251001"
@@ -42,13 +35,15 @@ TIMEOUT_SEGUNDOS = 30.0
 _CODIGOS_TRANSITORIOS = {429, 500, 502, 503, 504, 529}
 
 
-class AnthropicProveedorIA(ProveedorIA):
+class AnthropicProveedorIA(ProveedorIAporJSON):
     nombre = "anthropic"
 
     def __init__(self, api_key: str | None = None, modelo: str | None = None):
         api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
-            raise RuntimeError("Falta ANTHROPIC_API_KEY para usar el proveedor 'anthropic'")
+            raise ProveedorNoConfigurado(
+                "Falta ANTHROPIC_API_KEY para usar el proveedor 'anthropic'"
+            )
 
         self.modelo = modelo or os.environ.get("ANTHROPIC_MODEL", MODELO_POR_DEFECTO)
         self._cliente = anthropic.Anthropic(
@@ -56,26 +51,6 @@ class AnthropicProveedorIA(ProveedorIA):
             timeout=TIMEOUT_SEGUNDOS,
             max_retries=2,
         )
-
-    def generar_pregunta(
-        self, area: AreaTecnica, nivel: Nivel, numero: int, previas: list[TemaEvaluado]
-    ) -> Pregunta:
-        datos = self._pedir_json(
-            sistema=entrevistador.sistema(area, nivel, PREGUNTAS_POR_ENTREVISTA),
-            entrada=entrevistador.usuario(numero, previas),
-            esquema=entrevistador.ESQUEMA_PREGUNTA,
-        )
-        return parsear_pregunta(datos, numero=numero)
-
-    def evaluar_respuesta(
-        self, area: AreaTecnica, nivel: Nivel, pregunta: str, respuesta: str
-    ) -> Evaluacion:
-        datos = self._pedir_json(
-            sistema=evaluador.sistema(area, nivel),
-            entrada=evaluador.usuario(pregunta, respuesta),
-            esquema=evaluador.ESQUEMA_EVALUACION,
-        )
-        return parsear_evaluacion(datos)
 
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -98,15 +73,7 @@ class AnthropicProveedorIA(ProveedorIA):
             # Cubre también APITimeoutError, que hereda de esta.
             raise ErrorTransitorio(f"Fallo de conexión con Claude ({self.modelo}): {exc}") from exc
 
-        texto = self._extraer_texto(respuesta)
-        try:
-            datos = json.loads(texto)
-        except json.JSONDecodeError as exc:
-            raise RespuestaIAInvalida(f"Claude no devolvió JSON válido: {texto[:200]}") from exc
-
-        if not isinstance(datos, dict):
-            raise RespuestaIAInvalida(f"Se esperaba un objeto JSON, se recibió {type(datos).__name__}")
-        return datos
+        return self._decodificar(self._extraer_texto(respuesta))
 
     def _extraer_texto(self, respuesta: anthropic.types.Message) -> str:
         for bloque in respuesta.content:

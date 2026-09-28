@@ -5,8 +5,6 @@ const TONOS = {
   neutro: 'bg-vidrio-field text-vidrio-muted',
   /** Metadato que pertenece al producto: estado seleccionado, marca. */
   marca: 'bg-vidrio-acento-suave text-vidrio-acento',
-  /** Metadato sobre el sidebar u otra superficie oscura. */
-  oscuro: 'bg-white/10 text-vidrio-sidebar-muted',
   /** Sin relleno, para rótulos de sección que no necesitan cápsula. */
   suelto: 'text-vidrio-muted',
 } as const

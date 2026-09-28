@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
@@ -30,7 +31,7 @@ export default function PerfilPage() {
         Estos son los datos de tu cuenta. Por ahora son de solo lectura.
       </p>
 
-      <dl className="mt-6 divide-y divide-vidrio-linea rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]">
+      <Tarjeta como="dl" className="mt-6 divide-y divide-vidrio-linea">
         {campos.map((campo) => (
           <div key={campo.etiqueta} className="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:gap-4">
             <dt className="sm:w-48 sm:shrink-0">
@@ -39,7 +40,7 @@ export default function PerfilPage() {
             <dd className="text-sm text-vidrio-ink">{campo.valor}</dd>
           </div>
         ))}
-      </dl>
+      </Tarjeta>
     </div>
   )
 }

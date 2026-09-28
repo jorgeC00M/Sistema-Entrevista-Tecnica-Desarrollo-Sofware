@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import ControlSegmentado from '@/components/ui/ControlSegmentado'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import type { Nivel } from '@/types/catalogos'
@@ -10,7 +11,7 @@ interface Props {
 
 export default function SelectorNivel({ niveles, seleccionado, onSeleccionar }: Props) {
   return (
-    <div className="flex flex-col gap-3 rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:flex-row sm:items-center sm:justify-between">
+    <Tarjeta className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <span className="text-headline-sm font-semibold text-vidrio-ink">
@@ -30,6 +31,6 @@ export default function SelectorNivel({ niveles, seleccionado, onSeleccionar }: 
         onSeleccionar={onSeleccionar}
         className="shrink-0"
       />
-    </div>
+    </Tarjeta>
   )
 }

@@ -6,7 +6,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
  * Cajón de navegación para pantallas estrechas.
  *
  * El foco atrapado (Escape, confinamiento del tabulador, devolución de foco)
- * vive en `useFocusTrap`, compartido con `Modal`. Este hook solo añade el
+ * vive en `useFocusTrap`. Este hook solo añade el
  * estado de abierto/cerrado por encima. El "clic fuera" cierra el cajón
  * porque el fondo oscurecido en `RutaProtegida.tsx` tiene su propio
  * `onClick`, no porque este hook lo escuche.

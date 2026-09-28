@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import Alerta from '@/components/ui/Alerta'
 import BotonGoogle from '@/features/auth/components/BotonGoogle'
-import { IconoMarcaAuth } from '@/features/auth/components/iconosAuth'
+import Icono from '@/components/ui/Icono'
 
 interface Props {
   titulo: string
@@ -44,24 +44,24 @@ export default function TarjetaAuth({
   children,
 }: Props) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#e8edf5] p-6">
-      <div className="w-full max-w-[440px] rounded-[22px] border border-[rgba(255,255,255,0.8)] bg-[rgba(255,255,255,0.55)] px-10 pt-9 pb-8 text-center font-['Figtree'] text-[#4a5572] shadow-[0_20px_50px_-20px_rgba(28,47,94,0.25)] backdrop-blur-[18px] backdrop-saturate-[1.4]">
-        <IconoMarcaAuth className="mx-auto mb-[14px] h-9 w-9 text-[#2b55a3]" />
+    <div className="flex min-h-screen items-center justify-center bg-vidrio-bg p-4 sm:p-6">
+      <div className="w-full max-w-[440px] rounded-[22px] border border-vidrio-borde bg-vidrio-card px-6 pt-9 pb-8 text-center font-sans text-vidrio-texto shadow-[0_20px_50px_-20px_rgba(28,47,94,0.25)] backdrop-blur-[18px] backdrop-saturate-[1.4] sm:px-10">
+        <Icono nombre="marca" className="mx-auto mb-[14px] h-9 w-9 text-vidrio-acento" />
 
-        <h1 className="font-['Fraunces'] text-[2.6rem] leading-[1.1] font-semibold tracking-[-0.01em] text-[#1c2f5e]">
+        <h1 className="font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.01em] text-vidrio-ink sm:text-[2.6rem]">
           {titulo}
         </h1>
         <p className="mt-[10px] mb-7 text-base">{subtitulo}</p>
 
         {error && (
           <div className="mb-4 text-left">
-            <Alerta tipo="error">{error}</Alerta>
+            <Alerta>{error}</Alerta>
           </div>
         )}
 
         {children}
 
-        <div className="mt-6 mb-[18px] flex items-center gap-[14px] text-[0.82rem] text-[#8a93a8]">
+        <div className="mt-6 mb-[18px] flex items-center gap-[14px] text-[0.82rem] text-vidrio-muted">
           <span className="h-px flex-1 bg-[rgba(28,47,94,0.12)]" />
           <span>o</span>
           <span className="h-px flex-1 bg-[rgba(28,47,94,0.12)]" />
@@ -75,7 +75,7 @@ export default function TarjetaAuth({
 
         <p className="mt-6 text-[0.88rem]">
           {pregunta}
-          <Link to={rutaEnlace} className="ml-1.5 font-semibold text-[#2b55a3] hover:underline">
+          <Link to={rutaEnlace} className="ml-1.5 font-semibold text-vidrio-acento hover:underline">
             {textoEnlace}
           </Link>
         </p>

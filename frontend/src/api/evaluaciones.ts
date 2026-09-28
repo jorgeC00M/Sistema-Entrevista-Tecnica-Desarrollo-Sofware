@@ -2,10 +2,12 @@ import type { Estadisticas, RetroalimentacionAcumulada } from '@/types/evaluacio
 
 import { peticion } from './client'
 
-export function obtenerEstadisticas(): Promise<Estadisticas> {
-  return peticion<Estadisticas>('/api/estadisticas/')
+export function obtenerEstadisticas(signal?: AbortSignal): Promise<Estadisticas> {
+  return peticion<Estadisticas>('/api/estadisticas/', { signal })
 }
 
-export function obtenerRetroalimentacion(): Promise<RetroalimentacionAcumulada> {
-  return peticion<RetroalimentacionAcumulada>('/api/estadisticas/retroalimentacion/')
+export function obtenerRetroalimentacion(
+  signal?: AbortSignal,
+): Promise<RetroalimentacionAcumulada> {
+  return peticion<RetroalimentacionAcumulada>('/api/estadisticas/retroalimentacion/', { signal })
 }

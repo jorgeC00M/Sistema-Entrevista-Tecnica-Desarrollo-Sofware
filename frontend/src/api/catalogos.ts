@@ -5,8 +5,8 @@ import { peticion } from './client'
 // Áreas, niveles y duración de la entrevista. Es la única fuente: la pantalla
 // de selección no mantiene su propia copia, para que dar de baja un área en el
 // admin la retire también de la interfaz.
-export function obtenerCatalogos(): Promise<Catalogos> {
-  return peticion<Catalogos>('/api/catalogos/')
+export function obtenerCatalogos(signal?: AbortSignal): Promise<Catalogos> {
+  return peticion<Catalogos>('/api/catalogos/', { signal })
 }
 
 /**
@@ -17,6 +17,9 @@ export function obtenerCatalogos(): Promise<Catalogos> {
  * `client.ts`, y al fallar ese refresco se le borraría la sesión mientras
  * simplemente leía la portada.
  */
-export function obtenerCatalogosPublicos(): Promise<CatalogosPublicos> {
-  return peticion<CatalogosPublicos>('/api/catalogos/publico/', { autenticado: false })
+export function obtenerCatalogosPublicos(signal?: AbortSignal): Promise<CatalogosPublicos> {
+  return peticion<CatalogosPublicos>('/api/catalogos/publico/', {
+    autenticado: false,
+    signal,
+  })
 }

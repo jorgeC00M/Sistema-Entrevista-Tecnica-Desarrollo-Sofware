@@ -15,16 +15,14 @@ const TAMANOS = {
 interface Props {
   nombre: string
   tamano?: keyof typeof TAMANOS
-  /** `oscuro` se usa sobre el sidebar; `claro` sobre superficies blancas. */
-  tono?: 'claro' | 'oscuro'
 }
 
-export default function Avatar({ nombre, tamano = 'md', tono = 'claro' }: Props) {
+// Su único sitio es el bloque de perfil del sidebar, siempre oscuro: la
+// variante clara nunca se renderizó.
+export default function Avatar({ nombre, tamano = 'md' }: Props) {
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${TAMANOS[tamano]} ${
-        tono === 'oscuro' ? 'bg-white/15 text-white' : 'bg-iris-50 text-iris-700'
-      }`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-white/15 font-semibold text-white ${TAMANOS[tamano]}`}
     >
       {iniciales(nombre)}
     </span>

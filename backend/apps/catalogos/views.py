@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
-from .models import Area, Nivel
+from .selectors import areas_activas, niveles_activos
 from .serializers import AreaSerializer, NivelSerializer
 
 
@@ -22,8 +22,8 @@ class CatalogosView(APIView):
     def get(self, request):
         return Response(
             {
-                "areas": AreaSerializer(Area.objects.filter(activo=True), many=True).data,
-                "niveles": NivelSerializer(Nivel.objects.filter(activo=True), many=True).data,
+                "areas": AreaSerializer(areas_activas(), many=True).data,
+                "niveles": NivelSerializer(niveles_activos(), many=True).data,
                 "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
             }
         )

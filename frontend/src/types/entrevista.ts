@@ -1,4 +1,4 @@
-import type { DecimalTexto, FechaISO } from './api'
+import type { FechaISO } from './api'
 import type { Evaluacion } from './evaluacion'
 
 export type EstadoEntrevista = 'en_progreso' | 'finalizada' | 'abandonada'
@@ -15,8 +15,15 @@ export interface Entrevista {
   fecha_inicio: FechaISO
   /** `null` mientras la entrevista no haya terminado. */
   fecha_fin: FechaISO | null
-  /** Texto (`"75.00"`) porque DRF serializa así los decimales; `null` si sigue en curso. */
-  puntuacion_promedio: DecimalTexto | null
+  /**
+   * Media sobre 100; `null` mientras la entrevista siga en curso.
+   *
+   * Número, no texto: `COERCE_DECIMAL_TO_STRING = False` hace que DRF
+   * serialice los decimales como números, igual que ya llegaban los valores
+   * agregados de `/api/estadisticas/`. Trae decimales (`75.5`), así que las
+   * pantallas lo redondean antes de mostrarlo.
+   */
+  puntuacion_promedio: number | null
 }
 
 export interface Pregunta {
@@ -37,7 +44,11 @@ export interface Intercambio {
 
 export interface RespuestaIniciarEntrevista {
   entrevista: Entrevista
-  pregunta: Pregunta
+  /**
+   * `null` si el intercambio ya existía y no quedaba nada pendiente — la
+   * vista lo contempla, así que el tipo también.
+   */
+  pregunta: Pregunta | null
   total_preguntas: number
 }
 

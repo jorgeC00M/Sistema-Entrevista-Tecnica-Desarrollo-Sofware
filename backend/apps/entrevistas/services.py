@@ -14,7 +14,8 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import Avg, Max
+from django.db.models import Max
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from apps.evaluaciones.services import calificar, guardar
@@ -23,9 +24,21 @@ from integrations.ia.factory import get_proveedor
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from .models import Entrevista, Intercambio
-from .selectors import intercambio_pendiente, temas_evaluados
+from .selectors import intercambio_pendiente, promedio_de_evaluaciones, temas_evaluados
 
 MINUTOS_PARA_ABANDONO = 30
+
+
+class SinIntercambioPendiente(ValueError):
+    """Se pidió responder una entrevista que no tiene pregunta pendiente.
+
+    Hereda de `ValueError` por compatibilidad con quien ya la trataba así,
+    pero es un tipo propio para que la vista pueda capturar exactamente este
+    caso. Antes capturaba `ValueError` a secas y se tragaba también el que
+    lanza `Entrevista.area_enum` cuando un área no tiene miembro en el enum,
+    convirtiendo un problema de integridad de datos en un 409 con un mensaje
+    falso.
+    """
 
 
 def iniciar(usuario, area, nivel, proveedor: ProveedorIA | None = None) -> Entrevista:
@@ -69,7 +82,7 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
 
     intercambio = intercambio_pendiente(entrevista)
     if intercambio is None:
-        raise ValueError(
+        raise SinIntercambioPendiente(
             f"La entrevista {entrevista.pk} no tiene un intercambio pendiente de respuesta"
         )
 
@@ -101,11 +114,7 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
 
 
 def _finalizar(entrevista) -> None:
-    promedio = entrevista.intercambios.filter(evaluacion__isnull=False).aggregate(
-        promedio=Avg("evaluacion__puntuacion")
-    )["promedio"]
-
-    entrevista.puntuacion_promedio = promedio
+    entrevista.puntuacion_promedio = promedio_de_evaluaciones(entrevista)
     entrevista.fecha_fin = timezone.now()
     entrevista.estado = Entrevista.Estado.FINALIZADA
     entrevista.save(update_fields=["puntuacion_promedio", "fecha_fin", "estado"])
@@ -117,20 +126,25 @@ def marcar_abandonadas(usuario) -> int:
 
     Se invoca al consultar el historial, no con un planificador — el plan
     gratuito no ofrece tareas programadas fiables.
+
+    Es una sola sentencia a propósito: al vivir dentro de un GET que se
+    ejecuta en cada carga del historial, su coste no puede crecer con el
+    número de entrevistas en progreso del usuario. `Coalesce` reproduce en
+    SQL la regla "última actividad = última respuesta, o el inicio si aún no
+    respondió nada".
     """
     limite = timezone.now() - timedelta(minutes=MINUTOS_PARA_ABANDONO)
-    en_progreso = Entrevista.objects.filter(usuario=usuario, estado=Entrevista.Estado.EN_PROGRESO)
 
-    ids_abandonadas = []
-    for entrevista in en_progreso:
-        ultima_respuesta = entrevista.intercambios.aggregate(m=Max("respondido_en"))["m"]
-        ultima_actividad = ultima_respuesta or entrevista.fecha_inicio
-        if ultima_actividad < limite:
-            ids_abandonadas.append(entrevista.pk)
+    # `update()` no admite un queryset con agregación, así que la condición se
+    # resuelve como subconsulta de claves. Sigue siendo un número de consultas
+    # constante, que es lo que importa aquí.
+    inactivas = (
+        Entrevista.objects.filter(usuario=usuario, estado=Entrevista.Estado.EN_PROGRESO)
+        .annotate(ultima_actividad=Coalesce(Max("intercambios__respondido_en"), "fecha_inicio"))
+        .filter(ultima_actividad__lt=limite)
+        .values("pk")
+    )
 
-    if ids_abandonadas:
-        Entrevista.objects.filter(pk__in=ids_abandonadas).update(
-            estado=Entrevista.Estado.ABANDONADA
-        )
-
-    return len(ids_abandonadas)
+    return Entrevista.objects.filter(pk__in=inactivas).update(
+        estado=Entrevista.Estado.ABANDONADA
+    )

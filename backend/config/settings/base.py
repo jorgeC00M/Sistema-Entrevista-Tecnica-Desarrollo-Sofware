@@ -142,8 +142,25 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "EXCEPTION_HANDLER": "apps.common.exceptions.manejador_de_excepciones",
-    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.PaginacionEstandar",
-    "PAGE_SIZE": 20,
+    # Un decimal se emite como número, no como cadena. Sin esto,
+    # `puntuacion_promedio` sale como "75.00" desde el serializer de entrevista
+    # y como 75.0 desde las estadísticas (que no pasa por serializer): el mismo
+    # concepto con dos tipos según el endpoint.
+    "COERCE_DECIMAL_TO_STRING": False,
+    # Los límites se declaran por ámbito y no de forma global porque el coste
+    # real de cada endpoint es distinto: evaluar una respuesta gasta una
+    # llamada de pago al proveedor de IA, autenticarse gasta un hash, y el
+    # resto apenas cuesta. Un único límite global obligaría a elegir el mínimo
+    # común y no protegería lo que hay que proteger.
+    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
+    "DEFAULT_THROTTLE_RATES": {
+        # Holgado para una entrevista completa seguida (5 respuestas), estrecho
+        # frente a un bucle automatizado.
+        "evaluar": "30/hour",
+        "iniciar-entrevista": "20/hour",
+        "login": "10/min",
+        "registro": "5/hour",
+    },
 }
 
 SIMPLE_JWT = {

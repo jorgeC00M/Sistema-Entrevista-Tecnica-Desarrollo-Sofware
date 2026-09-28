@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { useParams } from 'react-router-dom'
 
 import Cronometro from '@/components/ui/Cronometro'
@@ -23,11 +24,11 @@ export default function EntrevistaPage() {
     reintentar,
   } = useEntrevista(id ?? '')
 
-  if (cargandoInicial) return <Spinner texto="Cargando entrevista…" tono="vidrio" />
+  if (cargandoInicial) return <Spinner texto="Cargando entrevista…" />
 
   return (
     <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
-      <div className="mb-4 rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px]">
+      <Tarjeta className="mb-4 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-serif text-headline-sm font-semibold text-vidrio-ink">
@@ -50,7 +51,7 @@ export default function EntrevistaPage() {
         <div className="mt-3">
           <BarraProgreso actual={numeroActual} total={totalPreguntas} />
         </div>
-      </div>
+      </Tarjeta>
 
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
 

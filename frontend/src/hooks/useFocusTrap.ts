@@ -12,8 +12,8 @@ interface Resultado<C extends HTMLElement, D extends HTMLElement> {
 /**
  * Atrapa el foco dentro de un contenedor mientras `activo` es `true`.
  *
- * Extraído de `components/layout/useCajonNavegacion.ts`, que era el único
- * consumidor hasta que `Modal` necesitó exactamente lo mismo. Son unas
+ * Extraído de `components/layout/useCajonNavegacion.ts`, hoy su único
+ * consumidor: el cajón de navegación en pantallas estrechas. Son unas
  * cuarenta líneas frente a los 15-40 kB de `focus-trap` o Radix, consistente
  * con cada otra dependencia de UI que este proyecto ya descartó.
  *

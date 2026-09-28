@@ -1,10 +1,15 @@
-from .base import ProveedorIA
-from .exceptions import ErrorPermanente, ErrorProveedorIA, ErrorTransitorio, RespuestaIAInvalida
+from .base import ProveedorIA, ProveedorIAporJSON
+from .exceptions import (
+    ErrorPermanente,
+    ErrorProveedorIA,
+    ErrorTransitorio,
+    ProveedorNoConfigurado,
+    RespuestaIAInvalida,
+)
 from .prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
     AreaTecnica,
     Evaluacion,
-    Intercambio,
     Nivel,
     Pregunta,
     TemaEvaluado,
@@ -17,10 +22,11 @@ __all__ = [
     "ErrorProveedorIA",
     "ErrorTransitorio",
     "Evaluacion",
-    "Intercambio",
     "Nivel",
     "Pregunta",
     "ProveedorIA",
+    "ProveedorIAporJSON",
+    "ProveedorNoConfigurado",
     "RespuestaIAInvalida",
     "TemaEvaluado",
 ]

@@ -1,16 +1,11 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 
+import Icono from '@/components/ui/Icono'
 import CampoAuth from '@/features/auth/components/CampoAuth'
-import {
-  IconoCandadoAuth,
-  IconoCandadoCheckAuth,
-  IconoCorreoAuth,
-  IconoUsuarioAuth,
-} from '@/features/auth/components/iconosAuth'
 import type { DatosDeRegistro } from '@/types/usuario'
 
-type Campos = Omit<DatosDeRegistro, 'carnet'>
+type Campos = DatosDeRegistro
 
 interface Props {
   onEnviar: (datos: DatosDeRegistro) => Promise<void>
@@ -50,7 +45,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
   return (
     <form onSubmit={manejarEnvio} className="text-left">
       <CampoAuth
-        icono={<IconoUsuarioAuth />}
+        icono={<Icono nombre="usuario" />}
         ariaLabel="Nombre completo"
         placeholder="Nombre completo"
         autoComplete="name"
@@ -59,7 +54,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         onChange={actualizar('nombreCompleto')}
       />
       <CampoAuth
-        icono={<IconoCorreoAuth />}
+        icono={<Icono nombre="correo" />}
         ariaLabel="Correo electrónico"
         placeholder="Correo electrónico"
         type="email"
@@ -69,7 +64,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         onChange={actualizar('email')}
       />
       <CampoAuth
-        icono={<IconoCandadoAuth />}
+        icono={<Icono nombre="candado" />}
         ariaLabel="Contraseña"
         placeholder="Contraseña"
         type="password"
@@ -80,10 +75,10 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         value={form.password}
         onChange={actualizar('password')}
       />
-      <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-[#8a93a8]">Mínimo 8 caracteres.</p>
+      <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-vidrio-muted">Mínimo 8 caracteres.</p>
 
       <CampoAuth
-        icono={<IconoCandadoCheckAuth />}
+        icono={<Icono nombre="candado-check" />}
         ariaLabel="Confirmar contraseña"
         placeholder="Confirmar contraseña"
         type="password"
@@ -103,20 +98,20 @@ export default function FormularioRegistro({ onEnviar }: Props) {
       )}
 
       <div className="mt-1 mb-6 text-[0.85rem] leading-[1.4]">
-        <label className="flex cursor-pointer items-start gap-2 text-left text-[#4a5572]">
+        <label className="flex cursor-pointer items-start gap-2 text-left text-vidrio-texto">
           <input
             type="checkbox"
             checked={aceptaTerminos}
             onChange={(e) => setAceptaTerminos(e.target.checked)}
-            className="mt-0.5 h-[17px] w-[17px] shrink-0 accent-[#2b55a3]"
+            className="mt-0.5 h-[17px] w-[17px] shrink-0 accent-vidrio-acento"
           />
           <span>
             Acepto los{' '}
-            <a href="#" className="font-medium text-[#2b55a3] no-underline hover:underline">
+            <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
               Términos
             </a>{' '}
             y la{' '}
-            <a href="#" className="font-medium text-[#2b55a3] no-underline hover:underline">
+            <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
               Política de privacidad
             </a>
           </span>
@@ -126,7 +121,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
       <button
         type="submit"
         disabled={cargando || form.password !== confirmarPassword}
-        className="flex h-[50px] w-full items-center justify-center rounded-full bg-[#2b55a3] text-[1.05rem] font-semibold text-white transition-colors hover:bg-[#234889] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-[50px] w-full items-center justify-center rounded-full bg-vidrio-acento text-[1.05rem] font-semibold text-white transition-colors hover:bg-vidrio-acento-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {cargando && (
           <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

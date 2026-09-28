@@ -39,4 +39,6 @@ class PerfilSerializer(serializers.ModelSerializer):
 
 
 class GoogleLoginSerializer(serializers.Serializer):
-    id_token = serializers.CharField()
+    # Un ID token de Google ronda 1-2 KB; el tope evita que el endpoint acepte
+    # cuerpos arbitrariamente grandes antes de intentar verificarlos.
+    id_token = serializers.CharField(max_length=4096)

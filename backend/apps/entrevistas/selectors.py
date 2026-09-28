@@ -7,6 +7,7 @@ resuelve en la consulta, no después de haber leído la fila.
 
 from __future__ import annotations
 
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 
 from integrations.ia.prompts.schemas import TemaEvaluado
@@ -32,6 +33,18 @@ def entrevistas_de(usuario):
 def intercambio_pendiente(entrevista):
     """Primer intercambio sin evaluar, que es la pregunta que espera respuesta."""
     return entrevista.intercambios.filter(evaluacion__isnull=True).order_by("numero").first()
+
+
+def primer_intercambio(entrevista):
+    """La pregunta con la que arranca la entrevista."""
+    return entrevista.intercambios.order_by("numero").first()
+
+
+def promedio_de_evaluaciones(entrevista):
+    """Media de las respuestas ya calificadas, o `None` si no hay ninguna."""
+    return entrevista.intercambios.filter(evaluacion__isnull=False).aggregate(
+        promedio=Avg("evaluacion__puntuacion")
+    )["promedio"]
 
 
 def intercambios_con_evaluacion(entrevista):

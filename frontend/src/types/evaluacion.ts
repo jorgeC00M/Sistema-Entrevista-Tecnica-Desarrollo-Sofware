@@ -30,13 +30,6 @@ export interface PuntoDeEvolucion {
   area: string
   area_display: string
   fecha_fin: FechaISO
-  /**
-   * Número, no texto.
-   *
-   * Sale de una agregación devuelta con `.values()`, que no pasa por el
-   * serializer — a diferencia de `Entrevista.puntuacion_promedio`, que DRF
-   * convierte a cadena. Mismo nombre, distinto tipo según el endpoint.
-   */
   puntuacion_promedio: number
 }
 

@@ -99,9 +99,3 @@ class ErroresAlResponderTest(APITestCase):
         )
 
         self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
-
-
-if __name__ == "__main__":
-    import unittest
-
-    unittest.main()

@@ -1,46 +1,21 @@
-/* La fuente se carga antes que Tailwind porque @import debe ir primero en CSS.
-   `display=swap` deja que el texto se pinte con la fuente del sistema mientras
-   descarga, para que la página no se quede en blanco en una conexión lenta.
-   Mono es para puntajes destacados, contadores ("03 / 05") y cualquier texto
-   que deba leerse como un dato exacto, no como prosa. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Las familias se cargan desde index.html con preconnect, no desde aquí: un
+   @import de CSS bloquea el render hasta que resuelve. Antes convivían con un
+   segundo par (IBM Plex Sans/Mono) que ninguna pantalla llegaba a mostrar,
+   porque las tres raíces del árbol imponían Figtree. */
 @import "tailwindcss";
 
 /* Tailwind v4: no hay tailwind.config.js, los tokens se declaran aquí como
-   variables CSS y quedan disponibles como clases (bg-tinta-950, text-iris-600,
-   rounded-superficie, font-mono...) sin archivo de configuración aparte. */
+   variables CSS y quedan disponibles como clases (bg-vidrio-bg,
+   text-vidrio-acento, rounded-vidrio, font-mono-vidrio...) sin archivo de
+   configuración aparte. */
 @theme {
+  /* Figtree para texto, Fraunces para títulos, JetBrains Mono para datos
+     exactos (puntajes, contadores "03 / 05"). Se cargan en index.html. */
   --font-sans:
-    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
-  --font-mono:
-    'IBM Plex Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
-    'Courier New', monospace;
-
-  /* Tipografía exclusiva del sistema "vidrio" (dashboard + login/registro):
-     Fraunces para títulos, JetBrains Mono para datos exactos ahí — aparte
-     de --font-sans/--font-mono, que siguen siendo IBM Plex en el resto
-     del sistema (landing). `font-serif` no lo usa nada hoy: cero colisión. */
+    'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
   --font-serif: 'Fraunces', Georgia, serif;
   --font-mono-vidrio: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
-
-  /* Escala neutra del producto: superficies, texto, bordes. tinta-950 es el
-     fondo del sidebar; tinta-50 el fondo general de la aplicación. */
-  --color-tinta-50: #f6f7fb;
-  --color-tinta-100: #e9ecf3;
-  --color-tinta-300: #a4aac0;
-  --color-tinta-500: #5b6380;
-  --color-tinta-700: #2e3657;
-  --color-tinta-800: #1e2542;
-  --color-tinta-900: #131a33;
-  --color-tinta-950: #0b1020;
-
-  /* Único color de acción del producto. No aparece en ningún estado ni
-     puntaje — eso es lo que separan los tokens semánticos de abajo. */
-  --color-iris-50: #eef0ff;
-  --color-iris-400: #7c83f0;
-  --color-iris-600: #4b4fd1;
-  --color-iris-700: #3c3fae;
 
   /* Semánticos: expresan estado o puntaje, nunca una acción. Cada uno es un
      par texto/fondo pensado para usarse junto, no por separado. */
@@ -51,10 +26,10 @@
   --color-error-texto: #b91c1c;
   --color-error-fondo: #fee2e2;
 
-  /* Sistema "vidrio": paleta propia del dashboard y de login/registro,
-     réplica valor por valor de sus mockups de referencia. Familia nueva y
-     autocontenida, no un reemplazo de tinta/iris — esos siguen siendo la
-     paleta real de la landing pública, que no usa este sistema. */
+  /* Sistema "vidrio": la paleta del producto entero — landing, auth y
+     aplicación. Réplica valor por valor de los mockups de referencia. Convivió
+     un tiempo con una escala anterior (tinta/iris) mientras la landing seguía
+     sin migrar; al migrarla, esa escala se quedó sin un solo consumidor. */
   --color-vidrio-acento: #2b55a3;
   --color-vidrio-acento-hover: #234889;
   --color-vidrio-acento-suave: rgba(43, 85, 163, 0.1);
@@ -70,16 +45,10 @@
      vidrio-muted, que es para superficies claras. */
   --color-vidrio-sidebar-muted: #9fb0cf;
 
-  /* superficie: tarjetas, el sidebar, modales. control: botones, inputs,
-     campos. chip: etiquetas de metadato y badges de puntaje.
-     superficie y control coinciden hoy en 8px y aun así se mantienen
-     separados: expresan intenciones distintas y volverán a divergir si el
-     diseño cambia. */
-  --radius-superficie: 8px;
+  /* control: botones, inputs, campos. chip: etiquetas de metadato y badges
+     de puntaje. vidrio: tarjetas y paneles. */
   --radius-control: 8px;
   --radius-chip: 4px;
-  /* Radio de tarjetas/paneles del sistema "vidrio" — distinto de
-     radius-superficie, que sigue en 8px para lo que no usa este sistema. */
   --radius-vidrio: 18px;
 
   /* Escala nominal del sistema de diseño. Se nombra por el papel que cumple
@@ -91,11 +60,6 @@
   --text-headline-xl--letter-spacing: -0.02em;
   --text-headline-xl--font-weight: 600;
 
-  --text-headline-lg: 24px;
-  --text-headline-lg--line-height: 32px;
-  --text-headline-lg--letter-spacing: -0.015em;
-  --text-headline-lg--font-weight: 600;
-
   --text-headline-md: 20px;
   --text-headline-md--line-height: 28px;
   --text-headline-md--letter-spacing: -0.01em;
@@ -105,18 +69,8 @@
   --text-headline-sm--line-height: 24px;
   --text-headline-sm--font-weight: 600;
 
-  --text-body-lg: 16px;
-  --text-body-lg--line-height: 24px;
-
-  --text-body-md: 14px;
-  --text-body-md--line-height: 20px;
-
   --text-body-sm: 12px;
   --text-body-sm--line-height: 16px;
-
-  --text-label-sans: 12px;
-  --text-label-sans--line-height: 16px;
-  --text-label-sans--font-weight: 500;
 
   --text-label-mono: 11px;
   --text-label-mono--line-height: 14px;
@@ -130,13 +84,43 @@
 
   --text-code-inline: 13px;
   --text-code-inline--line-height: 18px;
+}
 
-  --text-code-block: 13px;
-  --text-code-block--line-height: 20px;
+/* Desplazamiento suave para los enlaces de ancla del navbar de la landing
+   (#inicio, #como-funciona...) — es una propiedad de documento, no se puede
+   aplicar solo a un contenedor interno. */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-tinta-50 font-sans text-tinta-950 antialiased;
+  @apply bg-vidrio-bg font-sans text-vidrio-texto antialiased;
+}
+
+/* Resplandor que "respira" al fondo del hero de la landing — un solo
+   keyframe reutilizable, no depende de ninguna librería de animación. La
+   regla global de `prefers-reduced-motion` de más abajo ya lo neutraliza
+   (fuerza duration a ~0), no necesita su propia excepción. */
+@keyframes respirar {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Relleno del indicador activo del carrusel de áreas — se remonta con un
+   `key` distinto cada vez que cambia el índice, así el navegador reinicia
+   la animación sola. */
+@keyframes llenar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /* Enlace de salto: invisible hasta que recibe foco con el teclado. */
@@ -157,5 +141,9 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

@@ -1,3 +1,4 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import type { PuntoDeEvolucion } from '@/types/evaluacion'
 
 // SVG simple, sin librería de gráficos: el dato es una línea de puntos en el
@@ -29,9 +30,9 @@ interface Props {
 export default function GraficoProgreso({ puntos }: Props) {
   if (puntos.length < 2) {
     return (
-      <p className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-6 text-center text-sm text-vidrio-muted backdrop-blur-[18px]">
+      <Tarjeta como="p" className="p-6 text-center text-sm text-vidrio-muted">
         Completa al menos dos entrevistas para ver tu evolución en el tiempo.
-      </p>
+      </Tarjeta>
     )
   }
 
@@ -49,7 +50,7 @@ export default function GraficoProgreso({ puntos }: Props) {
   const areasPresentes = [...new Map(puntos.map((p) => [p.area, p.area_display])).entries()]
 
   return (
-    <div className="rounded-vidrio border border-vidrio-borde bg-vidrio-card p-4 backdrop-blur-[18px] sm:p-5">
+    <Tarjeta className="p-4 sm:p-5">
       <h3 className="mb-3 text-sm font-medium text-vidrio-ink">Evolución en el tiempo</h3>
 
       <svg
@@ -101,7 +102,7 @@ export default function GraficoProgreso({ puntos }: Props) {
             strokeWidth="2"
           >
             <title>
-              {c.area_display}: {c.puntuacion_promedio}/100
+              {c.area_display}: {Math.round(c.puntuacion_promedio)}/100
             </title>
           </circle>
         ))}
@@ -118,6 +119,6 @@ export default function GraficoProgreso({ puntos }: Props) {
           </span>
         ))}
       </div>
-    </div>
+    </Tarjeta>
   )
 }
