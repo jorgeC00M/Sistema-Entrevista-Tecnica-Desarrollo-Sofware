@@ -58,7 +58,7 @@ export default function HistorialPage() {
   const completadas = estadisticas.entrevistas_completadas
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <EtiquetaMono tono="suelto">
           {entrevistas.length} entrevista{entrevistas.length === 1 ? '' : 's'} registrada
@@ -83,10 +83,10 @@ export default function HistorialPage() {
       </div>
 
       {completadas > 0 && (
-        <>
+        <div className="grid gap-6 lg:grid-cols-2">
           <GraficoProgreso puntos={estadisticas.evolucion} />
           <ComparativaAreas areas={estadisticas.promedio_por_area} />
-        </>
+        </div>
       )}
 
       <div>

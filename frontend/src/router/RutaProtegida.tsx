@@ -92,7 +92,11 @@ export default function RutaProtegida() {
         }`}
       >
         <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />
-        <main className="mx-auto max-w-4xl px-4 py-6">
+        {/* Sin max-w aquí: cada página elige su propio ancho según lo que
+            muestra (angosto para conversar/leer, más ancho para tablas y
+            tarjetas de datos) — un tope único dejaba mucho espacio vacío en
+            pantallas grandes. */}
+        <main className="px-4 py-6 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>

@@ -45,7 +45,7 @@ export default function ResultadosPage() {
   const duracion = formatearDuracion(entrevista.fecha_inicio, entrevista.fecha_fin)
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-4xl">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <EtiquetaMono tono="suelto">

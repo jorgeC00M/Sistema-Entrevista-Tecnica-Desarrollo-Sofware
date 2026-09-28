@@ -58,7 +58,7 @@ export default function SeleccionAreaPage() {
   const areaElegida = catalogos.areas.find((a) => a.codigo === area)
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <div className="mb-1 flex items-center gap-2">
         <EtiquetaMono tono="marca">Fase 01 · Parámetros de evaluación</EtiquetaMono>
       </div>
