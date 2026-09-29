@@ -21,8 +21,19 @@ class IniciarEntrevistaSerializer(serializers.Serializer):
     )
 
 
+#: Tope del lado servidor para la respuesta del candidato. El cliente ya
+#: limita a 1000 (`CampoRespuesta.tsx`); este margen lo admite con holgura y a
+#: la vez impide que un cliente ajeno mande texto sin límite, que acabaría
+#: íntegro dentro del prompt de un proveedor de pago.
+MAXIMO_CARACTERES_RESPUESTA = 2000
+
+
 class ResponderSerializer(serializers.Serializer):
-    respuesta = serializers.CharField(allow_blank=False, trim_whitespace=True)
+    respuesta = serializers.CharField(
+        allow_blank=False,
+        trim_whitespace=True,
+        max_length=MAXIMO_CARACTERES_RESPUESTA,
+    )
 
 
 class EntrevistaSerializer(serializers.ModelSerializer):

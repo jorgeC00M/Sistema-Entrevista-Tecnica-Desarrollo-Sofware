@@ -20,6 +20,7 @@ from integrations.ia.exceptions import (
     ErrorPermanente,
     ErrorProveedorIA,
     ErrorTransitorio,
+    ProveedorNoConfigurado,
     RespuestaIAInvalida,
 )
 
@@ -27,6 +28,16 @@ logger = logging.getLogger(__name__)
 
 
 def _respuesta_para_error_ia(exc: ErrorProveedorIA) -> Response:
+    if isinstance(exc, ProveedorNoConfigurado):
+        # Para el cliente es indistinguible de una caída, pero para quien
+        # opera el servicio es un fallo de configuración que hay que ver en
+        # el log — por eso se registra y el transitorio no.
+        logger.error("Proveedor de IA no configurado: %s", exc)
+        return Response(
+            {"detail": "El servicio de IA no está disponible en este momento. Intenta de nuevo."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
     if isinstance(exc, ErrorTransitorio):
         # No se registra como error: es la caída esperable de un servicio
         # externo y el cliente puede reintentar.

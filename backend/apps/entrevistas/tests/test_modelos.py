@@ -82,23 +82,3 @@ class RestriccionesDeIntegridadTest(TestCase):
         self.assertEqual(evaluacion.evaluacion_json, {"puntuacion": 80, "fortalezas": "ok"})
 
 
-class UsuarioTest(TestCase):
-    def test_usuario_se_autentica_por_email(self):
-        self.assertEqual(Usuario.USERNAME_FIELD, "email")
-
-    def test_create_user_hashea_la_contrasena(self):
-        usuario = Usuario.objects.create_user(
-            email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado de Prueba"
-        )
-        self.assertNotEqual(usuario.password, "clave-segura-123")
-        self.assertTrue(usuario.check_password("clave-segura-123"))
-
-    def test_email_duplicado_no_permitido(self):
-        Usuario.objects.create_user(
-            email="egresado@example.com", password="clave-segura-123", nombre_completo="Uno"
-        )
-        with self.assertRaises(IntegrityError):
-            with transaction.atomic():
-                Usuario.objects.create_user(
-                    email="egresado@example.com", password="otra-clave-123", nombre_completo="Otro"
-                )

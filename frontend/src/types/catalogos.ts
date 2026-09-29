@@ -10,7 +10,6 @@ export interface ElementoDeCatalogo {
   codigo: string
   nombre: string
   descripcion: string
-  orden: number
 }
 
 export type Area = ElementoDeCatalogo

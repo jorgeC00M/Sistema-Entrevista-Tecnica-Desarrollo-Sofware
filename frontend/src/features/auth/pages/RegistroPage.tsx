@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { ErrorAPI } from '@/api/client'
-import Alerta from '@/components/ui/Alerta'
-import BotonGoogle from '@/features/auth/components/BotonGoogle'
 import FormularioRegistro from '@/features/auth/components/FormularioRegistro'
+import TarjetaAuth from '@/features/auth/components/TarjetaAuth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import type { DatosDeRegistro } from '@/types/usuario'
 
@@ -34,33 +33,18 @@ export default function RegistroPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-center text-xl font-semibold text-slate-900">Crear cuenta</h1>
-        <p className="mb-6 text-center text-sm text-slate-500">
-          Para egresados de Ingeniería de Sistemas
-        </p>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <Alerta tipo="error">{error}</Alerta>
-
-          <FormularioRegistro onEnviar={manejarEnvio} />
-
-          <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-            <div className="h-px flex-1 bg-slate-200" />o
-            <div className="h-px flex-1 bg-slate-200" />
-          </div>
-
-          <BotonGoogle onCredential={manejarGoogle} />
-        </div>
-
-        <p className="mt-6 text-center text-sm text-slate-500">
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="font-medium text-indigo-600 hover:underline">
-            Inicia sesión
-          </Link>
-        </p>
-      </div>
-    </div>
+    <TarjetaAuth
+      titulo="Crea tu cuenta"
+      subtitulo="Para egresados de Ingeniería de Sistemas"
+      error={error}
+      onCredentialGoogle={manejarGoogle}
+      modoGoogle="registro"
+      etiquetaGoogle="Registrarse con Google"
+      pregunta="¿Ya tienes cuenta?"
+      textoEnlace="Inicia sesión"
+      rutaEnlace="/login"
+    >
+      <FormularioRegistro onEnviar={manejarEnvio} />
+    </TarjetaAuth>
   )
 }

@@ -9,12 +9,11 @@ export async function registrar({
   email,
   password,
   nombreCompleto,
-  carnet,
 }: DatosDeRegistro): Promise<ParDeTokens> {
   const datos = await peticion<ParDeTokens>('/api/auth/registro', {
     method: 'POST',
     autenticado: false,
-    body: { email, password, nombre_completo: nombreCompleto, carnet },
+    body: { email, password, nombre_completo: nombreCompleto },
   })
   guardarTokens(datos)
   return datos

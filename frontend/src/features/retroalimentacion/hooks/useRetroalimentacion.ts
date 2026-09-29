@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
-
-import { ErrorAPI } from '@/api/client'
 import { obtenerRetroalimentacion } from '@/api/evaluaciones'
+import { usePeticion } from '@/hooks/usePeticion'
 import type { RetroalimentacionAcumulada } from '@/types/evaluacion'
 
 interface Estado {
@@ -11,28 +9,11 @@ interface Estado {
 }
 
 export function useRetroalimentacion(): Estado {
-  const [datos, setDatos] = useState<RetroalimentacionAcumulada | null>(null)
-  const [error, setError] = useState('')
+  const { datos, cargando, error } = usePeticion<RetroalimentacionAcumulada>(
+    'retroalimentacion',
+    (signal) => obtenerRetroalimentacion(signal),
+    { mensajeDeError: 'No se pudo cargar tu retroalimentación.' },
+  )
 
-  useEffect(() => {
-    let cancelado = false
-
-    obtenerRetroalimentacion()
-      .then((res) => {
-        if (!cancelado) setDatos(res)
-      })
-      .catch((err: unknown) => {
-        if (!cancelado) {
-          setError(
-            err instanceof ErrorAPI ? err.message : 'No se pudo cargar tu retroalimentación.',
-          )
-        }
-      })
-
-    return () => {
-      cancelado = true
-    }
-  }, [])
-
-  return { datos, cargando: !datos && !error, error }
+  return { datos, cargando, error }
 }

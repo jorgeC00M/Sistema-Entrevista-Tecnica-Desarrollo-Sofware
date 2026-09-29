@@ -2,60 +2,43 @@
 
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
+import httpx
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
-from .base import ProveedorIA
-from .exceptions import ErrorPermanente, ErrorTransitorio, RespuestaIAInvalida
-from .prompts import entrevistador, evaluador
-from .prompts.schemas import (
-    PREGUNTAS_POR_ENTREVISTA,
-    AreaTecnica,
-    Evaluacion,
-    Nivel,
-    Pregunta,
-    TemaEvaluado,
-    parsear_evaluacion,
-    parsear_pregunta,
+from .base import ProveedorIAporJSON
+from .exceptions import (
+    ErrorPermanente,
+    ErrorTransitorio,
+    ProveedorNoConfigurado,
+    RespuestaIAInvalida,
 )
 
 MODELO_POR_DEFECTO = "gemini-2.5-flash"
 
+# Mismo tope que el adaptador de Claude: sin timeout, una llamada colgada
+# retiene el worker que la atiende, y en el plan gratuito de Render un worker
+# retenido es el servicio caído.
+TIMEOUT_SEGUNDOS = 30.0
 
-class GeminiProveedorIA(ProveedorIA):
+
+class GeminiProveedorIA(ProveedorIAporJSON):
     nombre = "gemini"
 
     def __init__(self, api_key: str | None = None, modelo: str | None = None):
         api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            raise RuntimeError("Falta GEMINI_API_KEY para usar el proveedor 'gemini'")
+            raise ProveedorNoConfigurado("Falta GEMINI_API_KEY para usar el proveedor 'gemini'")
 
         self.modelo = modelo or os.environ.get("GEMINI_MODEL", MODELO_POR_DEFECTO)
-        self._cliente = genai.Client(api_key=api_key)
-
-    def generar_pregunta(
-        self, area: AreaTecnica, nivel: Nivel, numero: int, previas: list[TemaEvaluado]
-    ) -> Pregunta:
-        datos = self._pedir_json(
-            sistema=entrevistador.sistema(area, nivel, PREGUNTAS_POR_ENTREVISTA),
-            entrada=entrevistador.usuario(numero, previas),
-            esquema=entrevistador.ESQUEMA_PREGUNTA,
+        self._cliente = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(timeout=int(TIMEOUT_SEGUNDOS * 1000)),
         )
-        return parsear_pregunta(datos, numero=numero)
-
-    def evaluar_respuesta(
-        self, area: AreaTecnica, nivel: Nivel, pregunta: str, respuesta: str
-    ) -> Evaluacion:
-        datos = self._pedir_json(
-            sistema=evaluador.sistema(area, nivel),
-            entrada=evaluador.usuario(pregunta, respuesta),
-            esquema=evaluador.ESQUEMA_EVALUACION,
-        )
-        return parsear_evaluacion(datos)
 
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -68,13 +51,21 @@ class GeminiProveedorIA(ProveedorIA):
                     response_json_schema=esquema,
                 ),
             )
-        except genai.errors.ServerError as exc:
+        except genai_errors.ServerError as exc:
             raise ErrorTransitorio(f"Gemini ({self.modelo}) no disponible: {exc}") from exc
-        except genai.errors.ClientError as exc:
+        except genai_errors.ClientError as exc:
             codigo = getattr(exc, "code", None)
             if codigo == 429:
                 raise ErrorTransitorio(f"Gemini ({self.modelo}) límite de tasa: {exc}") from exc
             raise ErrorPermanente(f"Gemini ({self.modelo}) rechazó la petición: {exc}") from exc
+        except httpx.TimeoutException as exc:
+            raise ErrorTransitorio(
+                f"Gemini ({self.modelo}) agotó el tiempo de espera de {TIMEOUT_SEGUNDOS}s: {exc}"
+            ) from exc
+        except httpx.TransportError as exc:
+            # Fallo de red antes de recibir respuesta. Sin esto la excepción
+            # cruda del SDK llegaba hasta DRF y se convertía en un 500.
+            raise ErrorTransitorio(f"Fallo de conexión con Gemini ({self.modelo}): {exc}") from exc
 
         texto = respuesta.text
         if not texto:
@@ -83,11 +74,4 @@ class GeminiProveedorIA(ProveedorIA):
                 "puede deberse a filtros de seguridad o a un corte de generación"
             )
 
-        try:
-            datos = json.loads(texto)
-        except json.JSONDecodeError as exc:
-            raise RespuestaIAInvalida(f"Gemini no devolvió JSON válido: {texto[:200]}") from exc
-
-        if not isinstance(datos, dict):
-            raise RespuestaIAInvalida(f"Se esperaba un objeto JSON, se recibió {type(datos).__name__}")
-        return datos
+        return self._decodificar(texto)

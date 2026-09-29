@@ -1,87 +1,67 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
-import { obtenerHistorial } from '@/api/entrevistas'
-import { obtenerEstadisticas } from '@/api/evaluaciones'
 import Alerta from '@/components/ui/Alerta'
+import EstadoVacio from '@/components/ui/EstadoVacio'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import ComparativaAreas from '@/features/historial/components/ComparativaAreas'
 import GraficoProgreso from '@/features/historial/components/GraficoProgreso'
 import ListaEntrevistas from '@/features/historial/components/ListaEntrevistas'
-import type { Entrevista } from '@/types/entrevista'
-import type { Estadisticas } from '@/types/evaluacion'
+import { useHistorial } from '@/features/historial/hooks/useHistorial'
 
 export default function HistorialPage() {
-  const [entrevistas, setEntrevistas] = useState<Entrevista[] | null>(null)
-  const [estadisticas, setEstadisticas] = useState<Estadisticas | null>(null)
-  const [error, setError] = useState('')
+  const { entrevistas, estadisticas, cargando, error } = useHistorial()
 
-  useEffect(() => {
-    let cancelado = false
-
-    // En paralelo: son dos endpoints independientes y encadenarlos solo
-    // duplicaría la espera.
-    Promise.all([obtenerHistorial(), obtenerEstadisticas()])
-      .then(([historial, stats]) => {
-        if (cancelado) return
-        setEntrevistas(historial)
-        setEstadisticas(stats)
-      })
-      .catch((err: unknown) => {
-        if (!cancelado) {
-          setError(err instanceof ErrorAPI ? err.message : 'No se pudo cargar tu historial.')
-        }
-      })
-
-    return () => {
-      cancelado = true
-    }
-  }, [])
-
-  if (error) return <Alerta tipo="error">{error}</Alerta>
-  if (!entrevistas || !estadisticas) return <Spinner texto="Cargando tu historial…" />
+  if (error) return <Alerta>{error}</Alerta>
+  if (cargando || !entrevistas || !estadisticas)
+    return <Spinner texto="Cargando tu historial…" />
 
   if (entrevistas.length === 0) {
     return (
-      <div className="mx-auto max-w-lg text-center text-sm text-slate-500">
-        Todavía no realizaste ninguna entrevista.{' '}
-        <Link to="/nueva-entrevista" className="font-medium text-indigo-600 hover:underline">
+      <EstadoVacio icono="historial" titulo="Todavía no realizaste ninguna entrevista.">
+        <Link to="/nueva-entrevista" className="font-medium text-vidrio-acento hover:underline">
           Empieza la primera
         </Link>
-        .
-      </div>
+      </EstadoVacio>
     )
   }
 
   const completadas = estadisticas.entrevistas_completadas
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">Historial y progreso</h1>
+        <EtiquetaMono tono="suelto">
+          {entrevistas.length} entrevista{entrevistas.length === 1 ? '' : 's'} registrada
+          {entrevistas.length === 1 ? '' : 's'}
+        </EtiquetaMono>
+        <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
+          Historial y progreso
+        </h1>
         {completadas > 0 && estadisticas.promedio_general !== null ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-vidrio-texto">
             {completadas} entrevista{completadas === 1 ? '' : 's'} completada
             {completadas === 1 ? '' : 's'} · promedio general{' '}
-            {Math.round(estadisticas.promedio_general)}
+            <span className="font-mono-vidrio text-metric-counter">
+              {Math.round(estadisticas.promedio_general)}
+            </span>
           </p>
         ) : (
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-vidrio-texto">
             Tu progreso aparecerá aquí cuando completes la primera entrevista.
           </p>
         )}
       </div>
 
       {completadas > 0 && (
-        <>
+        <div className="grid gap-6 lg:grid-cols-2">
           <GraficoProgreso puntos={estadisticas.evolucion} />
           <ComparativaAreas areas={estadisticas.promedio_por_area} />
-        </>
+        </div>
       )}
 
       <div>
-        <h2 className="mb-3 text-sm font-medium text-slate-700">Tus entrevistas</h2>
+        <h2 className="mb-3 text-headline-md font-semibold text-vidrio-ink">Tus entrevistas</h2>
         <ListaEntrevistas entrevistas={entrevistas} />
       </div>
     </div>

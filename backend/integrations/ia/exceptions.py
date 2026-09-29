@@ -27,3 +27,15 @@ class ErrorPermanente(ErrorProveedorIA):
 
 class RespuestaIAInvalida(ErrorProveedorIA):
     """El proveedor respondió, pero el contenido no cumple el contrato esperado."""
+
+
+class ProveedorNoConfigurado(ErrorProveedorIA):
+    """El proveedor no se puede construir: falta su credencial, su SDK, o el
+    nombre configurado no existe.
+
+    No es transitorio —reintentar no lo arregla— pero desde fuera se comunica
+    igual que una caída: el servicio no está disponible. La distinción importa
+    para el registro en el log, no para el cliente. Hereda de la taxonomía en
+    vez de ser un `RuntimeError` para que no se salte el manejador central y
+    acabe como un 500 con traza.
+    """

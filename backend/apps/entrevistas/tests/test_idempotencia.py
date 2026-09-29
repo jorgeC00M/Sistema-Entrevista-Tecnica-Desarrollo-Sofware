@@ -67,8 +67,42 @@ class IdempotenciaTest(TestCase):
 
         self.assertEqual(Evaluacion.objects.filter(intercambio=intercambio).count(), 1)
 
+    def test_fallo_al_generar_la_siguiente_pregunta_deshace_la_evaluacion(self):
+        """El rollback más delicado del sistema.
 
-if __name__ == "__main__":
-    import unittest
+        `responder()` guarda la evaluación y genera la pregunta siguiente
+        dentro de la misma transacción a propósito: si la generación falla,
+        la evaluación tiene que deshacerse también. Si no, la entrevista
+        quedaría sin pregunta pendiente y sin estado final —atascada— y el
+        reintento encontraría el intercambio ya evaluado.
 
-    unittest.main()
+        Llamadas: 1 = pregunta inicial, 2 = evaluación, 3 = pregunta nº2.
+        """
+        proveedor_que_falla = FakeProveedorIA(fallar_en=3)
+        entrevista = servicio.iniciar(
+            self.usuario,
+            area_de(AreaTecnica.PROGRAMACION),
+            nivel_de(Nivel.BASICO),
+            proveedor=proveedor_que_falla,
+        )
+
+        with self.assertRaises(ErrorTransitorio):
+            servicio.responder(entrevista, "Mi respuesta", proveedor=proveedor_que_falla)
+
+        from apps.evaluaciones.models import Evaluacion
+
+        intercambio = entrevista.intercambios.get(numero=1)
+        # La respuesta sobrevive (se guarda fuera de la transacción), pero la
+        # evaluación se deshizo junto con la pregunta que no llegó a crearse.
+        self.assertEqual(intercambio.respuesta, "Mi respuesta")
+        self.assertEqual(Evaluacion.objects.filter(intercambio=intercambio).count(), 0)
+        self.assertEqual(entrevista.intercambios.count(), 1)
+
+        entrevista.refresh_from_db()
+        self.assertEqual(entrevista.estado, entrevista.Estado.EN_PROGRESO)
+
+        # Y el reintento con un proveedor sano continúa la entrevista.
+        servicio.responder(entrevista, "Mi respuesta", proveedor=FakeProveedorIA())
+
+        self.assertEqual(Evaluacion.objects.filter(intercambio=intercambio).count(), 1)
+        self.assertEqual(entrevista.intercambios.count(), 2)

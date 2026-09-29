@@ -39,7 +39,14 @@ class Entrevista(models.Model):
 
     class Meta:
         ordering = ["-fecha_inicio"]
-        indexes = [models.Index(fields=["usuario", "fecha_inicio"])]
+        indexes = [
+            # Sirve al listado del historial, que ordena por fecha.
+            models.Index(fields=["usuario", "fecha_inicio"]),
+            # El filtro realmente caliente: `marcar_abandonadas` y las
+            # estadísticas filtran por usuario + estado en cada consulta del
+            # historial, no por usuario + fecha.
+            models.Index(fields=["usuario", "estado"]),
+        ]
         verbose_name = "entrevista"
         verbose_name_plural = "entrevistas"
 

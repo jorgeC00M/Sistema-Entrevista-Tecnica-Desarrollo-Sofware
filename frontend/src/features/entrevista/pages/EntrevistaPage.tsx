@@ -1,5 +1,8 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { useParams } from 'react-router-dom'
 
+import Cronometro from '@/components/ui/Cronometro'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import BarraProgreso from '@/features/entrevista/components/BarraProgreso'
 import CampoRespuesta from '@/features/entrevista/components/CampoRespuesta'
@@ -12,6 +15,8 @@ export default function EntrevistaPage() {
     mensajes,
     numeroActual,
     totalPreguntas,
+    areaDisplay,
+    nivelDisplay,
     cargandoInicial,
     enviando,
     error,
@@ -23,14 +28,35 @@ export default function EntrevistaPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
-      <div className="mb-4">
-        <BarraProgreso actual={numeroActual} total={totalPreguntas} />
-      </div>
+      <Tarjeta className="mb-4 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate font-serif text-headline-sm font-semibold text-vidrio-ink">
+              Entrevista · {areaDisplay}
+            </h1>
+            <EtiquetaMono tono="suelto">Nivel {nivelDisplay}</EtiquetaMono>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-label-mono text-vidrio-muted uppercase">Pregunta</p>
+              <p className="font-mono-vidrio text-metric-counter text-vidrio-ink">
+                {String(numeroActual).padStart(2, '0')} / {String(totalPreguntas).padStart(2, '0')}
+              </p>
+            </div>
+            <Cronometro />
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <BarraProgreso actual={numeroActual} total={totalPreguntas} />
+        </div>
+      </Tarjeta>
 
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
 
       {error && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
           <span>{error}</span>
           <button
             type="button"

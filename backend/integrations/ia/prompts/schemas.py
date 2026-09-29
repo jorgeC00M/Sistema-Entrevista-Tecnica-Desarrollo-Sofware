@@ -43,12 +43,6 @@ class Pregunta:
 
 
 @dataclass(frozen=True)
-class Intercambio:
-    pregunta: str
-    respuesta: str
-
-
-@dataclass(frozen=True)
 class Evaluacion:
     puntuacion: int
     fortalezas: str

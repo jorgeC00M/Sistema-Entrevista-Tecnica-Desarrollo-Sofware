@@ -1,3 +1,5 @@
+import Tarjeta from '@/components/ui/Tarjeta'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import type { Entrevista } from '@/types/entrevista'
 
 interface Props {
@@ -6,14 +8,20 @@ interface Props {
 
 export default function TarjetaResumen({ entrevista }: Props) {
   return (
-    <div className="mb-6 rounded-xl bg-white p-5 text-center ring-1 ring-slate-200">
-      <p className="text-sm text-slate-500">
-        {entrevista.area_display} · {entrevista.nivel_display}
+    <Tarjeta className="mb-6 flex flex-col items-center gap-1 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
+      <div>
+        <EtiquetaMono tono="suelto">Calificación general</EtiquetaMono>
+        <p className="text-sm text-vidrio-texto">
+          {entrevista.area_display} · {entrevista.nivel_display}
+        </p>
+      </div>
+
+      <p className="font-mono-vidrio text-4xl font-medium text-vidrio-acento">
+        {entrevista.puntuacion_promedio === null
+          ? '—'
+          : Math.round(entrevista.puntuacion_promedio)}
+        <span className="text-headline-md font-normal text-vidrio-muted"> / 100</span>
       </p>
-      <p className="mt-2 text-4xl font-semibold text-indigo-600">
-        {entrevista.puntuacion_promedio ?? '—'}
-      </p>
-      <p className="text-sm text-slate-500">Puntuación promedio sobre 100</p>
-    </div>
+    </Tarjeta>
   )
 }

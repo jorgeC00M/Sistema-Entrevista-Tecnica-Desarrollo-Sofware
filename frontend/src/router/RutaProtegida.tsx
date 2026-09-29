@@ -1,11 +1,10 @@
-import { useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { LimiteDeErrorDeRuta } from '@/components/LimiteDeError'
+
+import Sidebar, { useSidebar } from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
-import Sidebar from '@/components/layout/Sidebar'
-import { useCajonNavegacion } from '@/components/layout/useCajonNavegacion'
-import { useEntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
-import IconoNav from '@/components/ui/IconoNav'
+import BotonIcono from '@/components/ui/BotonIcono'
 import Spinner from '@/components/ui/Spinner'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
@@ -18,63 +17,72 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
  */
 export default function RutaProtegida() {
   const { usuario, cargando } = useAuth()
-  const { abierto, alternar, cerrar, cajonRef, disparadorRef } = useCajonNavegacion()
-  const [plegado, setPlegado] = useState(false)
-  const entrevistaEnCurso = useEntrevistaEnCurso()
+  const { plegado, alternarPlegado, entrevistaEnCurso, ultimaFinalizada, cajon } = useSidebar()
+  // Desestructurado aparte: oxlint no reconoce una ref accedida como
+  // propiedad de un objeto anidado (`cajon.cajonRef`) y la marca como lectura
+  // de `.current` en render, aunque pasar la ref misma a `ref={}` es correcto.
+  const { abierto, alternar, cerrar, cajonRef, disparadorRef } = cajon
 
   if (cargando) return <Spinner texto="Verificando sesión…" />
   if (!usuario) return <Navigate to="/login" replace />
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* A todo lo ancho y por encima de todo lo demás: el sidebar y el cajón
-          se anclan a su altura (top-16) para quedar debajo, nunca a su lado. */}
-      <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />
-
-      {/* Barra fija en escritorio, debajo del encabezado. El ancho cambia al
-          plegar, con transición. */}
+    // Sistema "vidrio": fondo y tipografía propios de todo el dashboard,
+    // fijados una sola vez aquí — el resto del árbol hereda por cascada,
+    // igual que TarjetaAuth.tsx en login/registro. tinta/iris no aparecen
+    // en ningún hijo de este nodo.
+    <div className="min-h-screen bg-vidrio-bg text-vidrio-texto">
+      {/* Barra fija en escritorio: panel de borde completo, toca los 3 bordes
+          de la ventana (arriba, izquierda, abajo) sin margen ni radio — el
+          header arranca justo en su esquina superior derecha. El ancho
+          cambia al plegar, con transición. */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-10 hidden border-r border-slate-800 bg-slate-900 transition-[width] duration-200 ease-out lg:block ${
-          plegado ? 'w-[76px]' : 'w-64'
+        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-vidrio-ink transition-[width] duration-200 ease-out lg:block ${
+          plegado ? 'w-[72px]' : 'w-64'
         }`}
       >
         <Sidebar
           plegado={plegado}
-          onAlternarPlegado={() => setPlegado((v) => !v)}
+          onAlternarPlegado={alternarPlegado}
           entrevistaEnCurso={entrevistaEnCurso}
+          ultimaFinalizada={ultimaFinalizada}
         />
       </aside>
 
-      {/* Cajón en pantallas estrechas, también debajo del encabezado: el
-          botón que lo abre sigue visible y pulsable mientras está abierto. */}
+      {/* Cajón en pantallas estrechas, con el mismo estilo de borde completo. */}
       {abierto && (
         <>
           <div
-            className="fixed inset-x-0 top-16 bottom-0 z-20 bg-slate-900/40 lg:hidden"
+            className="fixed inset-0 z-20 bg-vidrio-ink/40 lg:hidden"
             onClick={cerrar}
             aria-hidden="true"
           />
           <aside
             ref={cajonRef}
+            // jsx-a11y sugiere <dialog> nativo en vez de role="dialog". No se
+            // adopta: el cajón ya trae su propio atrapado de foco
+            // (useFocusTrap) y su propio "clic fuera" (el fondo oscurecido de
+            // arriba); <dialog> añadiría un segundo modelo de apertura/cierre
+            // (showModal, ::backdrop) que competiría con ese, sin ganancia de
+            // accesibilidad real — el patrón ARIA ya está completo.
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed top-16 bottom-0 left-0 z-30 w-72 border-r border-slate-800 bg-slate-900 shadow-xl lg:hidden"
+            className="fixed top-0 bottom-0 left-0 z-30 w-72 bg-vidrio-ink lg:hidden"
           >
             <div className="flex justify-end p-2">
-              <button
-                type="button"
-                onClick={cerrar}
+              <BotonIcono
+                icono="cerrar"
                 aria-label="Cerrar menú"
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors duration-150 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-              >
-                <IconoNav nombre="cerrar" />
-              </button>
+                onClick={cerrar}
+              />
             </div>
             <div className="h-[calc(100%-3.5rem)]">
               <Sidebar
                 plegado={false}
                 entrevistaEnCurso={entrevistaEnCurso}
+                ultimaFinalizada={ultimaFinalizada}
                 onNavegar={cerrar}
               />
             </div>
@@ -82,9 +90,27 @@ export default function RutaProtegida() {
         </>
       )}
 
-      <div className={`transition-[padding] duration-200 ease-out ${plegado ? 'lg:pl-[76px]' : 'lg:pl-64'}`}>
-        <main className="mx-auto max-w-4xl px-4 py-6">
-          <Outlet />
+      {/* Contenido: header + main comparten el mismo margen izquierdo, igual
+          al ancho exacto del sidebar — sin hueco de por medio, porque ya no
+          es flotante. En móvil no hay margen — el sidebar no está en flujo,
+          es el cajón. */}
+      <div
+        className={`transition-[padding] duration-200 ease-out ${
+          plegado ? 'lg:pl-[72px]' : 'lg:pl-64'
+        }`}
+      >
+        <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />
+        {/* Sin max-w aquí: cada página elige su propio ancho según lo que
+            muestra (angosto para conversar/leer, más ancho para tablas y
+            tarjetas de datos) — un tope único dejaba mucho espacio vacío en
+            pantallas grandes. */}
+        {/* Dentro del layout, no envolviéndolo: si una pantalla revienta, la
+            barra lateral y la cabecera siguen en pie y el usuario puede irse a
+            otra sección en vez de quedarse sin navegación. */}
+        <main className="px-4 py-6 sm:px-6 lg:px-8">
+          <LimiteDeErrorDeRuta>
+            <Outlet />
+          </LimiteDeErrorDeRuta>
         </main>
       </div>
     </div>

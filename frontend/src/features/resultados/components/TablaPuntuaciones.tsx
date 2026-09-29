@@ -1,4 +1,10 @@
-import { ESTILO_DE_BANDA } from '@/features/resultados/bandas'
+import Tarjeta from '@/components/ui/Tarjeta'
+import { Fragment } from 'react'
+
+import ChipPuntaje from '@/components/ui/ChipPuntaje'
+import Divisor from '@/components/ui/Divisor'
+import { ESTILO_DE_BANDA } from '@/lib/puntajes'
+import { formatearSegundosCompacto } from '@/lib/estados'
 import type { Intercambio } from '@/types/entrevista'
 
 interface Props {
@@ -10,31 +16,39 @@ export default function TablaPuntuaciones({ intercambios }: Props) {
   if (calificados.length === 0) return null
 
   return (
-    <div className="mb-6 rounded-xl bg-white p-4 ring-1 ring-slate-200 sm:p-5">
-      <h3 className="mb-3 text-sm font-medium text-slate-700">Puntuación por pregunta</h3>
-      <div className="space-y-2">
-        {calificados.map((i) => {
-          const evaluacion = i.evaluacion!
-          const estilo = ESTILO_DE_BANDA[evaluacion.banda]
-          return (
-            <div key={i.numero} className="flex items-center gap-3 text-sm">
-              <span className="w-24 shrink-0 text-slate-500">Pregunta {i.numero}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className={`h-full rounded-full ${estilo.fondo}`}
-                  style={{ width: `${evaluacion.puntuacion}%` }}
-                />
-              </div>
-              <span className={`w-10 shrink-0 text-right font-semibold ${estilo.texto}`}>
-                {evaluacion.puntuacion}
-              </span>
-              <span className="hidden w-24 shrink-0 text-xs text-slate-400 sm:inline">
-                {estilo.etiqueta}
-              </span>
-            </div>
-          )
-        })}
+    <Tarjeta className="mb-6">
+      <div className="flex items-baseline justify-between p-4 pb-3 sm:px-5 sm:pt-5">
+        <h2 className="text-headline-sm font-semibold text-vidrio-ink">Desglose por pregunta</h2>
+        <span className="text-body-sm text-vidrio-muted">
+          {calificados.length} enunciado{calificados.length === 1 ? '' : 's'} evaluado
+          {calificados.length === 1 ? '' : 's'}
+        </span>
       </div>
-    </div>
+
+      {calificados.map((i, indice) => {
+        const evaluacion = i.evaluacion!
+        const estilo = ESTILO_DE_BANDA[evaluacion.banda]
+        return (
+          <Fragment key={i.numero}>
+            {indice > 0 && <Divisor />}
+            <div className="flex flex-wrap items-center gap-3 p-4 sm:px-5">
+              <span className="font-mono-vidrio text-body-sm text-vidrio-muted">
+                {String(i.numero).padStart(2, '0')}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-vidrio-ink">{i.pregunta}</p>
+                <p className="text-body-sm text-vidrio-muted">
+                  {estilo.etiqueta}
+                  {i.tiempo_respuesta !== null && (
+                    <> · {formatearSegundosCompacto(i.tiempo_respuesta)}</>
+                  )}
+                </p>
+              </div>
+              <ChipPuntaje puntuacion={evaluacion.puntuacion} banda={evaluacion.banda} />
+            </div>
+          </Fragment>
+        )
+      })}
+    </Tarjeta>
   )
 }

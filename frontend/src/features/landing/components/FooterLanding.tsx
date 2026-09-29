@@ -1,82 +1,62 @@
 import { Link } from 'react-router-dom'
 
-import Icono from '@/features/landing/components/Icono'
+import Icono from '@/components/ui/Icono'
+import Wrap from '@/features/landing/components/Wrap'
 
 // Marcadores de posición hasta que Jorge confirme el correo definitivo.
 const CORREO_CONTACTO = 'jorgecondorimaitarom@gmail.com'
 const AUTOR = 'Jorge Condori'
 const ANIO = new Date().getFullYear()
 
+const ENLACES = [
+  { href: '#como-funciona', etiqueta: 'Cómo funciona' },
+  { href: '#que-recibes', etiqueta: 'Qué recibes' },
+  { href: '#areas', etiqueta: 'Áreas' },
+]
+
+/** Footer compacto de dos filas: marca + navegación en línea arriba,
+ * identificación académica y contacto abajo — mismo contenido que antes,
+ * sin las tres columnas separadas. */
 export default function FooterLanding() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <div className="grid gap-8 sm:grid-cols-3">
-          <div>
-            <div className="flex items-center gap-2 text-slate-900">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-                <Icono nombre="marca" className="h-5 w-5" />
-              </span>
-              <span className="text-sm font-semibold">Entrevistas Técnicas</span>
-            </div>
-            <p className="mt-3 text-sm text-slate-600">
-              Simulador de entrevistas técnicas con evaluación automatizada, para egresados de
-              Ingeniería de Sistemas.
-            </p>
-          </div>
+    <footer className="bg-vidrio-ink py-7 text-sm text-vidrio-sidebar-muted">
+      <Wrap>
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-[0.98rem] font-semibold text-white"
+          >
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-control bg-white text-vidrio-ink">
+              <Icono nombre="marca" className="h-4 w-4" />
+            </span>
+            Entrevistas Técnicas
+          </Link>
 
-          <nav aria-label="Secciones">
-            <h2 className="text-sm font-semibold text-slate-900">Navegación</h2>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <a href="#como-funciona" className="text-slate-600 hover:text-indigo-600">
-                  Cómo funciona
-                </a>
-              </li>
-              <li>
-                <a href="#que-recibes" className="text-slate-600 hover:text-indigo-600">
-                  Qué recibes
-                </a>
-              </li>
-              <li>
-                <a href="#areas" className="text-slate-600 hover:text-indigo-600">
-                  Áreas técnicas
-                </a>
-              </li>
-              <li>
-                <Link to="/registro" className="text-slate-600 hover:text-indigo-600">
-                  Crear cuenta
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="text-slate-600 hover:text-indigo-600">
-                  Iniciar sesión
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Proyecto</h2>
-            <p className="mt-3 text-sm text-slate-600">
-              Proyecto de Grado
-              <br />
-              Carrera de Ingeniería de Sistemas
-              <br />
-              Universidad Mayor de San Simón
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              <a href={`mailto:${CORREO_CONTACTO}`} className="hover:text-indigo-600">
-                {CORREO_CONTACTO}
+          <nav aria-label="Secciones" className="flex flex-wrap gap-[22px]">
+            {ENLACES.map((e) => (
+              <a key={e.href} href={e.href} className="hover:text-white">
+                {e.etiqueta}
               </a>
-            </p>
-          </div>
+            ))}
+            <Link to="/registro" className="hover:text-white">
+              Crear cuenta
+            </Link>
+            <Link to="/login" className="hover:text-white">
+              Iniciar sesión
+            </Link>
+          </nav>
         </div>
 
-        <p className="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-500">
-          {AUTOR} · {ANIO}
-        </p>
-      </div>
+        <div className="mt-[18px] flex flex-wrap justify-between gap-3 border-t border-white/10 pt-4 text-[0.82rem] text-[#8d9cbd]">
+          <span>Proyecto de Grado · Ingeniería de Sistemas · Universidad Mayor de San Simón</span>
+          <span>
+            {AUTOR} · {ANIO} ·{' '}
+            <a href={`mailto:${CORREO_CONTACTO}`} className="hover:text-white">
+              {CORREO_CONTACTO}
+            </a>
+          </span>
+        </div>
+      </Wrap>
     </footer>
   )
 }

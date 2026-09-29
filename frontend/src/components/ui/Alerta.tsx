@@ -1,24 +1,22 @@
 import type { ReactNode } from 'react'
 
-const ESTILOS = {
-  error: 'bg-red-50 text-red-700 ring-1 ring-red-200',
-  exito: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  info: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
-} as const
-
-export type TipoDeAlerta = keyof typeof ESTILOS
-
 interface Props {
-  tipo?: TipoDeAlerta
   children?: ReactNode
 }
 
-export default function Alerta({ tipo = 'error', children }: Props) {
+/**
+ * Aviso de error sobre un formulario o una pantalla.
+ *
+ * Tenía tipos `exito` e `info` que ninguna pantalla usaba: lo positivo en este
+ * producto se comunica con la puntuación, no con un banner. `role="alert"` va
+ * fijo porque un error sí interrumpe.
+ */
+export default function Alerta({ children }: Props) {
   if (!children) return null
   return (
     <div
-      className={`rounded-lg px-4 py-3 text-sm ${ESTILOS[tipo]}`}
-      role={tipo === 'error' ? 'alert' : 'status'}
+      className="rounded-control bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20"
+      role="alert"
     >
       {children}
     </div>

@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -59,6 +61,28 @@ class RegistroTest(APITestCase):
         usuario = Usuario.objects.get(email="hash@example.com")
         self.assertNotEqual(usuario.password, "una-contrasena-robusta-123")
         self.assertTrue(usuario.check_password("una-contrasena-robusta-123"))
+
+
+class ModeloUsuarioTest(TestCase):
+    """Invariantes del modelo, independientes de la API.
+
+    Vivían en `apps/entrevistas/tests/test_modelos.py`, que es la app
+    equivocada; el test de hasheo que había allí se omite porque
+    `test_contrasena_queda_hasheada` de arriba ya lo cubre.
+    """
+
+    def test_usuario_se_autentica_por_email(self):
+        self.assertEqual(Usuario.USERNAME_FIELD, "email")
+
+    def test_email_duplicado_no_permitido(self):
+        Usuario.objects.create_user(
+            email="egresado@example.com", password="clave-segura-123", nombre_completo="Uno"
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Usuario.objects.create_user(
+                    email="egresado@example.com", password="otra-clave-123", nombre_completo="Otro"
+                )
 
 
 class LoginTest(APITestCase):

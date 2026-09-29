@@ -1,9 +1,9 @@
-import type { NombreDeIconoNav } from '@/components/ui/IconoNav'
+import type { NombreDeIcono } from '@/components/ui/Icono'
 
 export interface Destino {
   ruta: string
   etiqueta: string
-  icono: NombreDeIconoNav
+  icono: NombreDeIcono
 }
 
 /**
@@ -23,4 +23,17 @@ export const DESTINO_PRINCIPAL: Destino = {
   ruta: '/nueva-entrevista',
   etiqueta: 'Nueva entrevista',
   icono: 'mas',
+}
+
+/**
+ * Destinos condicionales: solo existen cuando el estudiante tiene una
+ * entrevista a la que aplican, así que se construyen con su id en vez de
+ * vivir como entradas fijas en `DESTINOS`. Ver `specs/navegacion-app`.
+ */
+export function destinoEntrevistaEnCurso(id: number): Destino {
+  return { ruta: `/entrevista/${id}`, etiqueta: 'Entrevista en curso', icono: 'terminal' }
+}
+
+export function destinoResultados(id: number): Destino {
+  return { ruta: `/entrevista/${id}/resultados`, etiqueta: 'Resultados', icono: 'resultados' }
 }

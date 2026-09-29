@@ -1,6 +1,9 @@
+import Tarjeta from '@/components/ui/Tarjeta'
 import { Link } from 'react-router-dom'
 
-import { ESTILO_DE_BANDA } from '@/features/resultados/bandas'
+import ChipPuntaje from '@/components/ui/ChipPuntaje'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
 import type { Observacion } from '@/types/evaluacion'
 
 interface Props {
@@ -12,51 +15,37 @@ export default function ListaObservaciones({ observaciones }: Props) {
 
   return (
     <div>
-      <h2 className="text-sm font-medium text-slate-700">Lo que te han señalado</h2>
-      <p className="mt-1 text-xs text-slate-500">
+      <h2 className="text-headline-sm font-semibold text-vidrio-ink">Lo que te han señalado</h2>
+      <p className="mt-1 text-body-sm text-vidrio-texto">
         De la más reciente a la más antigua, incluidas las entrevistas que dejaste a medias.
       </p>
 
       <ul className="mt-4 space-y-3">
-        {observaciones.map((o) => {
-          const estilo = ESTILO_DE_BANDA[o.banda]
-          return (
-            <li
-              key={`${o.entrevista_id}-${o.numero}`}
-              className="rounded-xl bg-white p-4 ring-1 ring-slate-200 sm:p-5"
+        {observaciones.map((o) => (
+          <Tarjeta como="li" key={`${o.entrevista_id}-${o.numero}`} className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <EtiquetaMono tono="suelto">
+                {o.area_display} · Pregunta {String(o.numero).padStart(2, '0')} ·{' '}
+                {new Date(o.fecha).toLocaleDateString('es-BO')}
+              </EtiquetaMono>
+              <ChipPuntaje puntuacion={o.puntuacion} banda={o.banda} conEtiqueta />
+            </div>
+
+            <p className="mt-2 text-sm font-medium text-vidrio-ink">{o.pregunta}</p>
+
+            <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+              <ListaRetroalimentacion variante="debilidades" texto={o.debilidades} />
+              <ListaRetroalimentacion variante="sugerencias" texto={o.sugerencias} />
+            </dl>
+
+            <Link
+              to={`/entrevista/${o.entrevista_id}/resultados`}
+              className="mt-3 inline-block rounded text-xs font-medium text-vidrio-acento underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
             >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-xs text-slate-500">
-                  {o.area_display} · Pregunta {o.numero} ·{' '}
-                  {new Date(o.fecha).toLocaleDateString('es-BO')}
-                </p>
-                <span className={`text-sm font-semibold ${estilo.texto}`}>
-                  {o.puntuacion}/100 · {estilo.etiqueta}
-                </span>
-              </div>
-
-              <p className="mt-2 text-sm font-medium text-slate-800">{o.pregunta}</p>
-
-              <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-semibold text-amber-600 uppercase">A mejorar</dt>
-                  <dd className="mt-1 text-sm text-slate-600">{o.debilidades}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-indigo-600 uppercase">Sugerencia</dt>
-                  <dd className="mt-1 text-sm text-slate-600">{o.sugerencias}</dd>
-                </div>
-              </dl>
-
-              <Link
-                to={`/entrevista/${o.entrevista_id}/resultados`}
-                className="mt-3 inline-block rounded text-xs font-medium text-indigo-600 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Ver la entrevista completa
-              </Link>
-            </li>
-          )
-        })}
+              Ver la entrevista completa
+            </Link>
+          </Tarjeta>
+        ))}
       </ul>
     </div>
   )

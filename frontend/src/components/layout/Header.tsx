@@ -2,7 +2,8 @@ import { forwardRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { resolverTitulo } from '@/components/layout/titulosDeRuta'
-import IconoNav from '@/components/ui/IconoNav'
+import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import Icono from '@/components/ui/Icono'
 
 interface Props {
   onAbrirMenu: () => void
@@ -31,9 +32,10 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
   const { titulo, subtitulo } = resolverTitulo(pathname)
 
   return (
-    // Altura fija (h-16) a propósito: el sidebar y el cajón se anclan a este
-    // mismo valor (top-16) para quedar debajo del encabezado, nunca a su lado.
-    <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white/90 backdrop-blur">
+    // Altura fija (h-16 = 64px): el sidebar es un panel de borde completo,
+    // independiente en altura (top-0 a bottom-0) — este header vive dentro
+    // de la columna de contenido, a la derecha del sidebar, no debajo.
+    <header className="sticky top-0 z-40 h-16 border-b border-vidrio-linea bg-vidrio-bg/80 backdrop-blur-md">
       <div className="flex h-full items-center gap-3 px-4">
         <button
           ref={disparadorRef}
@@ -41,20 +43,27 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
           onClick={onAbrirMenu}
           aria-expanded={menuAbierto}
           aria-label="Abrir menú de navegación"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-vidrio-muted transition-colors duration-150 hover:bg-vidrio-field hover:text-vidrio-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento lg:hidden"
         >
-          <IconoNav nombre="menu" />
+          <Icono nombre="menu" />
         </button>
 
         {/*
           No es un <h1>: cada página ya tiene el suyo en su contenido
-          (SeleccionAreaPage, HistorialPage, RetroalimentacionPage, PerfilPage).
+          (SeleccionAreaPage, EntrevistaPage, ResultadosPage, HistorialPage,
+          RetroalimentacionPage, PerfilPage).
           Un segundo <h1> aquí rompería la jerarquía de encabezados de la
           página. Esto es una etiqueta de la interfaz (chrome), no contenido.
         */}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-900">{titulo}</p>
-          {subtitulo && <p className="truncate text-xs text-slate-500">{subtitulo}</p>}
+          <p className="flex items-center gap-1.5 truncate">
+            <EtiquetaMono tono="suelto">Simulador técnico</EtiquetaMono>
+            <span aria-hidden="true" className="text-vidrio-muted">
+              /
+            </span>
+            <span className="truncate text-base font-semibold text-vidrio-ink">{titulo}</span>
+          </p>
+          {subtitulo && <p className="truncate text-body-sm text-vidrio-muted">{subtitulo}</p>}
         </div>
       </div>
     </header>

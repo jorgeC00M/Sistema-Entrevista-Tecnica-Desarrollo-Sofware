@@ -118,10 +118,9 @@ $RECYCLE.BIN/
 # ==========================================================
 .claude/
 .claude/settings.local.json
-
-# Documentación y especificaciones locales
-docs/
-openspec/
+.agents/
+CLAUDE.md
+skills-lock.json
 
 # ==========================================================
 # Temporales

@@ -38,6 +38,14 @@ def _pregunta_dict(intercambio) -> dict | None:
 class EntrevistaListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @property
+    def throttle_scope(self) -> str | None:
+        """Solo el alta consume una llamada al proveedor de IA (genera la
+        primera pregunta). Listar el historial se consulta a menudo y no debe
+        gastar ese cupo, así que fuera del POST no hay ámbito y
+        `ScopedRateThrottle` deja pasar la petición."""
+        return "iniciar-entrevista" if self.request.method == "POST" else None
+
     def get(self, request):
         services.marcar_abandonadas(request.user)
         return Response(
@@ -54,11 +62,10 @@ class EntrevistaListCreateView(APIView):
             entrada.validated_data["nivel"],
         )
 
-        primera_pregunta = entrevista.intercambios.order_by("numero").first()
         return Response(
             {
                 "entrevista": EntrevistaSerializer(entrevista).data,
-                "pregunta": _pregunta_dict(primera_pregunta),
+                "pregunta": _pregunta_dict(selectors.primer_intercambio(entrevista)),
                 "total_preguntas": PREGUNTAS_POR_ENTREVISTA,
             },
             status=status.HTTP_201_CREATED,
@@ -82,6 +89,8 @@ class EntrevistaDetailView(APIView):
 
 class ResponderView(APIView):
     permission_classes = [IsAuthenticated]
+    # Es el endpoint que gasta una llamada de pago al proveedor por petición.
+    throttle_scope = "evaluar"
 
     def post(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
@@ -97,9 +106,11 @@ class ResponderView(APIView):
 
         try:
             evaluacion = services.responder(entrevista, entrada.validated_data["respuesta"])
-        except ValueError as exc:
+        except services.SinIntercambioPendiente as exc:
             # No debería ocurrir dado el chequeo de estado de arriba; queda
-            # como red de seguridad ante una condición de carrera.
+            # como red de seguridad ante una condición de carrera. Se captura
+            # el tipo exacto: cualquier otro ValueError (por ejemplo, un área
+            # sin miembro en el enum) es un fallo real y debe subir.
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
         entrevista.refresh_from_db()
