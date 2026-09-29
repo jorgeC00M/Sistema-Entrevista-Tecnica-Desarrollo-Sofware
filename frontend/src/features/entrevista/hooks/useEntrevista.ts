@@ -44,10 +44,17 @@ export function useEntrevista(id: string) {
         const resultados = await obtenerResultados(id)
         if (cancelado) return
 
-        const previos: MensajeDeChat[] = resultados.intercambios.flatMap((i) => [
-          { autor: 'sistema' as const, texto: i.pregunta },
-          { autor: 'usuario' as const, texto: i.respuesta, evaluacion: i.evaluacion ?? undefined },
-        ])
+        // Solo los turnos ya calificados: el endpoint de resultados devuelve
+        // también el intercambio pendiente (con la respuesta vacía), y ese
+        // mismo lo aporta `estado.pregunta_pendiente` justo debajo. Sin este
+        // filtro la pregunta en curso se pintaba dos veces, con una burbuja
+        // de usuario vacía en medio.
+        const previos: MensajeDeChat[] = resultados.intercambios
+          .filter((i) => i.evaluacion !== null)
+          .flatMap((i) => [
+            { autor: 'sistema' as const, texto: i.pregunta },
+            { autor: 'usuario' as const, texto: i.respuesta, evaluacion: i.evaluacion ?? undefined },
+          ])
         const pendiente: MensajeDeChat[] = estado.pregunta_pendiente
           ? [{ autor: 'sistema', texto: estado.pregunta_pendiente.texto }]
           : []

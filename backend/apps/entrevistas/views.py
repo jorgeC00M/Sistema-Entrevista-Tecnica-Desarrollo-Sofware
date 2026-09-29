@@ -135,7 +135,7 @@ class ResultadosView(APIView):
             {
                 "entrevista": EntrevistaSerializer(entrevista).data,
                 "intercambios": IntercambioSerializer(
-                    selectors.intercambios_con_evaluacion(entrevista), many=True
+                    selectors.intercambios_de(entrevista), many=True
                 ).data,
             }
         )

@@ -18,12 +18,37 @@ from .exceptions import (
     RespuestaIAInvalida,
 )
 
-MODELO_POR_DEFECTO = "gemini-3.8-flash"
+# Google recomienda flash-lite para baja latencia y alto volumen, que es lo
+# que pide este proyecto: una pregunta corta o cuatro campos de texto, no
+# razonamiento de horizonte largo. Los modelos "frontera" recién lanzados
+# (3.8-flash y compañía) están además mucho más saturados: su pico de 503 por
+# alta demanda dura semanas tras cada lanzamiento.
+MODELO_POR_DEFECTO = "gemini-3.5-flash-lite"
 
 # Mismo tope que el adaptador de Claude: sin timeout, una llamada colgada
 # retiene el worker que la atiende, y en el plan gratuito de Render un worker
-# retenido es el servicio caído.
+# retenido es el servicio caído. Ojo: es por intento, no por petición —
+# con REINTENTOS el peor caso se multiplica.
 TIMEOUT_SEGUNDOS = 30.0
+
+# El SDK NO reintenta si no se le configura: con `retry_options=None` aplica
+# la estrategia "un solo intento". Eso dejaba que un 503 puntual de Google
+# ("este modelo tiene mucha demanda, reintenta más tarde") llegara tal cual al
+# usuario. Los códigos que cubre de fábrica —408, 429, 500, 502, 503, 504— son
+# justo los transitorios, y el retroceso exponencial con jitter es lo que
+# Google mismo recomienda para no formar una estampida de reintentos.
+#
+# Existe por simetría con `max_retries=2` del adaptador de Claude: que uno
+# reintentara y el otro no era precisamente la divergencia que `base.py` vino
+# a eliminar.
+REINTENTOS = types.HttpRetryOptions(attempts=3, initial_delay=1.0, max_delay=8.0)
+
+# Los modelos recientes razonan antes de responder, y ese paso domina el
+# tiempo de respuesta: en pruebas, pedir `{"ok": true}` tardaba ~17 s. Aquí no
+# hace falta deliberar —la pregunta sale del prompt y la nota, de la rúbrica—
+# así que se baja al mínimo útil. MINIMAL existe, pero LOW deja margen para
+# que el evaluador razone lo justo al calificar.
+NIVEL_DE_RAZONAMIENTO = types.ThinkingLevel.LOW
 
 
 class GeminiProveedorIA(ProveedorIAporJSON):
@@ -42,7 +67,10 @@ class GeminiProveedorIA(ProveedorIAporJSON):
         self.modelo = modelo or os.environ.get("GEMINI_MODEL") or MODELO_POR_DEFECTO
         self._cliente = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=int(TIMEOUT_SEGUNDOS * 1000)),
+            http_options=types.HttpOptions(
+                timeout=int(TIMEOUT_SEGUNDOS * 1000),
+                retry_options=REINTENTOS,
+            ),
         )
 
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:
@@ -54,6 +82,9 @@ class GeminiProveedorIA(ProveedorIAporJSON):
                     system_instruction=sistema,
                     response_mime_type="application/json",
                     response_json_schema=esquema,
+                    thinking_config=types.ThinkingConfig(
+                        thinking_level=NIVEL_DE_RAZONAMIENTO
+                    ),
                 ),
             )
         except genai_errors.ServerError as exc:

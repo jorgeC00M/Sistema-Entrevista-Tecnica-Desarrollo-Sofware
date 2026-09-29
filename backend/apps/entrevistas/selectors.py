@@ -47,7 +47,15 @@ def promedio_de_evaluaciones(entrevista):
     )["promedio"]
 
 
-def intercambios_con_evaluacion(entrevista):
+def intercambios_de(entrevista):
+    """Todos los intercambios de la entrevista, en orden, con su evaluación.
+
+    Incluye el que esté pendiente de responder: en una entrevista abandonada
+    la pantalla de resultados sí muestra la pregunta que quedó sin contestar.
+    Se llamaba `intercambios_con_evaluacion`, nombre que prometía un filtro
+    que nunca existió — y por creerlo el chat pintaba dos veces la pregunta
+    en curso.
+    """
     return entrevista.intercambios.select_related("evaluacion").order_by("numero")
 
 
