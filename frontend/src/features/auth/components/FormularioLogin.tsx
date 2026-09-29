@@ -63,6 +63,7 @@ export default function FormularioLogin({ onEnviar }: Props) {
         {/* Sin destino real todavía: no hay flujo de recuperación de
             contraseña en el backend. Queda visible como en el diseño, sin
             prometer una funcionalidad que no existe. */}
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
         <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
           ¿Olvidaste tu contraseña?
         </a>

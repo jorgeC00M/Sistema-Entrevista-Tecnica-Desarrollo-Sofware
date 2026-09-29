@@ -106,11 +106,16 @@ export default function FormularioRegistro({ onEnviar }: Props) {
             className="mt-0.5 h-[17px] w-[17px] shrink-0 accent-vidrio-acento"
           />
           <span>
+            {/* Sin destino real todavía: no hay páginas de términos ni de
+                privacidad publicadas. Mismo caso que "¿Olvidaste tu
+                contraseña?" en FormularioLogin. */}
             Acepto los{' '}
+            {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
             <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
               Términos
             </a>{' '}
             y la{' '}
+            {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
             <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
               Política de privacidad
             </a>

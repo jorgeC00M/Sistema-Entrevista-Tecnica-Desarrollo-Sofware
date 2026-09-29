@@ -56,6 +56,12 @@ export default function GraficoProgreso({ puntos }: Props) {
       <svg
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="w-full"
+        // jsx-a11y sugiere <img> en vez de role="img". No se adopta: es un
+        // SVG generado dinámicamente a partir de `puntos`, y <img> no admite
+        // SVG como hijo — habría que volcarlo a un data URI y perder la
+        // reactividad. El patrón ARIA (role="img" + aria-label) ya cubre el
+        // caso de un gráfico que se resume en una sola descripción.
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="img"
         aria-label="Gráfico de evolución de puntuaciones a lo largo del tiempo"
       >

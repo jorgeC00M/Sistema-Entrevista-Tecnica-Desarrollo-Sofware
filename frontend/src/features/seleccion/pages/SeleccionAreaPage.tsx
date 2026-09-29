@@ -106,7 +106,7 @@ export default function SeleccionAreaPage() {
             cargando={cargando}
             onClick={manejarInicio}
           >
-            Comenzar entrevista
+            Comenzar Entrevista
           </Boton>
         </div>
       </div>

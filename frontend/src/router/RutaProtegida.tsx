@@ -59,6 +59,13 @@ export default function RutaProtegida() {
           />
           <aside
             ref={cajonRef}
+            // jsx-a11y sugiere <dialog> nativo en vez de role="dialog". No se
+            // adopta: el cajón ya trae su propio atrapado de foco
+            // (useFocusTrap) y su propio "clic fuera" (el fondo oscurecido de
+            // arriba); <dialog> añadiría un segundo modelo de apertura/cierre
+            // (showModal, ::backdrop) que competiría con ese, sin ganancia de
+            // accesibilidad real — el patrón ARIA ya está completo.
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"

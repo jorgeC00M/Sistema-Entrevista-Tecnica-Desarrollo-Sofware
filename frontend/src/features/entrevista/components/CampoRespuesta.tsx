@@ -36,6 +36,12 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
           maxLength={MAXIMO_CARACTERES}
           maximoCaracteres={MAXIMO_CARACTERES}
           placeholder="Escribe tu respuesta…"
+          // El campo central de la aplicación no tenía nombre accesible: solo
+          // el placeholder, que un lector de pantalla no siempre anuncia y que
+          // desaparece en cuanto se escribe. No lleva `etiqueta` visible
+          // porque el mockup del chat no reserva espacio para una — el
+          // nombre accesible basta.
+          aria-label="Tu respuesta"
           className="flex-1"
           onKeyDown={(evento) => {
             // Enter envía; Shift+Enter hace salto de línea.

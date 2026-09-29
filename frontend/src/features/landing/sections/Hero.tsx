@@ -23,7 +23,7 @@ export default function Hero({ totalPreguntas }: Props) {
     <section
       id="inicio"
       ref={ref}
-      className="relative flex min-h-[100svh] items-center overflow-hidden bg-[linear-gradient(180deg,#16254b_0%,#1c2f5e_40%,#2b55a3_100%)] pt-[clamp(96px,13vh,130px)] pb-[clamp(28px,5vh,48px)] text-white"
+      className="relative flex min-h-[100svh] items-center overflow-hidden bg-[linear-gradient(180deg,#16254b_0%,var(--color-vidrio-ink)_40%,var(--color-vidrio-acento)_100%)] pt-[clamp(96px,13vh,130px)] pb-[clamp(28px,5vh,48px)] text-white"
     >
       {/* Cuadrícula tenue: decorativa, se desvanece arriba y abajo. */}
       <div
@@ -49,10 +49,10 @@ export default function Hero({ totalPreguntas }: Props) {
 
       <Wrap className="relative w-full text-center">
         <h1
-          className={`mx-auto max-w-[900px] font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance sm:text-[2.8rem] lg:text-[3.8rem] ${clasesRevelado(visible)}`}
+          className={`mx-auto max-w-[5000px] font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance sm:text-[2.8rem] lg:text-[3.8rem] ${clasesRevelado(visible)}`}
         >
-          Practica la entrevista técnica{' '}
-          <span className="text-[#bcd0f5]">antes de que sea la de verdad</span>
+          Preparate para tu proximo entrevista, antes de la evaluación real
+
         </h1>
 
         <p

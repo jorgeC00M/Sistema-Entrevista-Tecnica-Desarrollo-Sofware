@@ -12,6 +12,12 @@ export default function BarraProgreso({ actual, total }: Props) {
   const porcentaje = Math.min(100, Math.round((actual / total) * 100))
   return (
     <div
+      // jsx-a11y sugiere <progress> nativo en vez de role="progressbar". No
+      // se adopta: el relleno redondeado y coloreado dependería de pseudo-
+      // elementos con prefijo de fabricante (::-webkit-progress-value,
+      // ::-moz-progress-bar) que no se pueden verificar visualmente aquí, y
+      // el patrón ARIA ya está completo — no hay hueco de accesibilidad real.
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="progressbar"
       aria-valuenow={porcentaje}
       aria-valuemin={0}

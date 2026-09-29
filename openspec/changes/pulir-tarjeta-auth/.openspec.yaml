@@ -1,0 +1,8 @@
+schema: spec-driven
+created: 2026-09-24
+# Pulido visual puro sobre una pantalla ya aprobada (pulir-tarjeta-auth):
+# corrige contraste tarjeta/fondo y estilo de campos para acercarlos al
+# mockup de referencia. No introduce ni cambia ningún requisito observable
+# — la especificación de comportamiento no cambia, así que no hay delta
+# de specs que escribir.
+skip_specs: true
