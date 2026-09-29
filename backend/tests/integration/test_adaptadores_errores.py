@@ -17,6 +17,7 @@ import anthropic
 import httpx
 from google.genai import errors as genai_errors
 
+from integrations.ia import claude, gemini
 from integrations.ia.claude import AnthropicProveedorIA
 from integrations.ia.exceptions import (
     ErrorPermanente,
@@ -45,6 +46,16 @@ class ClaudeErroresTest(unittest.TestCase):
         with patch.dict("os.environ", {"ANTHROPIC_API_KEY": ""}, clear=False):
             with self.assertRaises(ProveedorNoConfigurado):
                 AnthropicProveedorIA(api_key=None)
+
+    def test_modelo_vacio_en_el_entorno_usa_el_valor_por_defecto(self):
+        """`ANTHROPIC_MODEL=` en el .env (variable presente, valor vacío) debe
+        comportarse igual que no definirla — no mandarle un modelo vacío a la
+        API. Candado del bug real: `.get(clave, por_defecto)` solo aplica el
+        valor por defecto cuando la variable no existe en absoluto."""
+        with patch.dict("os.environ", {"ANTHROPIC_MODEL": ""}, clear=False):
+            with patch("anthropic.Anthropic"):
+                proveedor = AnthropicProveedorIA(api_key="clave-de-prueba")
+        self.assertEqual(proveedor.modelo, claude.MODELO_POR_DEFECTO)
 
     def test_codigos_transitorios(self):
         for codigo in (429, 500, 502, 503, 504, 529):
@@ -90,6 +101,15 @@ class GeminiErroresTest(unittest.TestCase):
         with patch.dict("os.environ", {"GEMINI_API_KEY": ""}, clear=False):
             with self.assertRaises(ProveedorNoConfigurado):
                 GeminiProveedorIA(api_key=None)
+
+    def test_modelo_vacio_en_el_entorno_usa_el_valor_por_defecto(self):
+        """Mismo candado que en Claude, para `GEMINI_MODEL=`: es el bug real
+        que produjo un 500 (`ValueError: model is required.`) en vez del 503
+        que debería salir cuando falta configuración."""
+        with patch.dict("os.environ", {"GEMINI_MODEL": ""}, clear=False):
+            with patch("google.genai.Client"):
+                proveedor = GeminiProveedorIA(api_key="clave-de-prueba")
+        self.assertEqual(proveedor.modelo, gemini.MODELO_POR_DEFECTO)
 
     def test_error_de_servidor_es_transitorio(self):
         proveedor = self._proveedor()

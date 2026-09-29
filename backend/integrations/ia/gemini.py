@@ -18,7 +18,7 @@ from .exceptions import (
     RespuestaIAInvalida,
 )
 
-MODELO_POR_DEFECTO = "gemini-2.5-flash"
+MODELO_POR_DEFECTO = "gemini-3.8-flash"
 
 # Mismo tope que el adaptador de Claude: sin timeout, una llamada colgada
 # retiene el worker que la atiende, y en el plan gratuito de Render un worker
@@ -34,7 +34,12 @@ class GeminiProveedorIA(ProveedorIAporJSON):
         if not api_key:
             raise ProveedorNoConfigurado("Falta GEMINI_API_KEY para usar el proveedor 'gemini'")
 
-        self.modelo = modelo or os.environ.get("GEMINI_MODEL", MODELO_POR_DEFECTO)
+        # `os.environ.get(clave, por_defecto)` solo aplica el valor por
+        # defecto cuando la variable no existe — no cuando existe pero está
+        # vacía (`GEMINI_MODEL=` en el .env cuenta como "existe"). Encadenar
+        # el `or` trata ambos casos igual, que es lo que el .env.example
+        # documenta ("opcional, por defecto...").
+        self.modelo = modelo or os.environ.get("GEMINI_MODEL") or MODELO_POR_DEFECTO
         self._cliente = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(timeout=int(TIMEOUT_SEGUNDOS * 1000)),

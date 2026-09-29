@@ -45,7 +45,9 @@ class AnthropicProveedorIA(ProveedorIAporJSON):
                 "Falta ANTHROPIC_API_KEY para usar el proveedor 'anthropic'"
             )
 
-        self.modelo = modelo or os.environ.get("ANTHROPIC_MODEL", MODELO_POR_DEFECTO)
+        # Mismo motivo que en gemini.py: `.get(clave, por_defecto)` no cae al
+        # valor por defecto cuando la variable existe pero está vacía.
+        self.modelo = modelo or os.environ.get("ANTHROPIC_MODEL") or MODELO_POR_DEFECTO
         self._cliente = anthropic.Anthropic(
             api_key=api_key,
             timeout=TIMEOUT_SEGUNDOS,
