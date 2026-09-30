@@ -6,7 +6,6 @@ import Boton from '@/components/ui/Boton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import PanelCualitativo from '@/features/resultados/components/PanelCualitativo'
-import TablaPuntuaciones from '@/features/resultados/components/TablaPuntuaciones'
 import TarjetaResumen from '@/features/resultados/components/TarjetaResumen'
 import { useResultados } from '@/features/resultados/hooks/useResultados'
 import { formatearDuracion, TONO_POR_ESTADO } from '@/lib/estados'
@@ -44,7 +43,6 @@ export default function ResultadosPage() {
       </div>
 
       <TarjetaResumen entrevista={entrevista} />
-      <TablaPuntuaciones intercambios={intercambios} />
 
       <div className="space-y-4">
         {intercambios.map((intercambio) => (

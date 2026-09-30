@@ -2,6 +2,7 @@ import Tarjeta from '@/components/ui/Tarjeta'
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
+import { formatearSegundosCompacto } from '@/lib/estados'
 import type { Intercambio } from '@/types/entrevista'
 
 interface Props {
@@ -9,13 +10,18 @@ interface Props {
 }
 
 export default function PanelCualitativo({ intercambio }: Props) {
-  const { numero, pregunta, respuesta, evaluacion } = intercambio
+  const { numero, pregunta, respuesta, evaluacion, tiempo_respuesta } = intercambio
   if (!evaluacion) return null
 
   return (
     <Tarjeta como="article" className="p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <EtiquetaMono tono="suelto">Pregunta {String(numero).padStart(2, '0')}</EtiquetaMono>
+        <EtiquetaMono tono="suelto">
+          Pregunta {String(numero).padStart(2, '0')}
+          {/* El tiempo vivía en la tabla de desglose, que repetía lo que este
+              panel ya dice. Al quitarla, este es su sitio natural. */}
+          {tiempo_respuesta !== null && <> · {formatearSegundosCompacto(tiempo_respuesta)}</>}
+        </EtiquetaMono>
         <ChipPuntaje puntuacion={evaluacion.puntuacion} banda={evaluacion.banda} conEtiqueta />
       </div>
 
