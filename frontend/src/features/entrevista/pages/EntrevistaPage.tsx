@@ -15,7 +15,7 @@ export default function EntrevistaPage() {
     mensajes,
     numeroActual,
     totalPreguntas,
-    areaDisplay,
+    puestoDisplay,
     nivelDisplay,
     cargandoInicial,
     enviando,
@@ -32,7 +32,7 @@ export default function EntrevistaPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-serif text-headline-sm font-semibold text-vidrio-ink">
-              Entrevista · {areaDisplay}
+              Entrevista · {puestoDisplay}
             </h1>
             <EtiquetaMono tono="suelto">Nivel {nivelDisplay}</EtiquetaMono>
           </div>
@@ -51,6 +51,13 @@ export default function EntrevistaPage() {
         <div className="mt-3">
           <BarraProgreso actual={numeroActual} total={totalPreguntas} />
         </div>
+
+        {/* La ausencia de notas durante la entrevista es deliberada; decirlo
+            evita que se lea como un fallo. */}
+        <p className="mt-3 text-body-sm text-vidrio-muted">
+          Tu calificación y la retroalimentación aparecerán al terminar, como en una
+          entrevista real.
+        </p>
       </Tarjeta>
 
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />

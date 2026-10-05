@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Sistema web de simulación de entrevistas técnicas (Proyecto de Grado, Ingeniería de Sistemas, UMSS). Django REST backend + React frontend. A conversational AI agent conducts a 5-question technical interview by area/level and evaluates each answer against a fixed rubric. The academic requirements this implements live in `docs/Copia de Copia de PerfilJorgeV3.docx.md` (the thesis profile) — consult it for the "why" behind the data model (section 3.4.1) and scope decisions.
+Sistema web de simulación de entrevistas técnicas (Proyecto de Grado, Ingeniería de Sistemas, UMSS). Django REST backend + React frontend. A conversational AI agent conducts a 5-question technical interview for a chosen job role (puesto) and level, and evaluates each answer against a fixed rubric. The academic requirements this implements live in `docs/Copia de Copia de PerfilJorgeV3.docx.md` (the thesis profile) — consult it for the "why" behind the data model (section 3.4.1) and scope decisions.
 
 ## Commands
 
@@ -22,9 +22,9 @@ Settings are split by environment. `manage.py` defaults to `config.settings.loca
 Tests use Django's test runner (not plain `pytest`/`unittest` — several test modules import Django models and need `django.setup()`):
 
 ```powershell
-python manage.py test                                   # full suite (auto-discovery, 94 tests)
+python manage.py test                                   # full suite (auto-discovery, 232 tests)
 python manage.py test apps.entrevistas                  # one app
-python manage.py test tests.integration                 # the Django-free IA tests
+python manage.py test tests.integration                 # the Django-free IA and document tests
 python manage.py test apps.entrevistas.tests.test_idempotencia.IdempotenciaTest.test_reintento_tras_fallo_no_duplica_intercambio_ni_evaluacion
 ```
 
@@ -60,8 +60,9 @@ Both `backend/.env` and `frontend/.env` are gitignored; copy from the correspond
 ```
 backend/
 ├── config/settings/{base,local,production}.py
-├── apps/{common,usuarios,catalogos,entrevistas,evaluaciones}/
+├── apps/{common,usuarios,catalogos,entrevistas,evaluaciones,curriculums}/
 ├── integrations/ia/          # zero Django dependency
+├── integrations/documentos/  # zero Django dependency
 └── tests/{conftest.py,integration/}
 ```
 
@@ -79,17 +80,30 @@ The dependency direction is **apps → integrations, never the reverse**. `integ
 
 `CatalogosPublicosView` subclasses `CatalogosView` and only swaps `permission_classes` to `AllowAny`, served at `/api/catalogos/publico/`. The authenticated route stays 401 — `test_requiere_autenticacion` asserts it — so the boundary between what the system publishes and what it hands only to users stays explicit.
 
-`Area` and `Nivel` are real tables in `apps/catalogos/`, seeded by the data migration `catalogos/0002_datos_iniciales.py`. `Entrevista.area` / `.nivel` are `ForeignKey(..., on_delete=PROTECT)`.
+`Puesto`, `Nivel`, `Tecnologia` and `Area` are real tables in `apps/catalogos/`, seeded by data migrations (`0002` the original areas/levels, `0004` the puestos, tecnologías and four extra areas). `Entrevista.puesto` / `.nivel` are `ForeignKey(..., on_delete=PROTECT)`; `.tecnologia` is the same but nullable — NULL means "no stack preference", which is not the same as a row called "indifferent".
 
-The bridge to the Django-free IA layer is the `codigo` field: its values match the `AreaTecnica` / `Nivel` enums in `integrations/ia/prompts/schemas.py`, and `Entrevista.area_enum` does `AreaTecnica(self.area.codigo)`. `apps/catalogos/tests/test_catalogos.py::test_codigos_coinciden_con_los_enums_de_la_capa_de_ia` is what keeps those two in sync — if you add an área, add the enum member too or that test fails.
+The bridge to the Django-free IA layer is the `codigo` field: its values match the `AreaTecnica` / `Nivel` / `Puesto` / `Tecnologia` enums in `integrations/ia/prompts/schemas.py`, and `Entrevista.puesto_enum` does `Puesto(self.puesto.codigo)`. Two tests in `apps/catalogos/tests/test_catalogos.py` keep the two sides in sync: `test_codigos_coinciden_con_los_enums_de_la_capa_de_ia` (codes) and `test_los_nombres_visibles_coinciden_con_las_etiquetas_de_la_capa_de_ia` (display names — the user must read the same label the model is told).
 
 The API exposes `codigo`, never the numeric id (`SlugRelatedField`), so the frontend contract is unchanged by the normalization.
+
+### An interview is a puesto, not an área
+
+The user picks a **puesto** (`backend`, `frontend`, `full_stack`), a **nivel** and optionally a **tecnología** — never an área. That is the framing of a real application: nobody applies for a "Bases de Datos" position.
+
+`PLAN_POR_PUESTO` in `integrations/ia/prompts/schemas.py` maps each puesto to a tuple of exactly `PREGUNTAS_POR_ENTREVISTA` áreas — the área of question *n* is `area_de_la_pregunta(puesto, n)`. It is deterministic, not random, so an interview is reproducible, explainable in the thesis defence, and testable. It lives in the AI layer rather than the DB because it is simulation design, not reference data the user administers.
+
+Consequences worth knowing before touching this:
+
+- **`Area` lives on `Intercambio`, not on `Entrevista`.** It is persisted per question rather than recomputed from the puesto, so changing a plan later never rewrites the history of someone who already sat the interview.
+- **Statistics group by `intercambio__area`** (`apps/evaluaciones/selectors.py`). Before, one interview had a single área and its five answers all inherited that label; now the per-topic breakdown is real.
+- **`evolucion` is per interview, so it is labelled by puesto**, not área — a point on the chart is "my Backend interview", not "my Bases de Datos interview".
+- The selección screen shows the áreas each puesto covers (`PuestoSerializer.get_areas`). That is what keeps the thesis profile's objetivo específico 2 ("módulo de selección de diferentes áreas") visibly satisfied now that áreas are bundled rather than picked one at a time. They are listed in `features/seleccion/components/PanelDeSesion.tsx`, once, for the puesto currently chosen — not inside each `TarjetaPuesto`, where repeating them three times made the cards tall enough to wrap onto a second row and stop being comparable at a glance.
 
 ### Entrevistador and evaluador are separate roles, deliberately isolated
 
 Two distinct prompts live in `integrations/ia/prompts/`:
 - `entrevistador.py` generates the next question. It receives a **compressed summary** of prior turns (`TemaEvaluado`: topic + score only) — never the full Q&A history — to keep prompt size bounded regardless of interview length. Built by `apps/entrevistas/selectors.py::temas_evaluados()`, always from the DB, never from memory (Render free tier sleeps and restarts mid-interview).
-- `evaluador.py` scores one answer against a fixed rubric. It is a pure function of (area, nivel, pregunta, respuesta) — it never receives conversation history, so the same answer always scores the same way independent of when it was given.
+- `evaluador.py` scores one answer against a fixed rubric. It is a pure function of (contexto, area, pregunta, respuesta) — it never receives conversation history, so the same answer always scores the same way independent of when it was given. `ContextoDeEntrevista` (puesto, nivel, tecnología) is constant for the whole interview, so bundling it does not break that purity.
 
 `apps/evaluaciones/rubricas.py` imports `RUBRICA` from the prompt module (apps → integrations) and adds the score bands as queryable data, so backend, admin and frontend agree on what counts as a good score.
 
@@ -97,17 +111,92 @@ Two distinct prompts live in `integrations/ia/prompts/`:
 
 ### Idempotency is a DB-enforced contract, not just application logic
 
-`apps/entrevistas/services.py::responder()` runs in this exact order: save the answer → call the AI to evaluate → save the evaluation → generate the next question (or finalize). Each step checks whether it already happened before repeating it, so retrying after a mid-request failure (e.g. the AI call times out) never duplicates data.
+`apps/entrevistas/services.py::responder()` runs in this exact order: save the answer → call the AI to evaluate → save the evaluation → generate the next question **if it does not already exist** (or finalize). Each step checks whether it already happened before repeating it, so retrying after a mid-request failure (e.g. the AI call times out) never duplicates data. The existence check matters: the warm-up questions are created up front by `iniciar()`, so answering the first one must not try to create a `numero` that already exists.
 
 The evaluation call happens **outside** the transaction (so a slow provider doesn't hold a row lock); the next-question call happens **inside** it, so that a failure there rolls back the evaluation too and the retry finds the intercambio unevaluated — rather than leaving the interview stuck with no pending question and no final state.
 
 This is backed by real constraints — `Intercambio` has `UniqueConstraint(entrevista, numero)`, `Evaluacion` is `OneToOne` on `Intercambio` — not just careful code.
 
+### Warm-up is batched; adaptivity starts once there is signal
+
+`iniciar()` asks for the first `PREGUNTAS_DE_CALENTAMIENTO` (2) questions in a **single** AI call via `generar_preguntas_iniciales()`; questions 3 onward are generated one at a time with `generar_pregunta()`, which receives the prior scores.
+
+The reason is not the token saving (one call out of ten, ~5%). No question created before the first answer *can* be adaptive — there is nothing to adapt to — and question 2, if generated after one answer, would adapt to a **single data point**, which is noise: the candidate may have fumbled something they know. A human interviewer does not recalibrate after one answer either. Asking for both at once also lets the model make them complementary instead of risking overlap.
+
+They are two separate contract operations rather than one with an optional `previas`, precisely because one cannot be adaptive and the other must be.
+
+Note that `PLAN_POR_PUESTO` fixes the área of every question, so what the adaptive prompt calibrates is **the demand within the assigned topic**, not which topic comes next. The prompt says so explicitly; an earlier version told the model it could "profundizar en un área relacionada", which the plan had already made impossible.
+
+### The grade is not published until the interview ends
+
+The evaluation runs after every answer — that is what feeds adaptivity — but it does **not** leave the API while the interview is `EN_PROGRESO`:
+
+- `ResponderView` does not return it at all. `services.responder()` still returns it; the view discards it.
+- `ResultadosView` passes `con_evaluacion=False` to `IntercambioSerializer`, which then resolves `evaluacion` to `null` (the key stays, so the response shape does not change with state). `ABANDONADA` interviews **do** show theirs, consistent with `calcular_retroalimentacion` deliberately including unfinished ones.
+
+Hiding it only in the UI would not work: `/resultados/` is what the chat uses to rebuild itself on reload, so the score would sit in the browser's network tab. This is what the profile's *"para su posterior análisis"* (Alcance) and the *"módulo de análisis de resultados"* (objetivo 5) describe, and it is what a real interview does — nobody reads your score out loud mid-session.
+
+Consequence worth knowing: the chat rebuild in `useEntrevista` filters by `respuesta !== ''`, **not** by `evaluacion !== null`. With grades hidden, the latter would discard the whole history.
+
+### The CV module reports what an ATS sees, and never invents a score
+
+`apps/curriculums/` + `integrations/documentos/` diagnose why a CV fails an ATS filter. The tutor asked for it: few systems tell the candidate *why* they were filtered out.
+
+The finding that shapes the whole design is that **real ATS do not auto-reject by score**. Workday parses a CV into fields recruiters search and filter, Taleo runs boolean keyword searches, Greenhouse does not score at all. What eliminates a candidate is that their data never reached the fields, so they do not appear in the recruiter's search. Not rejection — invisibility.
+
+So the module **must not** publish a "Puntaje ATS: 73/100", and for the same reason not a "72% compatible" fit score either. That is what commercial checkers sell and it is indefensible in a thesis defence ("where does the 73 come from?"). Every metric it publishes is a string — `parseabilidad` `"5/7"`, `cobertura` `"4/6"` — deliberately, because a number out of 100 would read as a quality grade or a hiring probability, and nothing in the module can support that claim.
+
+Nothing in this module uses AI, and that is the point: a language model cannot know whether a PDF has a text layer or is laid out in two columns. Ask it and it answers confidently and partly invents. Every claim here comes from measuring the document, so it is reproducible and explainable rule by rule.
+
+### Two routes through the CV module, and only one section differs
+
+The screen asks for the CV and, **optionally**, the convocatoria (job posting) to measure it against — pasted, or uploaded as PDF/DOCX. There is no puesto selector: there was one, and it affected nothing (`ats.analizar()` never received it, so backend/frontend/full-stack produced byte-identical results). A required step with no consequence is worse than no step, because it promises the choice matters.
+
+| Section | Without convocatoria | With convocatoria |
+|---|---|---|
+| Espejo del ATS | the 7-field ficha | same |
+| Qué corregir / conservar | 11 possible weaknesses, 4 strengths | same |
+| **Third section** | **inventario** of legible terms | **mapa de evidencia** |
+| Viñetas de logro | achievement vs task bullets | same |
+
+Only the third row changes, and the same `terminos.py` dictionary feeds both. That is what makes the convocatoria feel genuinely optional rather than the difference between useful and useless. The inventario also does something the mirror alone cannot: if the skills are in level bars, it comes back empty, which turns `habilidades_en_graficos` from a suspicion into proof.
+
+### The evidence map is three states, not two
+
+For each requirement the posting asks: `demostrado` (appears in experiencia/proyectos), `declarado` (only in the habilidades list), or `ausente`. `declarado` counts as covered — what the state qualifies is the *strength* of the evidence, not its existence.
+
+The reason: "Django" in a comma-separated list and "Django" inside an achievement index identically for the machine and are worth very different things to the person reading. Recruiters make that distinction; the average candidate does not know it exists. `test_un_termino_solo_en_habilidades_esta_declarado` pins it.
+
+This needs `secciones.py::segmentar()`, which splits the CV into blocks by its headings. When the headings are not recognised there is nothing to segment, so the state degrades to `presente`/`ausente` **and says so** — chaining with `secciones_no_reconocidas`, which is already reported. A formatting weakness degrades the content analysis, and stating that is more honest than showing a half-map with no explanation.
+
+### Five things to know before touching this module
+
+- **A scanned PDF is not an error, it is the most valuable finding.** `integrations/documentos/exceptions.py` only covers cases where there is nothing to analyse (unsupported format, unopenable file, over the hard page cap). "No text layer" is reported inside the analysis, and when it happens `ats.py` reports *only* that and stops: running the other rules over empty text would produce a list of false weaknesses drowning the one that matters. `brecha.calcular()` returns `None` for the same reason — "0 of 6 requirements" would be a false claim when the truth is nobody can read the document. That is why it takes the `DocumentoExtraido` and not its text: `tiene_capa_de_texto` is the single place the legibility threshold lives, and an empty-text check is not enough because a scanned PDF carries stray artefacts.
+- **Section matching is by whole line, and loosening it would erase the module's best demonstration.** In a two-column CV the extracted text interleaves (`"Habilidades Optimice consultas y"`), so the headings are no longer alone on their line and stop being recognised. That cascade — columns scramble the text, the parser loses the sections — is exactly what a real ATS suffers, and `test_dos_columnas_arrastra_la_perdida_de_las_secciones` pins it. `secciones.py::titulo_de()` is shared by `ats.py` and `segmentar()` on purpose: if the two criteria diverged, the analysis could report a section as recognised and then fail to find its block, showing the user two contradictory claims.
+- **The file is never stored.** No `FileField`, no `MEDIA_ROOT`. Render's free tier has an ephemeral disk, a CV carries a real person's phone and address, and the bytes are useless once parsed. Only the extracted text, its hash and the analysis persist. `texto` and `convocatoria` are deliberately excluded from `CurriculumSerializer`.
+- **The cache key is the extracted text plus the convocatoria, and "no convocatoria" stores the hash of the empty string, never NULL.** Re-exporting the same CV from Word yields different bytes and identical text; what matters is whether there is anything new to analyse. Postgres treats NULLs as distinct, so with NULL the `UniqueConstraint(usuario, hash_texto, hash_convocatoria)` would not fire and the cache would break **in the most common case**, silently accumulating duplicates.
+- **The bullet analysis is labelled apart from the ATS sections, and that is a requirement.** An ATS does not care whether a bullet has metrics; that advice is for the human who reads the CV after the machine found it. `vinetas.py` says so in its docstring and `VinetasDeLogro.tsx` renders under its own heading. Mixing it under "filtros ATS" would be imprecise, and precision about what an ATS actually does is what holds up the module's credibility.
+- **`apps/curriculums` must not import `integrations.ia`, and that is enforced.** `tests/test_frontera_con_ia.py` checks it two ways: statically with `ast` over the app's files, and at runtime with a `sys.meta_path` finder that fails if anything in the call chain imports the AI layer. The reason is `Curriculum.texto` — the full CV of a real person. Today nothing sends it, which is a guarantee by omission that the AI phase would break silently. **If that test goes red, it gets rewritten with a spy provider that verifies the masking, never deleted**; its docstring says so.
+
+  Two lessons are baked into it. The first version patched `integrations.ia.factory.get_proveedor` and **passed even with the violation injected**: a module that did `from ... import get_proveedor` already copied the reference, so replacing it at the source intercepts nothing. The second: the static check *does* see a deferred import inside a function, because `ast.walk` traverses function bodies — what the runtime hook actually adds is an import happening **outside** the app's own files. Both claims were verified by injecting violations, not assumed.
+
+Tests split by level on purpose: the rules are tested by building a `DocumentoExtraido` in code (exact and fast), and the geometry against real PDFs in `backend/tests/fixtures/cv/`, because detecting columns depends on real coordinates. Those fixtures are generated by `generar.py`, which writes the PDFs **by hand** with no library — it adds no test-only dependency and, more importantly, gives exact control over where each word lands, which is what a column detector has to be pinned against.
+
+### The migrations of `curriculums` are a worked example of Postgres ordering
+
+Worth reading before adding another. `0002` adds the new columns **before** removing `puesto`, because Django emits `SET CONSTRAINTS ... IMMEDIATE` when dropping a foreign key and that leaves the table with pending trigger events — any later `ALTER TABLE` or `CREATE INDEX` on it in the same transaction then fails. Its dedup `DELETE` (needed because rows that only differed by puesto became duplicates) goes last for the same reason, and the new `UniqueConstraint` had to move to `0003` because a migration is the unit of atomicity. `0004` backfills `hash_convocatoria`, which `0002` left as the empty string rather than its hash on pre-existing rows.
+
+Neither `hash_texto` nor `hash_convocatoria` has an index of its own: the only query filters on all three columns together, so the constraint's composite index serves it by prefix. `hash_convocatoria` never had one (its `CREATE INDEX` was what collided with the pending triggers) and `hash_texto`'s was dropped in `0005`, which round-trips cleanly because it drops an index without touching a foreign key or deleting rows.
+
+`0002` is **not reversible** and says so rather than pretending: reversing re-adds `puesto_id` as NOT NULL and existing rows have no value to put there. Dropping a column with nothing to backfill is one-way.
+
 ### Error taxonomy translates provider failures into HTTP codes
 
 `integrations/ia/exceptions.py` defines `ErrorTransitorio` / `ErrorPermanente` / `RespuestaIAInvalida`. Every adapter translates its own SDK's exceptions into these.
 
-`apps/common/exceptions.py::manejador_de_excepciones` is the **single** place that turns that taxonomy into HTTP (503 / 502 / 502), registered as DRF's `EXCEPTION_HANDLER`. Views don't catch provider errors — they let them propagate. `apps/usuarios/views.py` does not follow this pattern for Google auth failures; it handles them inline.
+`integrations/documentos/exceptions.py` defines a parallel one for reading a CV: `FormatoNoSoportado` / `DocumentoCorrupto` / `DocumentoDemasiadoGrande`, all of which become **400** — the problem is in the file the client sent, nothing is down and there is nothing to retry.
+
+`apps/common/exceptions.py::manejador_de_excepciones` is the **single** place that turns both taxonomies into HTTP (AI: 503 / 502 / 502; documents: 400), registered as DRF's `EXCEPTION_HANDLER`. Views don't catch provider errors — they let them propagate. `apps/usuarios/views.py` does not follow this pattern for Google auth failures; it handles them inline.
 
 ### Ownership checks return 404, never 403
 

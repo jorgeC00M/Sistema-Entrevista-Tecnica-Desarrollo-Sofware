@@ -1,7 +1,11 @@
-"""Catálogos que alimentan la pantalla de selección de área.
+"""Catálogos que alimentan la pantalla de inicio de una entrevista.
 
 Se sirven en una sola respuesta porque el frontend los necesita juntos y son
-pocos registros: dos peticiones para seis filas no compensan.
+pocos registros: cuatro peticiones para una docena de filas no compensan.
+
+`puestos` y `niveles` son lo que se elige; `tecnologias`, lo que se puede
+elegir. `areas` se sigue publicando aunque ya no se seleccione: cada puesto
+declara qué áreas cubre, y la pantalla necesita sus nombres para mostrarlas.
 """
 
 from __future__ import annotations
@@ -12,8 +16,13 @@ from rest_framework.views import APIView
 
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
-from .selectors import areas_activas, niveles_activos
-from .serializers import AreaSerializer, NivelSerializer
+from .selectors import areas_activas, niveles_activos, puestos_activos, tecnologias_activas
+from .serializers import (
+    AreaSerializer,
+    NivelSerializer,
+    PuestoSerializer,
+    TecnologiaSerializer,
+)
 
 
 class CatalogosView(APIView):
@@ -22,8 +31,10 @@ class CatalogosView(APIView):
     def get(self, request):
         return Response(
             {
-                "areas": AreaSerializer(areas_activas(), many=True).data,
+                "puestos": PuestoSerializer(puestos_activos(), many=True).data,
                 "niveles": NivelSerializer(niveles_activos(), many=True).data,
+                "tecnologias": TecnologiaSerializer(tecnologias_activas(), many=True).data,
+                "areas": AreaSerializer(areas_activas(), many=True).data,
                 "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
             }
         )

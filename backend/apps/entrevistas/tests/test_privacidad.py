@@ -2,9 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.entrevistas import services as servicio
-from tests.conftest import area_de, nivel_de
+from tests.conftest import nivel_de, puesto_de
 from integrations.ia.base import ProveedorIA
-from integrations.ia.prompts.schemas import AreaTecnica, Evaluacion, Nivel, Pregunta
+from integrations.ia.prompts.schemas import Evaluacion, Pregunta
 
 Usuario = get_user_model()
 
@@ -25,12 +25,18 @@ class ProveedorEspiaIA(ProveedorIA):
     def __init__(self):
         self.textos_recibidos: list[str] = []
 
-    def generar_pregunta(self, area, nivel, numero, previas):
+    def generar_preguntas_iniciales(self, contexto, areas):
+        return [
+            Pregunta(texto=f"Pregunta de prueba #{numero}", numero=numero)
+            for numero, _ in enumerate(areas, start=1)
+        ]
+
+    def generar_pregunta(self, contexto, area, numero, previas):
         for tema in previas:
             self.textos_recibidos.append(tema.pregunta)
         return Pregunta(texto=f"Pregunta de prueba #{numero}", numero=numero)
 
-    def evaluar_respuesta(self, area, nivel, pregunta, respuesta):
+    def evaluar_respuesta(self, contexto, area, pregunta, respuesta):
         self.textos_recibidos.append(pregunta)
         self.textos_recibidos.append(respuesta)
         return Evaluacion(puntuacion=70, fortalezas="ok", debilidades="ok", sugerencias="ok")
@@ -46,7 +52,7 @@ class PrivacidadTest(TestCase):
         )
         proveedor = ProveedorEspiaIA()
 
-        entrevista = servicio.iniciar(usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), proveedor=proveedor)
+        entrevista = servicio.iniciar(usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
         servicio.responder(entrevista, "Mi respuesta a la primera pregunta", proveedor=proveedor)
 
         texto_completo = " ".join(proveedor.textos_recibidos)

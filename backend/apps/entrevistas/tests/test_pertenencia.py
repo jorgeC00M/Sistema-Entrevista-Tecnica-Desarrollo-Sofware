@@ -20,7 +20,7 @@ class PertenenciaTest(APITestCase):
         )
 
         self.client.force_authenticate(self.usuario_a)
-        inicio = self.client.post("/api/entrevistas/", {"area": "programacion", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
         self.entrevista_de_a = inicio.data["entrevista"]["id"]
 
     def test_detalle_de_entrevista_ajena_es_404(self):
@@ -42,7 +42,7 @@ class PertenenciaTest(APITestCase):
 
     def test_historial_no_incluye_entrevistas_ajenas(self):
         self.client.force_authenticate(self.usuario_b)
-        self.client.post("/api/entrevistas/", {"area": "bases_de_datos", "nivel": "basico"})
+        self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
 
         respuesta = self.client.get("/api/entrevistas/")
 

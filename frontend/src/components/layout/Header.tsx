@@ -50,7 +50,7 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
 
         {/*
           No es un <h1>: cada página ya tiene el suyo en su contenido
-          (SeleccionAreaPage, EntrevistaPage, ResultadosPage, HistorialPage,
+          (SeleccionPuestoPage, EntrevistaPage, ResultadosPage, HistorialPage,
           RetroalimentacionPage, PerfilPage).
           Un segundo <h1> aquí rompería la jerarquía de encabezados de la
           página. Esto es una etiqueta de la interfaz (chrome), no contenido.

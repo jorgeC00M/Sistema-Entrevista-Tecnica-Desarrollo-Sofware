@@ -12,7 +12,8 @@ export default function TarjetaResumen({ entrevista }: Props) {
       <div>
         <EtiquetaMono tono="suelto">Calificación general</EtiquetaMono>
         <p className="text-sm text-vidrio-texto">
-          {entrevista.area_display} · {entrevista.nivel_display}
+          {entrevista.puesto_display} · {entrevista.nivel_display}
+          {entrevista.tecnologia_display && <> · {entrevista.tecnologia_display}</>}
         </p>
       </div>
 

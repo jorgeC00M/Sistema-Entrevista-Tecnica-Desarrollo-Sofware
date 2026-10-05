@@ -34,7 +34,7 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
           to={`/entrevista/${entrevistaEnCurso.id}`}
           title={
             plegado
-              ? `Continuar entrevista — ${entrevistaEnCurso.areaDisplay} · ${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas}`
+              ? `Continuar entrevista — ${entrevistaEnCurso.puestoDisplay} · ${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas}`
               : undefined
           }
           className={`flex items-center gap-2 rounded-full bg-vidrio-acento text-sm font-medium text-white shadow-sm transition-colors duration-150 hover:bg-vidrio-acento-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${

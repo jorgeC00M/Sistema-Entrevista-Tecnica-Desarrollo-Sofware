@@ -2,10 +2,8 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from apps.entrevistas.models import Entrevista, Intercambio
 from apps.evaluaciones.models import Evaluacion
-from tests.conftest import area_de, nivel_de
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel
+from tests.conftest import crear_entrevista, crear_intercambio
 
 Usuario = get_user_model()
 
@@ -21,28 +19,22 @@ class RestriccionesDeIntegridadTest(TestCase):
             password="clave-segura-123",
             nombre_completo="Egresado de Prueba",
         )
-        self.entrevista = Entrevista.objects.create(
-            usuario=self.usuario, area=area_de(AreaTecnica.PROGRAMACION), nivel=nivel_de(Nivel.BASICO)
-        )
+        self.entrevista = crear_entrevista(self.usuario)
 
     def test_no_permite_dos_intercambios_con_el_mismo_numero(self):
-        Intercambio.objects.create(entrevista=self.entrevista, numero=1, pregunta="¿Qué es una variable?")
+        crear_intercambio(self.entrevista, pregunta="¿Qué es una variable?")
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
-                Intercambio.objects.create(entrevista=self.entrevista, numero=1, pregunta="Otra pregunta")
+                crear_intercambio(self.entrevista, pregunta="Otra pregunta")
 
     def test_permite_el_mismo_numero_en_entrevistas_distintas(self):
-        otra_entrevista = Entrevista.objects.create(
-            usuario=self.usuario, area=area_de(AreaTecnica.BASES_DE_DATOS), nivel=nivel_de(Nivel.BASICO)
-        )
-        Intercambio.objects.create(entrevista=self.entrevista, numero=1, pregunta="Pregunta A")
+        otra_entrevista = crear_entrevista(self.usuario, puesto="frontend")
+        crear_intercambio(self.entrevista, pregunta="Pregunta A")
         # No debe lanzar: el número 1 es único por entrevista, no globalmente.
-        Intercambio.objects.create(entrevista=otra_entrevista, numero=1, pregunta="Pregunta B")
+        crear_intercambio(otra_entrevista, pregunta="Pregunta B")
 
     def test_no_permite_dos_evaluaciones_del_mismo_intercambio(self):
-        intercambio = Intercambio.objects.create(
-            entrevista=self.entrevista, numero=1, pregunta="¿Qué es una variable?"
-        )
+        intercambio = crear_intercambio(self.entrevista, pregunta="¿Qué es una variable?")
         Evaluacion.objects.create(
             intercambio=intercambio,
             puntuacion=80,
@@ -67,7 +59,7 @@ class RestriccionesDeIntegridadTest(TestCase):
                 )
 
     def test_evaluacion_json_se_persiste_como_objeto(self):
-        intercambio = Intercambio.objects.create(entrevista=self.entrevista, numero=1, pregunta="p")
+        intercambio = crear_intercambio(self.entrevista)
         evaluacion = Evaluacion.objects.create(
             intercambio=intercambio,
             puntuacion=80,

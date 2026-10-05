@@ -8,15 +8,18 @@ from typing import Any
 
 from .exceptions import RespuestaIAInvalida
 from .prompts import entrevistador, evaluador
+from collections.abc import Sequence
+
 from .prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
     AreaTecnica,
+    ContextoDeEntrevista,
     Evaluacion,
-    Nivel,
     Pregunta,
     TemaEvaluado,
     parsear_evaluacion,
     parsear_pregunta,
+    parsear_preguntas,
 )
 
 
@@ -25,10 +28,31 @@ class ProveedorIA(ABC):
     modelo: str
 
     @abstractmethod
+    def generar_preguntas_iniciales(
+        self, contexto: ContextoDeEntrevista, areas: Sequence[AreaTecnica]
+    ) -> list[Pregunta]:
+        """Genera de una sola vez las primeras preguntas, numeradas desde 1.
+
+        Existe como operación aparte de `generar_pregunta` y no como un parámetro
+        opcional de aquella porque son dos cosas distintas: esta **no puede** ser
+        adaptativa —se llama cuando no hay ninguna respuesta todavía— y aquella
+        sí. Unificarlas en una firma con `previas` opcional dejaría ambigua la
+        diferencia.
+        """
+
+    @abstractmethod
     def generar_pregunta(
-        self, area: AreaTecnica, nivel: Nivel, numero: int, previas: list[TemaEvaluado]
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        numero: int,
+        previas: list[TemaEvaluado],
     ) -> Pregunta:
         """Genera la pregunta `numero` de la entrevista.
+
+        `contexto` es el encuadre de la postulación (puesto, nivel, tecnología),
+        constante durante toda la entrevista; `area` es el tema de esta pregunta
+        en concreto, que sí cambia turno a turno porque lo decide el puesto.
 
         `previas` es un resumen comprimido (tema + puntuación) de los turnos ya
         respondidos, no el historial completo: es lo que le permite al
@@ -38,7 +62,11 @@ class ProveedorIA(ABC):
 
     @abstractmethod
     def evaluar_respuesta(
-        self, area: AreaTecnica, nivel: Nivel, pregunta: str, respuesta: str
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        pregunta: str,
+        respuesta: str,
     ) -> Evaluacion:
         """Califica una respuesta según la rúbrica del evaluador.
 
@@ -60,21 +88,41 @@ class ProveedorIAporJSON(ProveedorIA):
     timeout y reintentos y el otro sin ellos. Aquí un arreglo vale para todos.
     """
 
+    def generar_preguntas_iniciales(
+        self, contexto: ContextoDeEntrevista, areas: Sequence[AreaTecnica]
+    ) -> list[Pregunta]:
+        datos = self._pedir_json(
+            sistema=entrevistador.sistema_de_calentamiento(
+                contexto, areas, PREGUNTAS_POR_ENTREVISTA
+            ),
+            entrada=entrevistador.usuario_de_calentamiento(areas),
+            esquema=entrevistador.esquema_de_preguntas(len(areas)),
+        )
+        return parsear_preguntas(datos, desde_numero=1, cuantas=len(areas))
+
     def generar_pregunta(
-        self, area: AreaTecnica, nivel: Nivel, numero: int, previas: list[TemaEvaluado]
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        numero: int,
+        previas: list[TemaEvaluado],
     ) -> Pregunta:
         datos = self._pedir_json(
-            sistema=entrevistador.sistema(area, nivel, PREGUNTAS_POR_ENTREVISTA),
+            sistema=entrevistador.sistema(contexto, area, PREGUNTAS_POR_ENTREVISTA),
             entrada=entrevistador.usuario(numero, previas),
             esquema=entrevistador.ESQUEMA_PREGUNTA,
         )
         return parsear_pregunta(datos, numero=numero)
 
     def evaluar_respuesta(
-        self, area: AreaTecnica, nivel: Nivel, pregunta: str, respuesta: str
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        pregunta: str,
+        respuesta: str,
     ) -> Evaluacion:
         datos = self._pedir_json(
-            sistema=evaluador.sistema(area, nivel),
+            sistema=evaluador.sistema(contexto, area),
             entrada=evaluador.usuario(pregunta, respuesta),
             esquema=evaluador.ESQUEMA_EVALUACION,
         )

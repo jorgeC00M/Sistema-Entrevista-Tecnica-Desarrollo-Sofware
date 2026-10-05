@@ -14,7 +14,7 @@ class EvaluacionInline(admin.StackedInline):
 class IntercambioInline(admin.TabularInline):
     model = Intercambio
     extra = 0
-    fields = ["numero", "pregunta", "respuesta", "tiempo_respuesta"]
+    fields = ["numero", "area", "pregunta", "respuesta", "tiempo_respuesta"]
     readonly_fields = ["tiempo_respuesta"]
     show_change_link = True
 
@@ -24,20 +24,21 @@ class EntrevistaAdmin(admin.ModelAdmin):
     list_display = [
         "id",
         "usuario",
-        "area",
+        "puesto",
         "nivel",
+        "tecnologia",
         "estado",
         "fecha_inicio",
         "puntuacion_promedio",
     ]
-    list_filter = ["area", "nivel", "estado"]
+    list_filter = ["puesto", "nivel", "tecnologia", "estado"]
     search_fields = ["usuario__email"]
-    list_select_related = ["usuario", "area", "nivel"]
+    list_select_related = ["usuario", "puesto", "nivel", "tecnologia"]
     inlines = [IntercambioInline]
 
 
 @admin.register(Intercambio)
 class IntercambioAdmin(admin.ModelAdmin):
-    list_display = ["entrevista", "numero", "creado_en", "respondido_en", "tiempo_respuesta"]
-    list_filter = ["entrevista__area"]
+    list_display = ["entrevista", "numero", "area", "creado_en", "respondido_en", "tiempo_respuesta"]
+    list_filter = ["area", "entrevista__puesto"]
     inlines = [EvaluacionInline]

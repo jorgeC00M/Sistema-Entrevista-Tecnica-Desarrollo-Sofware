@@ -10,9 +10,13 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.entrevistas import services as servicio
-from tests.conftest import area_de, nivel_de
+from tests.conftest import nivel_de, puesto_de
 from integrations.ia.fake import FakeProveedorIA
-from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA, AreaTecnica, Nivel
+from integrations.ia.prompts.schemas import (
+    PREGUNTAS_POR_ENTREVISTA,
+    Puesto,
+    areas_que_cubre,
+)
 
 Usuario = get_user_model()
 
@@ -26,7 +30,7 @@ class ProveedorPuntuacionFija(FakeProveedorIA):
         super().__init__()
         self._puntuacion = puntuacion
 
-    def evaluar_respuesta(self, area, nivel, pregunta, respuesta):
+    def evaluar_respuesta(self, contexto, area, pregunta, respuesta):
         from integrations.ia.prompts.schemas import parsear_evaluacion
 
         return parsear_evaluacion(
@@ -39,9 +43,9 @@ class ProveedorPuntuacionFija(FakeProveedorIA):
         )
 
 
-def _completar_entrevista(usuario, area, nivel, puntuacion):
+def _completar_entrevista(usuario, puesto, nivel, puntuacion):
     proveedor = ProveedorPuntuacionFija(puntuacion)
-    entrevista = servicio.iniciar(usuario, area, nivel, proveedor=proveedor)
+    entrevista = servicio.iniciar(usuario, puesto, nivel, proveedor=proveedor)
     for _ in range(PREGUNTAS_POR_ENTREVISTA):
         servicio.responder(entrevista, "Una respuesta", proveedor=proveedor)
     entrevista.refresh_from_db()
@@ -78,8 +82,8 @@ class EstadisticasConDatosTest(APITestCase):
         self.client.force_authenticate(self.usuario)
 
     def test_promedio_general_es_el_promedio_real_de_las_evaluaciones(self):
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 60)
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 80)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 60)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 80)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -87,25 +91,49 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(float(respuesta.data["promedio_general"]), 70.0)
         self.assertEqual(respuesta.data["entrevistas_completadas"], 2)
 
-    def test_promedio_por_area_agrupa_correctamente(self):
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 90)
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.BASES_DE_DATOS), nivel_de(Nivel.BASICO), 50)
+    def test_promedio_por_area_desglosa_los_temas_de_la_entrevista(self):
+        """Una sola entrevista aporta a varias áreas, porque el puesto reparte
+        los temas entre sus preguntas. Antes la entrevista tenía un área única y
+        las cinco respuestas heredaban esa etiqueta; ahora el desglose dice de
+        verdad en qué temas le fue bien o mal al candidato.
+        """
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 90)
 
         respuesta = self.client.get("/api/estadisticas/")
 
         por_area = {fila["area"]: fila for fila in respuesta.data["promedio_por_area"]}
-        self.assertEqual(float(por_area["programacion"]["promedio"]), 90.0)
-        self.assertEqual(por_area["programacion"]["entrevistas"], 1)
-        self.assertEqual(float(por_area["bases_de_datos"]["promedio"]), 50.0)
-        self.assertEqual(por_area["programacion"]["area_display"], "Programación")
+        esperadas = {a.value for a in areas_que_cubre(Puesto.BACKEND)}
+        self.assertEqual(set(por_area), esperadas)
+        for codigo, fila in por_area.items():
+            with self.subTest(area=codigo):
+                self.assertEqual(float(fila["promedio"]), 90.0)
+                # La misma entrevista es la que aportó a cada área.
+                self.assertEqual(fila["entrevistas"], 1)
 
-    def test_dos_entrevistas_de_la_misma_area_muestran_variacion(self):
+    def test_dos_puestos_distintos_tocan_conjuntos_de_areas_distintos(self):
+        """Elegir Backend o Frontend cambia los temas que se evalúan: es lo que
+        hace que el puesto signifique algo y no sea solo una etiqueta."""
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
+
+        del_backend = {
+            fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
+        }
+
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 70)
+        con_ambos = {
+            fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
+        }
+
+        # El frontend aporta temas que el backend no toca.
+        self.assertTrue(con_ambos - del_backend)
+
+    def test_dos_entrevistas_del_mismo_puesto_muestran_variacion(self):
         """Criterio de aceptación del incremento: tras completar dos
-        entrevistas de la misma área, se puede observar la variación de
+        entrevistas del mismo puesto, se puede observar la variación de
         desempeño entre ambas.
         """
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.DESARROLLO_WEB), nivel_de(Nivel.BASICO), 40)
-        _completar_entrevista(self.usuario, area_de(AreaTecnica.DESARROLLO_WEB), nivel_de(Nivel.BASICO), 95)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 40)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 95)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -115,9 +143,20 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(puntuaciones, [40.0, 95.0])
         self.assertNotEqual(puntuaciones[0], puntuaciones[1])
 
+    def test_la_evolucion_identifica_cada_entrevista_por_su_puesto(self):
+        """La evolución es por entrevista, no por tema, así que lo que la
+        identifica es el puesto: un punto del gráfico es "mi entrevista de
+        Backend", no "mi entrevista de Bases de Datos"."""
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
+
+        punto = self.client.get("/api/estadisticas/").data["evolucion"][0]
+
+        self.assertEqual(punto["puesto"], Puesto.BACKEND.value)
+        self.assertEqual(punto["puesto_display"], "Desarrollador Backend")
+
     def test_evolucion_esta_ordenada_cronologicamente(self):
-        primera = _completar_entrevista(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 70)
-        segunda = _completar_entrevista(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 85)
+        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
+        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 85)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -125,7 +164,7 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(ids, [primera.id, segunda.id])
 
     def test_entrevistas_en_progreso_no_cuentan(self):
-        servicio.iniciar(self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), proveedor=FakeProveedorIA())
+        servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=FakeProveedorIA())
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -136,7 +175,7 @@ class EstadisticasConDatosTest(APITestCase):
         otro = Usuario.objects.create_user(
             email="otro@example.com", password="clave-segura-123", nombre_completo="Otro"
         )
-        _completar_entrevista(otro, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), 100)
+        _completar_entrevista(otro, puesto_de("backend"), nivel_de("basico"), 100)
 
         respuesta = self.client.get("/api/estadisticas/")
 

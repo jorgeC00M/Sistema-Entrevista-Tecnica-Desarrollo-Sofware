@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from .base import ProveedorIA
 from .exceptions import ErrorTransitorio
 from .prompts.schemas import (
     AreaTecnica,
+    ContextoDeEntrevista,
     Evaluacion,
-    Nivel,
     Pregunta,
     TemaEvaluado,
     parsear_evaluacion,
     parsear_pregunta,
+    parsear_preguntas,
 )
 
 
@@ -35,17 +38,52 @@ class FakeProveedorIA(ProveedorIA):
         if self._fallar_en is not None and self._llamadas == self._fallar_en:
             raise ErrorTransitorio(f"Fallo simulado en la llamada #{self._llamadas}")
 
+    def _texto(
+        self, contexto: ContextoDeEntrevista, area: AreaTecnica, numero: int
+    ) -> str:
+        # El área va en el texto para que los tests puedan comprobar que una
+        # entrevista recorrió los temas que el puesto manda, sin pedirle nada a
+        # un proveedor real.
+        return (
+            f"[{contexto.puesto.etiqueta}/{contexto.nivel.etiqueta}]"
+            f"[{area.etiqueta}] Pregunta simulada #{numero}"
+        )
+
+    def generar_preguntas_iniciales(
+        self, contexto: ContextoDeEntrevista, areas: Sequence[AreaTecnica]
+    ) -> list[Pregunta]:
+        # Una sola llamada para todas, igual que un proveedor real: es lo que
+        # hace que `fallar_en` cuente lo mismo aquí y allá.
+        self._contar_llamada()
+        return parsear_preguntas(
+            {
+                "preguntas": [
+                    {"pregunta": self._texto(contexto, area, numero)}
+                    for numero, area in enumerate(areas, start=1)
+                ]
+            },
+            desde_numero=1,
+            cuantas=len(areas),
+        )
+
     def generar_pregunta(
-        self, area: AreaTecnica, nivel: Nivel, numero: int, previas: list[TemaEvaluado]
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        numero: int,
+        previas: list[TemaEvaluado],
     ) -> Pregunta:
         self._contar_llamada()
         return parsear_pregunta(
-            {"pregunta": f"[{area.etiqueta}/{nivel.etiqueta}] Pregunta simulada #{numero}"},
-            numero=numero,
+            {"pregunta": self._texto(contexto, area, numero)}, numero=numero
         )
 
     def evaluar_respuesta(
-        self, area: AreaTecnica, nivel: Nivel, pregunta: str, respuesta: str
+        self,
+        contexto: ContextoDeEntrevista,
+        area: AreaTecnica,
+        pregunta: str,
+        respuesta: str,
     ) -> Evaluacion:
         self._contar_llamada()
         return parsear_evaluacion(

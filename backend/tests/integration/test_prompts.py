@@ -1,11 +1,23 @@
 import unittest
 
 from integrations.ia.prompts import entrevistador, evaluador
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel, TemaEvaluado
+from integrations.ia.prompts.schemas import (
+    AreaTecnica,
+    ContextoDeEntrevista,
+    Nivel,
+    Puesto,
+    Tecnologia,
+    TemaEvaluado,
+)
 
 # Estimación conservadora para español (~3.7 caracteres por token). Sirve solo
 # como cota superior fácil de calcular sin depender de un tokenizador real.
 CARACTERES_POR_TOKEN = 3.7
+
+CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.BASICO)
+CONTEXTO_CON_STACK = ContextoDeEntrevista(
+    puesto=Puesto.BACKEND, nivel=Nivel.BASICO, tecnologia=Tecnologia.PYTHON_DJANGO
+)
 
 
 def _tokens_estimados(texto: str) -> float:
@@ -76,12 +88,46 @@ class SistemaMencionaRolCorrectoTest(unittest.TestCase):
     """El entrevistador y el evaluador tienen roles distintos y no deben mezclarse."""
 
     def test_sistema_del_entrevistador_no_contiene_la_rubrica(self):
-        prompt = entrevistador.sistema(AreaTecnica.PROGRAMACION, Nivel.BASICO, total_preguntas=5)
+        prompt = entrevistador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION, total_preguntas=5)
         self.assertNotIn("Bandas de puntuación", prompt)
 
     def test_sistema_del_evaluador_contiene_la_rubrica(self):
-        prompt = evaluador.sistema(AreaTecnica.PROGRAMACION, Nivel.BASICO)
+        prompt = evaluador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION)
         self.assertIn("Bandas de puntuación", prompt)
+
+
+class SistemaDeclaraElEncuadreTest(unittest.TestCase):
+    """Los dos prompts deben decirle al modelo a qué puesto se postula y de qué
+    tema va la pregunta: es lo que hace que la simulación se parezca a una
+    entrevista real en lugar de a un cuestionario suelto."""
+
+    def test_ambos_prompts_nombran_puesto_nivel_y_tema(self):
+        for nombre, prompt in (
+            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 5)),
+            ("evaluador", evaluador.sistema(CONTEXTO, AreaTecnica.APIS)),
+        ):
+            with self.subTest(prompt=nombre):
+                self.assertIn(Puesto.BACKEND.etiqueta, prompt)
+                self.assertIn(Nivel.BASICO.etiqueta, prompt)
+                self.assertIn(AreaTecnica.APIS.etiqueta, prompt)
+
+    def test_la_tecnologia_se_omite_cuando_no_hay(self):
+        """Sin stack elegido no se escribe "ninguna": mencionar la ausencia
+        invita al modelo a comentarla en vez de ignorarla."""
+        for nombre, prompt in (
+            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 5)),
+            ("evaluador", evaluador.sistema(CONTEXTO, AreaTecnica.APIS)),
+        ):
+            with self.subTest(prompt=nombre):
+                self.assertNotIn("Tecnología", prompt)
+
+    def test_la_tecnologia_aparece_cuando_se_eligio(self):
+        for nombre, prompt in (
+            ("entrevistador", entrevistador.sistema(CONTEXTO_CON_STACK, AreaTecnica.APIS, 5)),
+            ("evaluador", evaluador.sistema(CONTEXTO_CON_STACK, AreaTecnica.APIS)),
+        ):
+            with self.subTest(prompt=nombre):
+                self.assertIn(Tecnologia.PYTHON_DJANGO.etiqueta, prompt)
 
 
 if __name__ == "__main__":

@@ -12,12 +12,15 @@ import { peticion } from './client'
 // Estas rutas SÍ llevan barra final, a diferencia de las de auth.
 
 export function iniciarEntrevista({
-  area,
+  puesto,
   nivel,
+  tecnologia,
 }: DatosIniciarEntrevista): Promise<RespuestaIniciarEntrevista> {
   return peticion<RespuestaIniciarEntrevista>('/api/entrevistas/', {
     method: 'POST',
-    body: { area, nivel },
+    // La tecnología se omite del cuerpo cuando no se eligió: el serializer la
+    // declara opcional, y mandar null o cadena vacía sería decir otra cosa.
+    body: tecnologia ? { puesto, nivel, tecnologia } : { puesto, nivel },
   })
 }
 

@@ -6,8 +6,7 @@ from django.utils import timezone
 
 from apps.entrevistas.models import Entrevista
 from apps.entrevistas import services as servicio
-from tests.conftest import area_de, nivel_de
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel
+from tests.conftest import crear_entrevista, crear_intercambio
 
 Usuario = get_user_model()
 
@@ -21,9 +20,7 @@ class AbandonoTest(TestCase):
         )
 
     def test_entrevista_vieja_sin_actividad_pasa_a_abandonada(self):
-        entrevista = Entrevista.objects.create(
-            usuario=self.usuario, area=area_de(AreaTecnica.PROGRAMACION), nivel=nivel_de(Nivel.BASICO)
-        )
+        entrevista = crear_entrevista(self.usuario)
         Entrevista.objects.filter(pk=entrevista.pk).update(
             fecha_inicio=timezone.now() - timedelta(minutes=45)
         )
@@ -35,20 +32,13 @@ class AbandonoTest(TestCase):
         self.assertEqual(entrevista.estado, Entrevista.Estado.ABANDONADA)
 
     def test_entrevista_reciente_no_se_marca(self):
-        Entrevista.objects.create(
-            usuario=self.usuario, area=area_de(AreaTecnica.PROGRAMACION), nivel=nivel_de(Nivel.BASICO)
-        )
+        crear_entrevista(self.usuario)
 
         actualizadas = servicio.marcar_abandonadas(self.usuario)
         self.assertEqual(actualizadas, 0)
 
     def test_no_afecta_entrevistas_ya_finalizadas(self):
-        entrevista = Entrevista.objects.create(
-            usuario=self.usuario,
-            area=area_de(AreaTecnica.PROGRAMACION),
-            nivel=nivel_de(Nivel.BASICO),
-            estado=Entrevista.Estado.FINALIZADA,
-        )
+        entrevista = crear_entrevista(self.usuario, estado=Entrevista.Estado.FINALIZADA)
         Entrevista.objects.filter(pk=entrevista.pk).update(
             fecha_inicio=timezone.now() - timedelta(minutes=45)
         )
@@ -61,15 +51,12 @@ class AbandonoTest(TestCase):
     def test_actividad_reciente_en_un_intercambio_evita_el_abandono(self):
         """Aunque la entrevista haya iniciado hace más de 30 minutos, una
         respuesta reciente cuenta como actividad."""
-        entrevista = Entrevista.objects.create(
-            usuario=self.usuario, area=area_de(AreaTecnica.PROGRAMACION), nivel=nivel_de(Nivel.BASICO)
-        )
+        entrevista = crear_entrevista(self.usuario)
         Entrevista.objects.filter(pk=entrevista.pk).update(
             fecha_inicio=timezone.now() - timedelta(minutes=45)
         )
-        entrevista.intercambios.create(
-            numero=1,
-            pregunta="p",
+        crear_intercambio(
+            entrevista,
             respuesta="r",
             respondido_en=timezone.now() - timedelta(minutes=2),
         )
@@ -84,9 +71,7 @@ class AbandonoTest(TestCase):
         otro_usuario = Usuario.objects.create_user(
             email="otro@example.com", password="clave-segura-123", nombre_completo="Otro"
         )
-        entrevista_ajena = Entrevista.objects.create(
-            usuario=otro_usuario, area=area_de(AreaTecnica.PROGRAMACION), nivel=nivel_de(Nivel.BASICO)
-        )
+        entrevista_ajena = crear_entrevista(otro_usuario)
         Entrevista.objects.filter(pk=entrevista_ajena.pk).update(
             fecha_inicio=timezone.now() - timedelta(minutes=45)
         )
@@ -110,14 +95,9 @@ class AbandonoTest(TestCase):
 
     def _crear_en_progreso_antiguas(self, cuantas: int) -> None:
         for _ in range(cuantas):
-            entrevista = Entrevista.objects.create(
-                usuario=self.usuario,
-                area=area_de(AreaTecnica.PROGRAMACION),
-                nivel=nivel_de(Nivel.BASICO),
-            )
-            entrevista.intercambios.create(
-                numero=1,
-                pregunta="p",
+            entrevista = crear_entrevista(self.usuario)
+            crear_intercambio(
+                entrevista,
                 respuesta="r",
                 respondido_en=timezone.now() - timedelta(minutes=45),
             )

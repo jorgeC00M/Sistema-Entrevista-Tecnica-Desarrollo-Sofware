@@ -32,7 +32,12 @@ const TITULOS: TituloDeRuta[] = [
   {
     patron: '/nueva-entrevista',
     titulo: 'Nueva entrevista',
-    subtitulo: 'Elige un área técnica y un nivel de dificultad',
+    subtitulo: 'Elige el puesto al que quieres postular y el nivel de exigencia',
+  },
+  {
+    patron: '/mi-cv',
+    titulo: 'Revisar mi CV',
+    subtitulo: 'Qué lee un ATS de tu currículum, y cómo encaja en una convocatoria',
   },
   {
     patron: '/historial',

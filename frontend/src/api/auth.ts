@@ -5,6 +5,23 @@ import { guardarTokens, limpiarTokens, peticion } from './client'
 // Las rutas de auth van SIN barra final; las de entrevistas con ella.
 // Es asimétrico pero coincide con backend/config/urls.py.
 
+// El mapa inverso de la conversión que ya hace `registrar()` al construir el
+// body: el backend valida y responde en snake_case, el formulario vive en
+// camelCase. Vive aquí, junto a la conversión de ida, en vez de en un
+// conversor genérico snake→camel: un conversor automático funcionaría por
+// accidente en los campos que ya coinciden (`email`) y fallaría en silencio
+// en los que no se declaren aquí.
+const CAMPO_DEL_FORMULARIO_DE_REGISTRO: Record<string, string> = {
+  nombre_completo: 'nombreCompleto',
+  email: 'email',
+  password: 'password',
+}
+
+/** Traduce una clave de error de `registrar()` al nombre que usa el formulario. */
+export function campoDeRegistro(campoDelBackend: string): string | undefined {
+  return CAMPO_DEL_FORMULARIO_DE_REGISTRO[campoDelBackend]
+}
+
 export async function registrar({
   email,
   password,

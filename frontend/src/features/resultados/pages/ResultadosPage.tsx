@@ -25,7 +25,7 @@ export default function ResultadosPage() {
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <EtiquetaMono tono="suelto">
-            Sesión #{entrevista.id} · {entrevista.area_display}
+            Sesión #{entrevista.id} · {entrevista.puesto_display}
           </EtiquetaMono>
           <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
             Reporte de evaluación técnica

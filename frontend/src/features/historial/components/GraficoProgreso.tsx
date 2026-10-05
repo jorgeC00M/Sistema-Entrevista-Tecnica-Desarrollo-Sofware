@@ -4,18 +4,21 @@ import type { PuntoDeEvolucion } from '@/types/evaluacion'
 // SVG simple, sin librería de gráficos: el dato es una línea de puntos en el
 // tiempo, no justifica una dependencia nueva para este proyecto.
 //
+// Un punto del gráfico es una entrevista completa, y lo que la identifica es el
+// puesto: una entrevista recorre varios temas, así que colorear por área ya no
+// significaría nada.
+//
 // Los atributos fill/stroke de SVG no aceptan clases de Tailwind, así que
 // necesitan valores literales. Donde el color coincide con un token real
-// (programación = el acento del producto, la línea de conexión = su tinte
-// suave) se referencia la variable de @theme en vez de repetir el hex. Las
-// otras tres áreas son categóricas, no de estado: se eligen deliberadamente
-// distintas de exito/progreso/error, para que un punto del gráfico nunca se
-// lea como "esta área tiene mal puntaje".
-const COLORES_AREA: Record<string, string> = {
-  programacion: 'var(--color-vidrio-acento)',
-  bases_de_datos: '#0d9488', // teal — categórico, no exito-texto
-  estructuras_de_datos: '#7c3aed', // violeta — categórico, sin colisión con el acento ni progreso-texto
-  desarrollo_web: '#db2777', // rosa — categórico, sin colisión con ningún semántico
+// (backend = el acento del producto, la línea de conexión = su tinte suave) se
+// referencia la variable de @theme en vez de repetir el hex. Los otros son
+// categóricos, no de estado: se eligen deliberadamente distintos de
+// exito/progreso/error, para que un punto del gráfico nunca se lea como "esta
+// entrevista salió mal".
+const COLORES_PUESTO: Record<string, string> = {
+  backend: 'var(--color-vidrio-acento)',
+  frontend: '#0d9488', // teal — categórico, no exito-texto
+  full_stack: '#7c3aed', // violeta — categórico, sin colisión con el acento ni progreso-texto
 }
 const COLOR_POR_DEFECTO = 'var(--color-vidrio-acento)'
 
@@ -47,7 +50,9 @@ export default function GraficoProgreso({ puntos }: Props) {
 
   const lineaPath = coordenadas.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ')
 
-  const areasPresentes = [...new Map(puntos.map((p) => [p.area, p.area_display])).entries()]
+  const puestosPresentes = [
+    ...new Map(puntos.map((p) => [p.puesto, p.puesto_display])).entries(),
+  ]
 
   return (
     <Tarjeta className="p-4 sm:p-5">
@@ -103,23 +108,23 @@ export default function GraficoProgreso({ puntos }: Props) {
             cx={c.x}
             cy={c.y}
             r="5"
-            fill={COLORES_AREA[c.area] ?? COLOR_POR_DEFECTO}
+            fill={COLORES_PUESTO[c.puesto] ?? COLOR_POR_DEFECTO}
             stroke="white"
             strokeWidth="2"
           >
             <title>
-              {c.area_display}: {Math.round(c.puntuacion_promedio)}/100
+              {c.puesto_display}: {Math.round(c.puntuacion_promedio)}/100
             </title>
           </circle>
         ))}
       </svg>
 
       <div className="mt-3 flex flex-wrap gap-3 text-xs text-vidrio-muted">
-        {areasPresentes.map(([area, etiqueta]) => (
-          <span key={area} className="flex items-center gap-1.5">
+        {puestosPresentes.map(([puesto, etiqueta]) => (
+          <span key={puesto} className="flex items-center gap-1.5">
             <span
               className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: COLORES_AREA[area] ?? COLOR_POR_DEFECTO }}
+              style={{ backgroundColor: COLORES_PUESTO[puesto] ?? COLOR_POR_DEFECTO }}
             />
             {etiqueta}
           </span>

@@ -30,7 +30,8 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
             >
               <div>
                 <p className="text-sm font-medium text-vidrio-ink">
-                  {entrevista.area_display} · {entrevista.nivel_display}
+                  {entrevista.puesto_display} · {entrevista.nivel_display}
+                  {entrevista.tecnologia_display && <> · {entrevista.tecnologia_display}</>}
                 </p>
                 <p className="text-xs text-vidrio-muted">
                   {new Date(entrevista.fecha_inicio).toLocaleString('es-BO')}

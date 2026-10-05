@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.catalogos.models import Area, Nivel
+from apps.catalogos.models import Area, Nivel, Puesto, Tecnologia
 
 Usuario = get_user_model()
 
@@ -27,11 +27,48 @@ def nivel_de(codigo) -> Nivel:
     return Nivel.objects.get(codigo=codigo)
 
 
+def puesto_de(codigo) -> Puesto:
+    return Puesto.objects.get(codigo=codigo)
+
+
+def tecnologia_de(codigo) -> Tecnologia:
+    return Tecnologia.objects.get(codigo=codigo)
+
+
 def crear_usuario(email: str = "egresado@example.com", **extra) -> Usuario:
     """Usuario de pruebas con valores por defecto razonables."""
     extra.setdefault("password", "clave-segura-123")
     extra.setdefault("nombre_completo", "Egresado de Prueba")
     return Usuario.objects.create_user(email=email, **extra)
+
+
+def crear_entrevista(usuario, puesto="full_stack", nivel="basico", tecnologia=None, **extra):
+    """Entrevista con el catálogo ya resuelto desde sus códigos.
+
+    Centraliza la forma del modelo: cuando la cabecera cambia —como al pasar de
+    área única a puesto— se actualiza aquí y no en los ocho archivos que crean
+    entrevistas a mano.
+    """
+    from apps.entrevistas.models import Entrevista
+
+    return Entrevista.objects.create(
+        usuario=usuario,
+        puesto=puesto_de(puesto),
+        nivel=nivel_de(nivel),
+        tecnologia=tecnologia_de(tecnologia) if tecnologia else None,
+        **extra,
+    )
+
+
+def crear_intercambio(entrevista, numero=1, area="programacion", **extra):
+    """Intercambio con su área resuelta. `area` es obligatoria en el modelo:
+    cada pregunta declara de qué tema es."""
+    from apps.entrevistas.models import Intercambio
+
+    extra.setdefault("pregunta", f"Pregunta {numero}")
+    return Intercambio.objects.create(
+        entrevista=entrevista, numero=numero, area=area_de(area), **extra
+    )
 
 
 class TestDeAPI(TestCase):

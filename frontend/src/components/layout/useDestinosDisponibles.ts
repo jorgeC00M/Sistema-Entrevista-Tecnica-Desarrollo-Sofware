@@ -4,7 +4,7 @@ import type { Entrevista } from '@/types/entrevista'
 
 export interface EntrevistaEnCurso {
   id: number
-  areaDisplay: string
+  puestoDisplay: string
   numeroActual: number
   totalPreguntas: number
 }
@@ -55,7 +55,7 @@ export function useDestinosDisponibles(): DestinosDisponibles {
     pendiente && estado
       ? {
           id: pendiente.id,
-          areaDisplay: pendiente.area_display,
+          puestoDisplay: pendiente.puesto_display,
           numeroActual: estado.pregunta_pendiente?.numero ?? estado.total_preguntas,
           totalPreguntas: estado.total_preguntas,
         }

@@ -9,6 +9,12 @@ directamente (una fila por pregunta respondida), no promediando los
 `puntuacion_promedio` ya promediados de cada entrevista: promediar promedios
 pondera mal cuando las entrevistas no tienen el mismo número de preguntas
 evaluadas.
+
+El área se lee del intercambio, no de la entrevista. Antes la entrevista tenía
+una sola área y las cinco respuestas heredaban esa etiqueta; hoy cada pregunta
+lleva la suya, así que agrupar por `intercambio__area` describe de verdad en qué
+temas le fue bien o mal al usuario. La evolución en el tiempo, en cambio, es por
+entrevista, y lo que la identifica ahí es el puesto.
 """
 
 from __future__ import annotations
@@ -34,31 +40,38 @@ def calcular_estadisticas(usuario) -> dict:
         intercambio__entrevista__estado=Entrevista.Estado.FINALIZADA,
     ).aggregate(promedio=Avg("puntuacion"))["promedio"]
 
+    # Se agrupa desde `Evaluacion` y no desde `Entrevista` porque el área vive
+    # ahora en el intercambio: una entrevista aporta respuestas a varias áreas.
+    # `entrevistas` sigue contando entrevistas distintas, para que la cifra
+    # responda "en cuántas entrevistas toqué este tema".
     por_area = [
         {
-            "area": fila["area__codigo"],
-            "area_display": fila["area__nombre"],
+            "area": fila["intercambio__area__codigo"],
+            "area_display": fila["intercambio__area__nombre"],
             "promedio": fila["promedio"],
             "entrevistas": fila["entrevistas"],
         }
-        for fila in finalizadas.values("area__codigo", "area__nombre")
-        .annotate(
-            promedio=Avg("intercambios__evaluacion__puntuacion"),
-            entrevistas=Count("id", distinct=True),
+        for fila in Evaluacion.objects.filter(
+            intercambio__entrevista__in=finalizadas,
         )
-        .order_by("area__codigo")
+        .values("intercambio__area__codigo", "intercambio__area__nombre")
+        .annotate(
+            promedio=Avg("puntuacion"),
+            entrevistas=Count("intercambio__entrevista", distinct=True),
+        )
+        .order_by("intercambio__area__codigo")
     ]
 
     evolucion = [
         {
             "entrevista_id": fila["id"],
-            "area": fila["area__codigo"],
-            "area_display": fila["area__nombre"],
+            "puesto": fila["puesto__codigo"],
+            "puesto_display": fila["puesto__nombre"],
             "fecha_fin": fila["fecha_fin"],
             "puntuacion_promedio": fila["puntuacion_promedio"],
         }
         for fila in finalizadas.order_by("fecha_fin").values(
-            "id", "area__codigo", "area__nombre", "fecha_fin", "puntuacion_promedio"
+            "id", "puesto__codigo", "puesto__nombre", "fecha_fin", "puntuacion_promedio"
         )
     ]
 
@@ -94,33 +107,33 @@ def calcular_retroalimentacion(usuario) -> dict:
 
     por_area = [
         {
-            "area": fila["intercambio__entrevista__area__codigo"],
-            "area_display": fila["intercambio__entrevista__area__nombre"],
+            "area": fila["intercambio__area__codigo"],
+            "area_display": fila["intercambio__area__nombre"],
             "total_respuestas": fila["total_respuestas"],
             "promedio": fila["promedio"],
             "bandas": {banda.codigo: fila[banda.codigo] for banda in BANDAS},
         }
         for fila in evaluaciones.values(
-            "intercambio__entrevista__area__codigo",
-            "intercambio__entrevista__area__nombre",
+            "intercambio__area__codigo",
+            "intercambio__area__nombre",
         )
         .annotate(
             total_respuestas=Count("id"),
             promedio=Avg("puntuacion"),
             **conteo_por_banda,
         )
-        .order_by("intercambio__entrevista__area__codigo")
+        .order_by("intercambio__area__codigo")
     ]
 
-    recientes = evaluaciones.select_related(
-        "intercambio", "intercambio__entrevista", "intercambio__entrevista__area"
-    ).order_by("-creado_en")[:MAXIMO_OBSERVACIONES]
+    recientes = evaluaciones.select_related("intercambio", "intercambio__area").order_by(
+        "-creado_en"
+    )[:MAXIMO_OBSERVACIONES]
 
     observaciones = [
         {
             "entrevista_id": evaluacion.intercambio.entrevista_id,
-            "area": evaluacion.intercambio.entrevista.area.codigo,
-            "area_display": evaluacion.intercambio.entrevista.area.nombre,
+            "area": evaluacion.intercambio.area.codigo,
+            "area_display": evaluacion.intercambio.area.nombre,
             "numero": evaluacion.intercambio.numero,
             "pregunta": evaluacion.intercambio.pregunta,
             "puntuacion": evaluacion.puntuacion,

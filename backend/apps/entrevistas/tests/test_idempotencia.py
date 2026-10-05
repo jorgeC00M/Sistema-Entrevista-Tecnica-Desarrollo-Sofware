@@ -2,10 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.entrevistas import services as servicio
-from tests.conftest import area_de, nivel_de
+from tests.conftest import nivel_de, puesto_de
 from integrations.ia.exceptions import ErrorTransitorio
 from integrations.ia.fake import FakeProveedorIA
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel
 
 Usuario = get_user_model()
 
@@ -25,11 +24,12 @@ class IdempotenciaTest(TestCase):
         )
 
     def test_reintento_tras_fallo_no_duplica_intercambio_ni_evaluacion(self):
-        # Llamada 1 = generar_pregunta dentro de iniciar(). Fallar en la 2 =
-        # la evaluación del primer responder().
+        # Llamada 1 = el calentamiento dentro de iniciar() (las dos primeras
+        # preguntas de una vez). Fallar en la 2 = la evaluación del primer
+        # responder().
         proveedor_que_falla = FakeProveedorIA(fallar_en=2)
         entrevista = servicio.iniciar(
-            self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), proveedor=proveedor_que_falla
+            self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor_que_falla
         )
 
         with self.assertRaises(ErrorTransitorio):
@@ -49,12 +49,14 @@ class IdempotenciaTest(TestCase):
         intercambio.refresh_from_db()
         self.assertEqual(intercambio.respuesta, "Mi respuesta")  # se conserva la original
         self.assertTrue(hasattr(intercambio, "evaluacion"))
-        self.assertEqual(entrevista.intercambios.count(), 2)  # la 1 evaluada + la pregunta 2 generada
+        # Siguen siendo las dos del calentamiento: responder la primera no
+        # genera nada, porque la segunda ya existía.
+        self.assertEqual(entrevista.intercambios.count(), 2)
 
     def test_reintento_exitoso_deja_exactamente_una_evaluacion(self):
         proveedor_que_falla = FakeProveedorIA(fallar_en=2)
         entrevista = servicio.iniciar(
-            self.usuario, area_de(AreaTecnica.PROGRAMACION), nivel_de(Nivel.BASICO), proveedor=proveedor_que_falla
+            self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor_que_falla
         )
         with self.assertRaises(ErrorTransitorio):
             servicio.responder(entrevista, "Mi respuesta", proveedor=proveedor_que_falla)
@@ -76,27 +78,35 @@ class IdempotenciaTest(TestCase):
         quedaría sin pregunta pendiente y sin estado final —atascada— y el
         reintento encontraría el intercambio ya evaluado.
 
-        Llamadas: 1 = pregunta inicial, 2 = evaluación, 3 = pregunta nº2.
+        Se falla al generar la pregunta 3, no la 2: las dos primeras son el
+        calentamiento y se crean juntas en `iniciar()`, así que responder la
+        primera no genera nada. Llamadas: 1 = calentamiento (las dos preguntas
+        de una vez), 2 = evaluar la respuesta 1, 3 = evaluar la respuesta 2,
+        4 = generar la pregunta 3.
         """
-        proveedor_que_falla = FakeProveedorIA(fallar_en=3)
+        proveedor_que_falla = FakeProveedorIA(fallar_en=4)
         entrevista = servicio.iniciar(
             self.usuario,
-            area_de(AreaTecnica.PROGRAMACION),
-            nivel_de(Nivel.BASICO),
+            puesto_de("backend"),
+            nivel_de("basico"),
             proveedor=proveedor_que_falla,
         )
+
+        # La primera respuesta pasa sin incidentes: no hay pregunta que generar.
+        servicio.responder(entrevista, "Mi primera respuesta", proveedor=proveedor_que_falla)
 
         with self.assertRaises(ErrorTransitorio):
             servicio.responder(entrevista, "Mi respuesta", proveedor=proveedor_que_falla)
 
         from apps.evaluaciones.models import Evaluacion
 
-        intercambio = entrevista.intercambios.get(numero=1)
+        intercambio = entrevista.intercambios.get(numero=2)
         # La respuesta sobrevive (se guarda fuera de la transacción), pero la
         # evaluación se deshizo junto con la pregunta que no llegó a crearse.
         self.assertEqual(intercambio.respuesta, "Mi respuesta")
         self.assertEqual(Evaluacion.objects.filter(intercambio=intercambio).count(), 0)
-        self.assertEqual(entrevista.intercambios.count(), 1)
+        # Siguen siendo solo las dos del calentamiento: la tercera no se creó.
+        self.assertEqual(entrevista.intercambios.count(), 2)
 
         entrevista.refresh_from_db()
         self.assertEqual(entrevista.estado, entrevista.Estado.EN_PROGRESO)
@@ -105,4 +115,6 @@ class IdempotenciaTest(TestCase):
         servicio.responder(entrevista, "Mi respuesta", proveedor=FakeProveedorIA())
 
         self.assertEqual(Evaluacion.objects.filter(intercambio=intercambio).count(), 1)
-        self.assertEqual(entrevista.intercambios.count(), 2)
+        # Ahora sí aparece la tercera: el reintento completó lo que el fallo dejó
+        # a medias, sin duplicar nada de lo anterior.
+        self.assertEqual(entrevista.intercambios.count(), 3)

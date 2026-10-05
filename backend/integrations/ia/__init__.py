@@ -7,17 +7,27 @@ from .exceptions import (
     RespuestaIAInvalida,
 )
 from .prompts.schemas import (
+    PLAN_POR_PUESTO,
+    PREGUNTAS_DE_CALENTAMIENTO,
     PREGUNTAS_POR_ENTREVISTA,
     AreaTecnica,
+    ContextoDeEntrevista,
     Evaluacion,
     Nivel,
     Pregunta,
+    Puesto,
+    Tecnologia,
     TemaEvaluado,
+    area_de_la_pregunta,
+    areas_que_cubre,
 )
 
 __all__ = [
+    "PLAN_POR_PUESTO",
+    "PREGUNTAS_DE_CALENTAMIENTO",
     "PREGUNTAS_POR_ENTREVISTA",
     "AreaTecnica",
+    "ContextoDeEntrevista",
     "ErrorPermanente",
     "ErrorProveedorIA",
     "ErrorTransitorio",
@@ -27,6 +37,10 @@ __all__ = [
     "ProveedorIA",
     "ProveedorIAporJSON",
     "ProveedorNoConfigurado",
+    "Puesto",
     "RespuestaIAInvalida",
+    "Tecnologia",
     "TemaEvaluado",
+    "area_de_la_pregunta",
+    "areas_que_cubre",
 ]

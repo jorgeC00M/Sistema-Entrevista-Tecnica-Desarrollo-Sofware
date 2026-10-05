@@ -26,7 +26,17 @@ from integrations.ia.exceptions import (
     RespuestaIAInvalida,
 )
 from integrations.ia.gemini import GeminiProveedorIA
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel
+from integrations.ia.prompts.schemas import (
+    AreaTecnica,
+    ContextoDeEntrevista,
+    Nivel,
+    Puesto,
+)
+
+# Para estos tests el encuadre es irrelevante —lo que se prueba es cómo se
+# traduce el fallo del SDK— así que se fija uno cualquiera y no se repite en
+# cada llamada.
+CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.BASICO)
 
 
 def _error_de_anthropic(codigo: int) -> anthropic.APIStatusError:
@@ -63,7 +73,7 @@ class ClaudeErroresTest(unittest.TestCase):
                 proveedor = self._proveedor()
                 proveedor._cliente.messages.create.side_effect = _error_de_anthropic(codigo)
                 with self.assertRaises(ErrorTransitorio):
-                    proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+                    proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
     def test_codigos_permanentes(self):
         for codigo in (400, 401, 403, 404, 422):
@@ -71,7 +81,7 @@ class ClaudeErroresTest(unittest.TestCase):
                 proveedor = self._proveedor()
                 proveedor._cliente.messages.create.side_effect = _error_de_anthropic(codigo)
                 with self.assertRaises(ErrorPermanente):
-                    proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+                    proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
     def test_fallo_de_conexion_es_transitorio(self):
         proveedor = self._proveedor()
@@ -79,7 +89,7 @@ class ClaudeErroresTest(unittest.TestCase):
             request=httpx.Request("POST", "https://api.anthropic.com")
         )
         with self.assertRaises(ErrorTransitorio):
-            proveedor.evaluar_respuesta(AreaTecnica.PROGRAMACION, Nivel.BASICO, "p", "r")
+            proveedor.evaluar_respuesta(CONTEXTO, AreaTecnica.PROGRAMACION, "p", "r")
 
     def test_json_invalido_rompe_el_contrato(self):
         proveedor = self._proveedor()
@@ -89,7 +99,7 @@ class ClaudeErroresTest(unittest.TestCase):
         proveedor._cliente.messages.create.return_value = MagicMock(content=[bloque])
 
         with self.assertRaises(RespuestaIAInvalida):
-            proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+            proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
 
 class GeminiErroresTest(unittest.TestCase):
@@ -117,7 +127,7 @@ class GeminiErroresTest(unittest.TestCase):
             503, {"error": {"message": "no disponible"}}
         )
         with self.assertRaises(ErrorTransitorio):
-            proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+            proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
     def test_limite_de_tasa_es_transitorio(self):
         proveedor = self._proveedor()
@@ -125,7 +135,7 @@ class GeminiErroresTest(unittest.TestCase):
             429, {"error": {"message": "demasiadas peticiones"}}
         )
         with self.assertRaises(ErrorTransitorio):
-            proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+            proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
     def test_peticion_rechazada_es_permanente(self):
         proveedor = self._proveedor()
@@ -133,7 +143,7 @@ class GeminiErroresTest(unittest.TestCase):
             400, {"error": {"message": "petición inválida"}}
         )
         with self.assertRaises(ErrorPermanente):
-            proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+            proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
 
     def test_timeout_es_transitorio(self):
         """Antes de este cambio, un timeout escapaba crudo del adaptador y
@@ -143,7 +153,7 @@ class GeminiErroresTest(unittest.TestCase):
             "se agotó el tiempo"
         )
         with self.assertRaises(ErrorTransitorio):
-            proveedor.evaluar_respuesta(AreaTecnica.PROGRAMACION, Nivel.BASICO, "p", "r")
+            proveedor.evaluar_respuesta(CONTEXTO, AreaTecnica.PROGRAMACION, "p", "r")
 
     def test_fallo_de_red_es_transitorio(self):
         proveedor = self._proveedor()
@@ -151,10 +161,10 @@ class GeminiErroresTest(unittest.TestCase):
             "sin conexión"
         )
         with self.assertRaises(ErrorTransitorio):
-            proveedor.evaluar_respuesta(AreaTecnica.PROGRAMACION, Nivel.BASICO, "p", "r")
+            proveedor.evaluar_respuesta(CONTEXTO, AreaTecnica.PROGRAMACION, "p", "r")
 
     def test_respuesta_vacia_rompe_el_contrato(self):
         proveedor = self._proveedor()
         proveedor._cliente.models.generate_content.return_value = MagicMock(text="")
         with self.assertRaises(RespuestaIAInvalida):
-            proveedor.generar_pregunta(AreaTecnica.PROGRAMACION, Nivel.BASICO, 1, [])
+            proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])

@@ -1,9 +1,10 @@
 """Traducción centralizada de errores del dominio a respuestas HTTP.
 
-La taxonomía de `integrations.ia.exceptions` existe para que ninguna capa
-necesite conocer el SDK del proveedor. Este manejador es el único punto donde
-esa taxonomía se convierte en código HTTP, así que las vistas no repiten el
-mismo try/except: dejan subir la excepción y DRF la trae hasta aquí.
+Las taxonomías de `integrations.ia.exceptions` y
+`integrations.documentos.exceptions` existen para que ninguna capa necesite
+conocer el SDK del proveedor ni la librería de PDF. Este manejador es el único
+punto donde esas taxonomías se convierten en código HTTP, así que las vistas no
+repiten el mismo try/except: dejan subir la excepción y DRF la trae hasta aquí.
 
 Se registra en REST_FRAMEWORK["EXCEPTION_HANDLER"].
 """
@@ -16,6 +17,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as manejador_drf
 
+from integrations.documentos.exceptions import (
+    DocumentoCorrupto,
+    DocumentoDemasiadoGrande,
+    ErrorDeDocumento,
+    FormatoNoSoportado,
+)
 from integrations.ia.exceptions import (
     ErrorPermanente,
     ErrorProveedorIA,
@@ -67,7 +74,35 @@ def _respuesta_para_error_ia(exc: ErrorProveedorIA) -> Response:
     )
 
 
+def _respuesta_para_error_de_documento(exc: ErrorDeDocumento) -> Response:
+    """Todos son 400: el problema está en el archivo que mandó el cliente.
+
+    A diferencia de los errores de IA, aquí no hay nada caído ni nada que
+    reintentar, y el mensaje de la excepción se le muestra al usuario porque es
+    accionable —qué formato se acepta, cuántas páginas son demasiadas—. Tampoco
+    se registran en el log: subir un archivo equivocado es un uso normal del
+    sistema, no un incidente.
+    """
+    if isinstance(exc, (FormatoNoSoportado, DocumentoDemasiadoGrande)):
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    if isinstance(exc, DocumentoCorrupto):
+        return Response(
+            {
+                "detail": (
+                    "No se pudo abrir el archivo. Puede estar dañado o protegido con "
+                    "contraseña; prueba exportándolo de nuevo desde Word o Google Docs."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response({"detail": "No se pudo procesar el documento."}, status=status.HTTP_400_BAD_REQUEST)
+
+
 def manejador_de_excepciones(exc, context):
     if isinstance(exc, ErrorProveedorIA):
         return _respuesta_para_error_ia(exc)
+    if isinstance(exc, ErrorDeDocumento):
+        return _respuesta_para_error_de_documento(exc)
     return manejador_drf(exc, context)

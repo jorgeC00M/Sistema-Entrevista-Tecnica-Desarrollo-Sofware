@@ -22,12 +22,16 @@ def entrevista_del_usuario(usuario, pk: int) -> Entrevista:
     entrevista de otro devuelva 404 y no 403: un 403 confirmaría que existe.
     """
     return get_object_or_404(
-        Entrevista.objects.select_related("area", "nivel"), pk=pk, usuario=usuario
+        Entrevista.objects.select_related("puesto", "nivel", "tecnologia"),
+        pk=pk,
+        usuario=usuario,
     )
 
 
 def entrevistas_de(usuario):
-    return Entrevista.objects.filter(usuario=usuario).select_related("area", "nivel")
+    return Entrevista.objects.filter(usuario=usuario).select_related(
+        "puesto", "nivel", "tecnologia"
+    )
 
 
 def intercambio_pendiente(entrevista):
@@ -56,7 +60,7 @@ def intercambios_de(entrevista):
     que nunca existió — y por creerlo el chat pintaba dos veces la pregunta
     en curso.
     """
-    return entrevista.intercambios.select_related("evaluacion").order_by("numero")
+    return entrevista.intercambios.select_related("evaluacion", "area").order_by("numero")
 
 
 def temas_evaluados(entrevista) -> list[TemaEvaluado]:

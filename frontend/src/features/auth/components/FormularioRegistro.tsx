@@ -9,9 +9,22 @@ type Campos = DatosDeRegistro
 
 interface Props {
   onEnviar: (datos: DatosDeRegistro) => Promise<void>
+  /**
+   * Errores de validación del backend, ya traducidos al nombre de cada
+   * campo por `campoDeRegistro` en `api/auth.ts`. Independientes de
+   * `noCoincide`, que es la única regla que el backend no puede evaluar
+   * (`confirmarPassword` nunca viaja fuera del navegador).
+   */
+  erroresPorCampo?: Partial<Record<keyof Campos, string>>
+  /** Se llama al escribir en un campo, para borrar su error mientras se corrige. */
+  onLimpiarError?: (campo: keyof Campos) => void
 }
 
-export default function FormularioRegistro({ onEnviar }: Props) {
+export default function FormularioRegistro({
+  onEnviar,
+  erroresPorCampo = {},
+  onLimpiarError,
+}: Props) {
   const [form, setForm] = useState<Campos>({
     email: '',
     password: '',
@@ -26,8 +39,13 @@ export default function FormularioRegistro({ onEnviar }: Props) {
   const [aceptaTerminos, setAceptaTerminos] = useState(false)
   const [cargando, setCargando] = useState(false)
 
-  const actualizar = (campo: keyof Campos) => (evento: ChangeEvent<HTMLInputElement>) =>
+  const actualizar = (campo: keyof Campos) => (evento: ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [campo]: evento.target.value }))
+    // Si el usuario corrige el campo, el error de la última validación del
+    // servidor deja de aplicar: mostrarlo seguiría sería afirmar algo que
+    // ya no es cierto sobre lo que hay escrito.
+    onLimpiarError?.(campo)
+  }
 
   const noCoincide = confirmarPassword.length > 0 && confirmarPassword !== form.password
 
@@ -52,6 +70,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         required
         value={form.nombreCompleto}
         onChange={actualizar('nombreCompleto')}
+        error={erroresPorCampo.nombreCompleto}
       />
       <CampoAuth
         icono={<Icono nombre="correo" />}
@@ -62,6 +81,7 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         required
         value={form.email}
         onChange={actualizar('email')}
+        error={erroresPorCampo.email}
       />
       <CampoAuth
         icono={<Icono nombre="candado" />}
@@ -74,8 +94,16 @@ export default function FormularioRegistro({ onEnviar }: Props) {
         minLength={8}
         value={form.password}
         onChange={actualizar('password')}
+        error={erroresPorCampo.password}
       />
-      <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-vidrio-muted">Mínimo 8 caracteres.</p>
+      {/* Solo cuando la contraseña no tiene su propio error del servidor: no
+          tiene sentido apilar "mínimo 8 caracteres" encima del mensaje real
+          ("esta contraseña es demasiado común"). */}
+      {!erroresPorCampo.password && (
+        <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-vidrio-muted">
+          Mínimo 8 caracteres.
+        </p>
+      )}
 
       <CampoAuth
         icono={<Icono nombre="candado-check" />}

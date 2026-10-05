@@ -13,6 +13,7 @@ export interface Destino {
  * sola vez evita que añadir una sección obligue a acordarse de dos sitios.
  */
 export const DESTINOS: Destino[] = [
+  { ruta: '/mi-cv', etiqueta: 'Revisar mi CV', icono: 'resultados' },
   { ruta: '/historial', etiqueta: 'Historial y progreso', icono: 'historial' },
   { ruta: '/retroalimentacion', etiqueta: 'Retroalimentación', icono: 'brujula' },
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'usuario' },

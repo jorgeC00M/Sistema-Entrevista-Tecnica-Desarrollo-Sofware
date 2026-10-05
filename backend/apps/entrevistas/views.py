@@ -16,7 +16,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.evaluaciones.serializers import EvaluacionSerializer
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from . import selectors, services
@@ -58,8 +57,10 @@ class EntrevistaListCreateView(APIView):
 
         entrevista = services.iniciar(
             request.user,
-            entrada.validated_data["area"],
+            entrada.validated_data["puesto"],
             entrada.validated_data["nivel"],
+            # Opcional en el serializer: si no vino, la entrevista no fija stack.
+            entrada.validated_data.get("tecnologia"),
         )
 
         return Response(
@@ -105,7 +106,11 @@ class ResponderView(APIView):
         entrada.is_valid(raise_exception=True)
 
         try:
-            evaluacion = services.responder(entrevista, entrada.validated_data["respuesta"])
+            # El valor de retorno se descarta a propósito: la calificación no se
+            # publica hasta que la entrevista termina. Se sigue calculando y
+            # guardando — es lo que alimenta la adaptatividad de las preguntas
+            # siguientes y lo que luego muestra el módulo de resultados.
+            services.responder(entrevista, entrada.validated_data["respuesta"])
         except services.SinIntercambioPendiente as exc:
             # No debería ocurrir dado el chequeo de estado de arriba; queda
             # como red de seguridad ante una condición de carrera. Se captura
@@ -116,7 +121,6 @@ class ResponderView(APIView):
         entrevista.refresh_from_db()
         return Response(
             {
-                "evaluacion": EvaluacionSerializer(evaluacion).data,
                 "siguiente_pregunta": _pregunta_dict(
                     selectors.intercambio_pendiente(entrevista)
                 ),
@@ -131,11 +135,20 @@ class ResultadosView(APIView):
     def get(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
 
+        # Mientras la entrevista siga en progreso no se publica ninguna
+        # calificación: este mismo endpoint es el que usa el chat para
+        # reconstruirse al recargar la página, así que devolverlas filtraría la
+        # nota a mitad de entrevista. Una abandonada sí las muestra, igual que
+        # hace la retroalimentación acumulada con las dejadas a medias.
+        en_progreso = entrevista.estado == Entrevista.Estado.EN_PROGRESO
+
         return Response(
             {
                 "entrevista": EntrevistaSerializer(entrevista).data,
                 "intercambios": IntercambioSerializer(
-                    selectors.intercambios_de(entrevista), many=True
+                    selectors.intercambios_de(entrevista),
+                    many=True,
+                    context={"con_evaluacion": not en_progreso},
                 ).data,
             }
         )

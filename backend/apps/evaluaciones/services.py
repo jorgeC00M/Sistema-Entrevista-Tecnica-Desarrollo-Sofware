@@ -8,16 +8,15 @@ services escribe, selectors lee.
 from __future__ import annotations
 
 from integrations.ia.base import ProveedorIA
-from integrations.ia.prompts.schemas import AreaTecnica
+from integrations.ia.prompts.schemas import AreaTecnica, ContextoDeEntrevista
 from integrations.ia.prompts.schemas import Evaluacion as EvaluacionIA
-from integrations.ia.prompts.schemas import Nivel
 
 from .models import Evaluacion
 
 
 def calificar(
+    contexto: ContextoDeEntrevista,
     area: AreaTecnica,
-    nivel: Nivel,
     pregunta: str,
     respuesta: str,
     proveedor: ProveedorIA,
@@ -27,8 +26,11 @@ def calificar(
     Está separada de `guardar` a propósito: el llamador hace esta llamada
     fuera de la transacción, para no mantener una abierta durante los segundos
     que tarda el proveedor en responder.
+
+    `area` es el tema de esa pregunta concreta, no de la entrevista: el puesto
+    reparte varios temas entre las preguntas.
     """
-    return proveedor.evaluar_respuesta(area, nivel, pregunta, respuesta)
+    return proveedor.evaluar_respuesta(contexto, area, pregunta, respuesta)
 
 
 def guardar(intercambio, resultado: EvaluacionIA, proveedor: ProveedorIA) -> Evaluacion:

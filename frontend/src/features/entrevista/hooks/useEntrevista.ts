@@ -4,13 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { ErrorAPI } from '@/api/client'
 import { obtenerEstado, obtenerResultados, responder } from '@/api/entrevistas'
 import type { AutorDeMensaje } from '@/features/entrevista/components/BurbujaPregunta'
-import type { Evaluacion } from '@/types/evaluacion'
 
 export interface MensajeDeChat {
   autor: AutorDeMensaje
   texto: string
-  /** Solo en mensajes del candidato, y solo una vez evaluada la respuesta. */
-  evaluacion?: Evaluacion
 }
 
 export function useEntrevista(id: string) {
@@ -19,7 +16,7 @@ export function useEntrevista(id: string) {
   const [mensajes, setMensajes] = useState<MensajeDeChat[]>([])
   const [numeroActual, setNumeroActual] = useState(1)
   const [totalPreguntas, setTotalPreguntas] = useState(0)
-  const [areaDisplay, setAreaDisplay] = useState('')
+  const [puestoDisplay, setPuestoDisplay] = useState('')
   const [nivelDisplay, setNivelDisplay] = useState('')
   const [cargandoInicial, setCargandoInicial] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -44,16 +41,20 @@ export function useEntrevista(id: string) {
         const resultados = await obtenerResultados(id)
         if (cancelado) return
 
-        // Solo los turnos ya calificados: el endpoint de resultados devuelve
-        // también el intercambio pendiente (con la respuesta vacía), y ese
-        // mismo lo aporta `estado.pregunta_pendiente` justo debajo. Sin este
-        // filtro la pregunta en curso se pintaba dos veces, con una burbuja
-        // de usuario vacía en medio.
+        // Solo los turnos ya respondidos: el endpoint de resultados devuelve
+        // también los intercambios pendientes (con la respuesta vacía), y el
+        // que toca ahora lo aporta `estado.pregunta_pendiente` justo debajo.
+        // Sin este filtro la pregunta en curso se pintaría dos veces, con una
+        // burbuja de usuario vacía en medio.
+        //
+        // El criterio es la respuesta y no la evaluación: durante la entrevista
+        // la API ya no publica calificaciones, así que filtrar por evaluación
+        // dejaría el historial entero fuera.
         const previos: MensajeDeChat[] = resultados.intercambios
-          .filter((i) => i.evaluacion !== null)
+          .filter((i) => i.respuesta !== '')
           .flatMap((i) => [
             { autor: 'sistema' as const, texto: i.pregunta },
-            { autor: 'usuario' as const, texto: i.respuesta, evaluacion: i.evaluacion ?? undefined },
+            { autor: 'usuario' as const, texto: i.respuesta },
           ])
         const pendiente: MensajeDeChat[] = estado.pregunta_pendiente
           ? [{ autor: 'sistema', texto: estado.pregunta_pendiente.texto }]
@@ -62,7 +63,7 @@ export function useEntrevista(id: string) {
         setMensajes([...previos, ...pendiente])
         setNumeroActual(estado.pregunta_pendiente?.numero ?? estado.total_preguntas)
         setTotalPreguntas(estado.total_preguntas)
-        setAreaDisplay(estado.entrevista.area_display)
+        setPuestoDisplay(estado.entrevista.puesto_display)
         setNivelDisplay(estado.entrevista.nivel_display)
       } catch (err: unknown) {
         if (!cancelado) {
@@ -89,15 +90,11 @@ export function useEntrevista(id: string) {
       try {
         const resultado = await responder(id, texto)
 
-        // La evaluación se cuelga del mensaje que califica, no de uno nuevo:
-        // así el hilo nunca puede quedar con una calificación huérfana o
-        // desordenada respecto a la respuesta que la generó.
-        setMensajes((previos) => {
-          const ultimo = previos[previos.length - 1]
-          if (!ultimo || ultimo.autor !== 'usuario') return previos
-          return [...previos.slice(0, -1), { ...ultimo, evaluacion: resultado.evaluacion }]
-        })
-
+        // No se pinta ninguna calificación: la respuesta se evalúa en el
+        // servidor —es lo que calibra la exigencia de las preguntas
+        // siguientes— pero la nota y la retroalimentación solo se muestran al
+        // terminar, en el módulo de resultados. Un entrevistador real tampoco
+        // canta el puntaje a mitad de la sesión.
         if (resultado.siguiente_pregunta) {
           const siguiente = resultado.siguiente_pregunta
           setMensajes((previos) => [...previos, { autor: 'sistema', texto: siguiente.texto }])
@@ -126,7 +123,7 @@ export function useEntrevista(id: string) {
     mensajes,
     numeroActual,
     totalPreguntas,
-    areaDisplay,
+    puestoDisplay,
     nivelDisplay,
     cargandoInicial,
     enviando,

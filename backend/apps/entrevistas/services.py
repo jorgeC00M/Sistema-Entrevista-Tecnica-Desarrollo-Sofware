@@ -18,10 +18,16 @@ from django.db.models import Max
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from apps.catalogos.selectors import areas_por_codigo
 from apps.evaluaciones.services import calificar, guardar
 from integrations.ia.base import ProveedorIA
 from integrations.ia.factory import get_proveedor
-from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
+from integrations.ia.prompts.schemas import (
+    PREGUNTAS_DE_CALENTAMIENTO,
+    PREGUNTAS_POR_ENTREVISTA,
+    ContextoDeEntrevista,
+    area_de_la_pregunta,
+)
 
 from .models import Entrevista, Intercambio
 from .selectors import intercambio_pendiente, promedio_de_evaluaciones, temas_evaluados
@@ -35,28 +41,68 @@ class SinIntercambioPendiente(ValueError):
     Hereda de `ValueError` por compatibilidad con quien ya la trataba así,
     pero es un tipo propio para que la vista pueda capturar exactamente este
     caso. Antes capturaba `ValueError` a secas y se tragaba también el que
-    lanza `Entrevista.area_enum` cuando un área no tiene miembro en el enum,
-    convirtiendo un problema de integridad de datos en un 409 con un mensaje
-    falso.
+    lanzan las propiedades `*_enum` cuando una fila del catálogo no tiene
+    miembro en el enum, convirtiendo un problema de integridad de datos en un
+    409 con un mensaje falso.
     """
 
 
-def iniciar(usuario, area, nivel, proveedor: ProveedorIA | None = None) -> Entrevista:
-    """Crea la entrevista y su primera pregunta.
+def _contexto(entrevista) -> ContextoDeEntrevista:
+    """El encuadre de la postulación, que no cambia durante la entrevista."""
+    return ContextoDeEntrevista(
+        puesto=entrevista.puesto_enum,
+        nivel=entrevista.nivel_enum,
+        tecnologia=entrevista.tecnologia_enum,
+    )
 
-    `area` y `nivel` son instancias de los modelos de catálogo; el enum que
-    necesita el proveedor se deriva de su `codigo`.
+
+def _crear_intercambios(entrevista, preguntas, areas_enum) -> list[Intercambio]:
+    """Guarda cada pregunta junto con el área que le toca.
+
+    El área se persiste en vez de recalcularse después desde el puesto: así el
+    desglose por tema sigue describiendo lo que de verdad se preguntó aunque la
+    composición del puesto cambie más adelante.
+
+    Resuelve el catálogo de una sola consulta aunque lleguen varias preguntas,
+    que es el caso del calentamiento.
+    """
+    areas = areas_por_codigo({a.value for a in areas_enum})
+    return [
+        Intercambio.objects.create(
+            entrevista=entrevista,
+            numero=pregunta.numero,
+            area=areas[area_enum.value],
+            pregunta=pregunta.texto,
+        )
+        for pregunta, area_enum in zip(preguntas, areas_enum, strict=True)
+    ]
+
+
+def iniciar(usuario, puesto, nivel, tecnologia=None, proveedor: ProveedorIA | None = None):
+    """Crea la entrevista y sus preguntas de calentamiento.
+
+    `puesto`, `nivel` y `tecnologia` son instancias de los modelos de catálogo
+    (la última, opcional); los enums que necesita el proveedor se derivan de su
+    `codigo`. El área de cada pregunta no se recibe: la decide el puesto.
+
+    Las primeras `PREGUNTAS_DE_CALENTAMIENTO` se piden en una sola llamada porque
+    ninguna puede ser adaptativa todavía — no hay respuestas de las que
+    adaptarse. De la siguiente en adelante se generan de a una, ya con el
+    desempeño previo como guía.
     """
     proveedor = proveedor or get_proveedor()
 
     with transaction.atomic():
-        entrevista = Entrevista.objects.create(usuario=usuario, area=area, nivel=nivel)
-        pregunta = proveedor.generar_pregunta(
-            entrevista.area_enum, entrevista.nivel_enum, numero=1, previas=[]
+        entrevista = Entrevista.objects.create(
+            usuario=usuario, puesto=puesto, nivel=nivel, tecnologia=tecnologia
         )
-        Intercambio.objects.create(
-            entrevista=entrevista, numero=pregunta.numero, pregunta=pregunta.texto
-        )
+        contexto = _contexto(entrevista)
+        areas = [
+            area_de_la_pregunta(contexto.puesto, numero)
+            for numero in range(1, PREGUNTAS_DE_CALENTAMIENTO + 1)
+        ]
+        preguntas = proveedor.generar_preguntas_iniciales(contexto, areas)
+        _crear_intercambios(entrevista, preguntas, areas)
 
     return entrevista
 
@@ -77,8 +123,7 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
     atascada sin pregunta pendiente ni estado final.
     """
     proveedor = proveedor or get_proveedor()
-    area = entrevista.area_enum
-    nivel = entrevista.nivel_enum
+    contexto = _contexto(entrevista)
 
     intercambio = intercambio_pendiente(entrevista)
     if intercambio is None:
@@ -94,21 +139,27 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
         )
         intercambio.save(update_fields=["respuesta", "respondido_en", "tiempo_respuesta"])
 
-    resultado = calificar(area, nivel, intercambio.pregunta, intercambio.respuesta, proveedor)
+    # Se evalúa contra el área de ESTE intercambio, no una de la entrevista: en
+    # una misma entrevista cada pregunta es de un tema distinto.
+    resultado = calificar(
+        contexto, intercambio.area_enum, intercambio.pregunta, intercambio.respuesta, proveedor
+    )
 
     with transaction.atomic():
         evaluacion = guardar(intercambio, resultado, proveedor)
 
         siguiente_numero = intercambio.numero + 1
-        if siguiente_numero <= PREGUNTAS_POR_ENTREVISTA:
-            pregunta = proveedor.generar_pregunta(
-                area, nivel, siguiente_numero, temas_evaluados(entrevista)
-            )
-            Intercambio.objects.create(
-                entrevista=entrevista, numero=pregunta.numero, pregunta=pregunta.texto
-            )
-        else:
+        if siguiente_numero > PREGUNTAS_POR_ENTREVISTA:
             _finalizar(entrevista)
+        elif not entrevista.intercambios.filter(numero=siguiente_numero).exists():
+            # Las de calentamiento ya existen desde `iniciar()`: intentar crearlas
+            # otra vez violaría `UniqueConstraint(entrevista, numero)`. Solo se
+            # genera la que falta, que es el caso de la tercera en adelante.
+            siguiente_area = area_de_la_pregunta(contexto.puesto, siguiente_numero)
+            pregunta = proveedor.generar_pregunta(
+                contexto, siguiente_area, siguiente_numero, temas_evaluados(entrevista)
+            )
+            _crear_intercambios(entrevista, [pregunta], [siguiente_area])
 
     return evaluacion
 

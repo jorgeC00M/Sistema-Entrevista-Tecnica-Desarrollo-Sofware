@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Area, Nivel
+from .models import Area, Nivel, Puesto, Tecnologia
 
 
 @admin.register(Area)
@@ -12,6 +12,20 @@ class AreaAdmin(admin.ModelAdmin):
 
 @admin.register(Nivel)
 class NivelAdmin(admin.ModelAdmin):
+    list_display = ["nombre", "codigo", "orden", "activo"]
+    list_editable = ["orden", "activo"]
+    search_fields = ["nombre", "codigo"]
+
+
+@admin.register(Puesto)
+class PuestoAdmin(admin.ModelAdmin):
+    list_display = ["nombre", "codigo", "orden", "activo"]
+    list_editable = ["orden", "activo"]
+    search_fields = ["nombre", "codigo"]
+
+
+@admin.register(Tecnologia)
+class TecnologiaAdmin(admin.ModelAdmin):
     list_display = ["nombre", "codigo", "orden", "activo"]
     list_editable = ["orden", "activo"]
     search_fields = ["nombre", "codigo"]

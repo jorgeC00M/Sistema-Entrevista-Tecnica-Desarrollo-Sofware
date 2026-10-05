@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { campoDeRegistro } from '@/api/auth'
 import { ErrorAPI } from '@/api/client'
+import { repartirErrores } from '@/api/errores'
 import FormularioRegistro from '@/features/auth/components/FormularioRegistro'
 import TarjetaAuth from '@/features/auth/components/TarjetaAuth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -11,14 +13,24 @@ export default function RegistroPage() {
   const { registrar, iniciarSesionConGoogle } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState('')
+  const [erroresPorCampo, setErroresPorCampo] = useState<Partial<Record<keyof DatosDeRegistro, string>>>(
+    {},
+  )
 
   const manejarEnvio = async (datos: DatosDeRegistro) => {
     setError('')
+    setErroresPorCampo({})
     try {
       await registrar(datos)
       navigate('/')
     } catch (err) {
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo completar el registro.')
+      const { general, porCampo } = repartirErrores(
+        err,
+        'No se pudo completar el registro.',
+        campoDeRegistro,
+      )
+      setError(general)
+      setErroresPorCampo(porCampo)
     }
   }
 
@@ -30,6 +42,14 @@ export default function RegistroPage() {
     } catch (err) {
       setError(err instanceof ErrorAPI ? err.message : 'No se pudo continuar con Google.')
     }
+  }
+
+  const limpiarErrorDeCampo = (campo: keyof DatosDeRegistro) => {
+    setErroresPorCampo((previos) => {
+      if (!(campo in previos)) return previos
+      const { [campo]: _descartado, ...resto } = previos
+      return resto
+    })
   }
 
   return (
@@ -44,7 +64,11 @@ export default function RegistroPage() {
       textoEnlace="Inicia sesión"
       rutaEnlace="/login"
     >
-      <FormularioRegistro onEnviar={manejarEnvio} />
+      <FormularioRegistro
+        onEnviar={manejarEnvio}
+        erroresPorCampo={erroresPorCampo}
+        onLimpiarError={limpiarErrorDeCampo}
+      />
     </TarjetaAuth>
   )
 }

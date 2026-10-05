@@ -150,14 +150,26 @@ export async function peticion<T>(
   const porTiempo = AbortSignal.timeout(timeoutMs)
   const señal = signal ? AbortSignal.any([signal, porTiempo]) : porTiempo
 
+  // Un `FormData` (subir el currículum) viaja como multipart y **no** se
+  // serializa ni lleva Content-Type propio: el navegador tiene que fijarlo él
+  // para incluir el `boundary`, y ponerlo a mano rompe el parseo en el
+  // servidor. Se gestiona aquí, dentro del envoltorio, para no duplicar la
+  // lógica de token, refresco y timeout en una segunda función de subida.
+  const esFormulario = body instanceof FormData
+
   const hacer = async (access: string | null): Promise<Response> => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const headers: Record<string, string> = {}
+    if (!esFormulario) headers['Content-Type'] = 'application/json'
     if (autenticado && access) headers.Authorization = `Bearer ${access}`
+
+    let cuerpo: BodyInit | undefined
+    if (esFormulario) cuerpo = body
+    else if (body !== undefined) cuerpo = JSON.stringify(body)
 
     return fetch(`${API_URL}${ruta}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: cuerpo,
       signal: señal,
     })
   }

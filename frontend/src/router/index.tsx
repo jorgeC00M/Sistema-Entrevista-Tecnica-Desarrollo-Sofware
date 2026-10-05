@@ -3,13 +3,14 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { LimiteDeErrorDeRuta } from '@/components/LimiteDeError'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import RegistroPage from '@/features/auth/pages/RegistroPage'
+import CurriculumPage from '@/features/curriculum/pages/CurriculumPage'
 import EntrevistaPage from '@/features/entrevista/pages/EntrevistaPage'
 import HistorialPage from '@/features/historial/pages/HistorialPage'
 import EntradaRaiz from '@/features/landing/pages/EntradaRaiz'
 import PerfilPage from '@/features/perfil/pages/PerfilPage'
 import ResultadosPage from '@/features/resultados/pages/ResultadosPage'
 import RetroalimentacionPage from '@/features/retroalimentacion/pages/RetroalimentacionPage'
-import SeleccionAreaPage from '@/features/seleccion/pages/SeleccionAreaPage'
+import SeleccionPuestoPage from '@/features/seleccion/pages/SeleccionPuestoPage'
 import RutaProtegida from '@/router/RutaProtegida'
 
 export default function Rutas() {
@@ -27,9 +28,10 @@ export default function Rutas() {
         <Route path="/registro" element={<RegistroPage />} />
 
         <Route element={<RutaProtegida />}>
-          <Route path="/nueva-entrevista" element={<SeleccionAreaPage />} />
+          <Route path="/nueva-entrevista" element={<SeleccionPuestoPage />} />
           <Route path="/entrevista/:id" element={<EntrevistaPage />} />
           <Route path="/entrevista/:id/resultados" element={<ResultadosPage />} />
+          <Route path="/mi-cv" element={<CurriculumPage />} />
           <Route path="/historial" element={<HistorialPage />} />
           <Route path="/retroalimentacion" element={<RetroalimentacionPage />} />
           <Route path="/perfil" element={<PerfilPage />} />

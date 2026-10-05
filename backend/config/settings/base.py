@@ -62,6 +62,7 @@ APPS_PROPIAS = [
     "apps.catalogos",
     "apps.entrevistas",
     "apps.evaluaciones",
+    "apps.curriculums",
 ]
 
 INSTALLED_APPS = APPS_DJANGO + APPS_TERCEROS + APPS_PROPIAS
@@ -158,6 +159,10 @@ REST_FRAMEWORK = {
         # frente a un bucle automatizado.
         "evaluar": "30/hour",
         "iniciar-entrevista": "20/hour",
+        # Abrir un PDF y recorrerlo palabra por palabra es el trabajo más
+        # costoso del sistema sin llamar a la IA. Holgado para corregir el CV
+        # y reanalizarlo varias veces, estrecho frente a un bucle.
+        "analizar-cv": "20/hour",
         "login": "10/min",
         "registro": "5/hour",
     },
