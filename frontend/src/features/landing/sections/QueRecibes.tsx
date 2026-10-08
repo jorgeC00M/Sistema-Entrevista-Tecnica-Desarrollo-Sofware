@@ -1,6 +1,9 @@
 import { CLASES_TARJETA_ELEVADA } from '@/components/ui/Tarjeta'
 import Icono from '@/components/ui/Icono'
 import EncabezadoSeccion from '@/features/landing/components/EncabezadoSeccion'
+import NotaAclaratoria from '@/features/landing/components/NotaAclaratoria'
+import TarjetaDeFuncion from '@/features/landing/components/TarjetaDeFuncion'
+import type { Funcion } from '@/features/landing/components/TarjetaDeFuncion'
 import Wrap from '@/features/landing/components/Wrap'
 import { useProgresoAnimado } from '@/features/landing/hooks/useProgresoAnimado'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
@@ -14,26 +17,34 @@ const RUBRICA = [
   { etiqueta: 'Claridad', valor: 87 },
 ]
 
-const TARJETAS = {
-  fortalezas: {
-    icono: 'fortaleza' as const,
-    color: 'bg-exito-fondo text-exito-texto',
+// La tarjeta grande del medidor va aparte; estas cuatro la acompañan.
+const FUNCIONES: Funcion[] = [
+  {
+    icono: 'fortaleza',
+    colorIcono: 'bg-exito-fondo text-exito-texto',
     titulo: 'Tus fortalezas',
     texto: 'Qué demostraste saber y qué partes de tu respuesta funcionaron bien.',
   },
-  debilidades: {
-    icono: 'mejora' as const,
-    color: 'bg-progreso-fondo text-progreso-texto',
+  {
+    icono: 'mejora',
+    colorIcono: 'bg-progreso-fondo text-progreso-texto',
     titulo: 'Tus debilidades',
     texto: 'Los vacíos concretos que se notaron, sin rodeos y sin generalidades.',
   },
-  sugerencias: {
-    icono: 'sugerencia' as const,
-    color: 'bg-vidrio-acento-suave text-vidrio-acento',
+  {
+    icono: 'sugerencia',
+    colorIcono: 'bg-vidrio-acento-suave text-vidrio-acento',
     titulo: 'Sugerencias de mejora',
     texto: 'Qué estudiar o cómo reformular la respuesta la próxima vez.',
   },
-}
+  {
+    icono: 'historial',
+    colorIcono: 'bg-vidrio-field text-vidrio-ink',
+    titulo: 'Tu progreso',
+    texto:
+      'El historial de tus entrevistas, tu promedio por tema y la retroalimentación acumulada de todas tus respuestas, para ver qué se repite.',
+  },
+]
 
 export default function QueRecibes() {
   const { ref, visible } = useRevelarAlEntrar<HTMLElement>()
@@ -70,7 +81,7 @@ export default function QueRecibes() {
             </h3>
             <p className="mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
               Cada respuesta se califica con la misma rúbrica: corrección técnica, completitud y
-              claridad. La misma respuesta obtiene siempre la misma nota.
+              claridad. Se evalúa sola, sin depender del orden ni de lo que respondiste antes.
             </p>
 
             <div className="relative mx-auto my-[22px] h-[190px] w-[190px]">
@@ -125,56 +136,17 @@ export default function QueRecibes() {
             </div>
           </article>
 
-          <article className={CLASES_TARJETA_ELEVADA}>
-            <span
-              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-control ${TARJETAS.fortalezas.color}`}
-            >
-              <Icono nombre={TARJETAS.fortalezas.icono} />
-            </span>
-            <h3 className="text-[1.15rem] font-semibold text-vidrio-ink">
-              {TARJETAS.fortalezas.titulo}
-            </h3>
-            <p className="mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
-              {TARJETAS.fortalezas.texto}
-            </p>
-          </article>
-
-          <article className={CLASES_TARJETA_ELEVADA}>
-            <span
-              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-control ${TARJETAS.debilidades.color}`}
-            >
-              <Icono nombre={TARJETAS.debilidades.icono} />
-            </span>
-            <h3 className="text-[1.15rem] font-semibold text-vidrio-ink">
-              {TARJETAS.debilidades.titulo}
-            </h3>
-            <p className="mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
-              {TARJETAS.debilidades.texto}
-            </p>
-          </article>
-
-          <article className={`sm:col-span-2 ${CLASES_TARJETA_ELEVADA}`}>
-            <span
-              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-control ${TARJETAS.sugerencias.color}`}
-            >
-              <Icono nombre={TARJETAS.sugerencias.icono} />
-            </span>
-            <h3 className="text-[1.15rem] font-semibold text-vidrio-ink">
-              {TARJETAS.sugerencias.titulo}
-            </h3>
-            <p className="mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
-              {TARJETAS.sugerencias.texto}
-            </p>
-          </article>
+          {FUNCIONES.map((funcion) => (
+            <TarjetaDeFuncion key={funcion.titulo} {...funcion} />
+          ))}
         </div>
 
         {/* El alcance del perfil obliga a decirlo, y decirlo aquí —donde se está
             leyendo qué se recibe— es más honesto que esconderlo en el pie. */}
-        <p className="mt-[22px] flex max-w-[760px] items-start gap-2.5 text-[0.86rem] text-vidrio-muted">
-          <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" />
+        <NotaAclaratoria>
           La evaluación la genera un modelo de inteligencia artificial. Es una herramienta de
           práctica y no sustituye el criterio de un entrevistador humano.
-        </p>
+        </NotaAclaratoria>
       </Wrap>
     </section>
   )

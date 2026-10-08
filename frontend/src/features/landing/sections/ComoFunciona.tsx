@@ -16,21 +16,21 @@ export default function ComoFunciona({ totalPreguntas }: Props) {
   const pasos: { icono: NombreDeIcono; titulo: string; texto: string }[] = [
     {
       icono: 'seleccion',
-      titulo: 'Eliges área y nivel',
+      titulo: 'Eliges puesto y nivel',
       texto:
-        'Escoges sobre qué quieres que te pregunten y con qué grado de dificultad. La entrevista se arma a partir de esa elección.',
+        'Backend, frontend o full stack, con el grado de dificultad que quieras y, si prefieres, una tecnología. Cada pregunta toca una de las áreas de ese puesto.',
     },
     {
       icono: 'respuesta',
       titulo: `Respondes ${cuantas} preguntas`,
       texto:
-        'El entrevistador plantea una pregunta a la vez y tú respondes por escrito, a tu ritmo. Puedes dejarla a medias y retomarla después.',
+        'Una pregunta a la vez, por escrito y a tu ritmo. Desde la tercera, el entrevistador ajusta la exigencia según cómo vas. Puedes dejarla a medias y retomarla después.',
     },
     {
       icono: 'evaluacion',
       titulo: 'Recibes tu evaluación',
       texto:
-        'Al terminar obtienes una calificación por cada respuesta y un resumen de la entrevista, con tu historial para comparar tu avance.',
+        'Al terminar ves la calificación de cada respuesta y un resumen de la entrevista. Mientras respondes no hay nota, como en una entrevista real.',
     },
   ]
 

@@ -17,6 +17,10 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO
  * reproducen en bucle. No es una entrevista real — no usa `useEntrevista`
  * ni ninguna API, es contenido de muestra fijo, igual que las barras de
  * rúbrica ilustrativas de "Qué recibes al terminar".
+ *
+ * Muestra la última pregunta y rotula la evaluación "al terminar": en el
+ * sistema la nota no se publica mientras la entrevista sigue, y una vista
+ * previa con la nota a mitad de camino prometería lo contrario.
  */
 export default function VistaPreviaEntrevista() {
   const [texto, setTexto] = useState('')
@@ -71,14 +75,14 @@ export default function VistaPreviaEntrevista() {
     <div className="mx-auto mt-6 grid max-w-[940px] overflow-hidden rounded-[22px] border border-white/28 bg-white/12 text-left shadow-[0_30px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:mt-8 sm:grid-cols-[1.35fr_1fr]">
       <div className="flex flex-col gap-2.5 border-white/18 p-5 sm:border-r">
         <div className="flex items-center gap-2.5 text-xs text-white/75">
-          <b className="text-[0.88rem] font-semibold text-white">Entrevista · Programación</b>
-          <span>Básico · Pregunta 2 de 5</span>
+          <b className="text-[0.88rem] font-semibold text-white">Entrevista · Desarrollador Backend</b>
+          <span>Básico · Pregunta 5 de 5</span>
           <span className="font-mono-vidrio ml-auto rounded-full bg-vidrio-ink px-2.5 py-0.5">
             01:42
           </span>
         </div>
         <div className="flex gap-1.5">
-          {[true, true, false, false, false].map((activa, i) => (
+          {[true, true, true, true, true].map((activa, i) => (
             <i
               key={i}
               aria-hidden="true"
@@ -105,7 +109,7 @@ export default function VistaPreviaEntrevista() {
 
       <div className="flex flex-col gap-3 bg-white/[0.06] p-5">
         <small className="text-[0.66rem] tracking-[0.08em] text-white/60 uppercase">
-          Evaluación de la IA
+          Al terminar la entrevista · Evaluación de la IA
         </small>
         <div className="flex items-center gap-3.5">
           <div className="relative h-16 w-16 shrink-0">

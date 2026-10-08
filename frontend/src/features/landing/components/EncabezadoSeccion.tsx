@@ -8,8 +8,9 @@ interface Props {
 
 /**
  * Encabezado compacto compartido por las secciones de contenido de la
- * landing (Cómo funciona / Qué recibes / Áreas): número de fase en píldora,
- * título en Fraunces y descripción, cerrado con una línea inferior.
+ * landing (Cómo funciona / Qué recibes / Revisa tu CV / Puestos): número de
+ * fase en píldora, título en Fraunces y descripción, cerrado con una línea
+ * inferior.
  */
 export default function EncabezadoSeccion({ indice, titulo, descripcion }: Props) {
   return (

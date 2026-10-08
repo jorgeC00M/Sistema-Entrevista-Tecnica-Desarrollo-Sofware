@@ -4,32 +4,31 @@ import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/use
 import { useProgresoAnimado } from '@/features/landing/hooks/useProgresoAnimado'
 
 interface Props {
+  puestos: number
   preguntas: number
   areas: number
   niveles: number
 }
 
-const PUNTOS_MAXIMOS = 100
-
 /**
  * Tarjeta de vidrio con 4 contadores que animan desde 0 al entrar en
- * pantalla. Preguntas/áreas/niveles vienen del catálogo público ya cargado
- * por `LandingPage.tsx` — solo "puntos" es una constante fija (la escala de
- * la rúbrica, no un dato del backend).
+ * pantalla. Las cuatro cifras vienen del catálogo público ya cargado por
+ * `LandingPage.tsx`: ninguna es una constante escrita aquí, así que no pueden
+ * quedar desfasadas respecto del sistema.
  */
-export default function FranjaDatos({ preguntas, areas, niveles }: Props) {
+export default function FranjaDatos({ puestos, preguntas, areas, niveles }: Props) {
   const { ref, visible } = useRevelarAlEntrar<HTMLDivElement>()
 
+  const contadorPuestos = useProgresoAnimado(puestos, visible)
   const contadorPreguntas = useProgresoAnimado(preguntas, visible)
   const contadorAreas = useProgresoAnimado(areas, visible)
   const contadorNiveles = useProgresoAnimado(niveles, visible)
-  const contadorPuntos = useProgresoAnimado(PUNTOS_MAXIMOS, visible)
 
   const stats = [
+    { valor: contadorPuestos, etiqueta: 'puestos para practicar' },
     { valor: contadorPreguntas, etiqueta: 'preguntas por entrevista' },
     { valor: contadorAreas, etiqueta: 'áreas técnicas' },
     { valor: contadorNiveles, etiqueta: 'niveles de dificultad' },
-    { valor: contadorPuntos, etiqueta: 'puntos por respuesta' },
   ]
 
   return (

@@ -12,7 +12,8 @@ import PanelDeSesion from '@/features/seleccion/components/PanelDeSesion'
 import SelectorNivel from '@/features/seleccion/components/SelectorNivel'
 import TarjetaPuesto from '@/features/seleccion/components/TarjetaPuesto'
 import { useCatalogos } from '@/hooks/useCatalogos'
-import { ICONO_POR_DEFECTO, ICONO_POR_PUESTO } from '@/lib/iconosPorArea'
+import { nombresDeAreas } from '@/lib/catalogos'
+import { ICONO_POR_DEFECTO, ICONO_POR_PUESTO } from '@/lib/iconosPorPuesto'
 
 /** Valor del control de tecnología que significa "no fijar stack". */
 const SIN_PREFERENCIA = ''
@@ -79,7 +80,7 @@ export default function SeleccionPuestoPage() {
   // El backend publica los códigos de las áreas que cubre cada puesto; los
   // nombres salen del catálogo de áreas de la misma respuesta, para no tener el
   // mismo texto duplicado en dos sitios del payload.
-  const nombrePorArea = new Map(catalogos.areas.map((a) => [a.codigo, a.nombre]))
+  const nombrePorArea = nombresDeAreas(catalogos.areas)
   const areasDelPuesto = (puestoElegido?.areas ?? []).map(
     (codigo) => nombrePorArea.get(codigo) ?? codigo,
   )

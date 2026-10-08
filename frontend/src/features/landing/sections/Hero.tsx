@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom'
-
-import Boton from '@/components/ui/Boton'
 import Icono from '@/components/ui/Icono'
+import AccionesDeRegistro from '@/features/landing/components/AccionesDeRegistro'
 import VistaPreviaEntrevista from '@/features/landing/components/VistaPreviaEntrevista'
 import Wrap from '@/features/landing/components/Wrap'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
@@ -10,10 +8,12 @@ interface Props {
   totalPreguntas: number | null
 }
 
+// Cada rastro describe algo que el sistema hace hoy. "Nota al terminar" y no
+// "al instante": la evaluación no se publica mientras la entrevista sigue.
 const RASTROS = [
   { icono: 'fortaleza' as const, texto: 'preguntas por entrevista', dinamico: true },
   { icono: 'fortaleza' as const, texto: 'Respuestas escritas', dinamico: false },
-  { icono: 'fortaleza' as const, texto: 'Resultados al instante', dinamico: false },
+  { icono: 'fortaleza' as const, texto: 'Nota al terminar', dinamico: false },
 ]
 
 export default function Hero({ totalPreguntas }: Props) {
@@ -51,34 +51,21 @@ export default function Hero({ totalPreguntas }: Props) {
         <h1
           className={`mx-auto max-w-[5000px] font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance sm:text-[2.8rem] lg:text-[3.8rem] ${clasesRevelado(visible)}`}
         >
-          Preparate para tu proximo entrevista, antes de la evaluación real 
+          Prepárate para tu próxima entrevista, antes de la evaluación real
         </h1>
 
         <p
           className={`mx-auto mt-[clamp(12px,2.2vh,20px)] max-w-[600px] text-[clamp(0.98rem,2vh,1.08rem)] leading-[1.6] text-white/82 ${clasesRevelado(visible)} delay-100`}
         >
-          Un entrevistador con inteligencia artificial te hace preguntas del área que elijas,
-          evalúa lo que respondes y te dice exactamente qué mejorar. Sin agendar con nadie y
-          cuantas veces quieras.
+          Un entrevistador con inteligencia artificial te hace las preguntas del puesto al que
+          postulas, evalúa lo que respondes y te dice qué mejorar. Y antes de postular, revisa
+          qué lee un ATS de tu CV. Sin agendar con nadie y cuantas veces quieras.
         </p>
 
         <div
           className={`mt-[clamp(18px,3.2vh,28px)] flex flex-wrap items-center justify-center gap-3 ${clasesRevelado(visible)} delay-200`}
         >
-          <Link to="/registro" className="w-full sm:w-auto">
-            <Boton variante="vidrio-secundario" forma="pildora" className="group h-12 w-full sm:w-auto">
-              Crear cuenta gratis
-              <Icono
-                nombre="flecha-diagonal"
-                className="h-[17px] w-[17px] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Boton>
-          </Link>
-          <Link to="/login" className="w-full sm:w-auto">
-            <Boton variante="vidrio-glass" forma="pildora" className="h-12 w-full sm:w-auto">
-              Ya tengo cuenta
-            </Boton>
-          </Link>
+          <AccionesDeRegistro textoRegistro="Crear cuenta gratis" />
         </div>
 
         <div

@@ -1,12 +1,13 @@
 import FooterLanding from '@/features/landing/components/FooterLanding'
 import FranjaDatos from '@/features/landing/components/FranjaDatos'
 import HeaderLanding from '@/features/landing/components/HeaderLanding'
-import { useCatalogos } from '@/hooks/useCatalogos'
-import AreasTecnicas from '@/features/landing/sections/AreasTecnicas'
 import CierreCTA from '@/features/landing/sections/CierreCTA'
 import ComoFunciona from '@/features/landing/sections/ComoFunciona'
 import Hero from '@/features/landing/sections/Hero'
+import PuestosDisponibles from '@/features/landing/sections/PuestosDisponibles'
 import QueRecibes from '@/features/landing/sections/QueRecibes'
+import RevisaTuCV from '@/features/landing/sections/RevisaTuCV'
+import { useCatalogos } from '@/hooks/useCatalogos'
 
 export default function LandingPage() {
   const { catalogos } = useCatalogos({ publico: true })
@@ -15,7 +16,7 @@ export default function LandingPage() {
   // él se omiten y el resto sigue cumpliendo su función, que es explicar el
   // servicio y llevar al registro.
   const totalPreguntas = catalogos?.preguntas_por_entrevista ?? null
-  const hayAreas = (catalogos?.areas.length ?? 0) > 0
+  const hayPuestos = (catalogos?.puestos.length ?? 0) > 0
 
   return (
     // Sistema "vidrio": fondo y tipografía propios de toda la landing,
@@ -33,6 +34,7 @@ export default function LandingPage() {
         <Hero totalPreguntas={totalPreguntas} />
         {catalogos && (
           <FranjaDatos
+            puestos={catalogos.puestos.length}
             preguntas={catalogos.preguntas_por_entrevista}
             areas={catalogos.areas.length}
             niveles={catalogos.niveles.length}
@@ -40,8 +42,14 @@ export default function LandingPage() {
         )}
         <ComoFunciona totalPreguntas={totalPreguntas} />
         <QueRecibes />
-        {hayAreas && catalogos && (
-          <AreasTecnicas areas={catalogos.areas} niveles={catalogos.niveles} />
+        {/* No depende del catálogo: sin él, la sección sigue explicando el módulo. */}
+        <RevisaTuCV />
+        {hayPuestos && catalogos && (
+          <PuestosDisponibles
+            puestos={catalogos.puestos}
+            areas={catalogos.areas}
+            niveles={catalogos.niveles}
+          />
         )}
         <CierreCTA />
       </main>

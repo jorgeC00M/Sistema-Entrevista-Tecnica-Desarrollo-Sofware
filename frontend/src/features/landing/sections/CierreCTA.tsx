@@ -1,7 +1,4 @@
-import { Link } from 'react-router-dom'
-
-import Boton from '@/components/ui/Boton'
-import Icono from '@/components/ui/Icono'
+import AccionesDeRegistro from '@/features/landing/components/AccionesDeRegistro'
 import Wrap from '@/features/landing/components/Wrap'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
 
@@ -39,24 +36,7 @@ export default function CierreCTA() {
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link to="/registro" className="w-full sm:w-auto">
-            <Boton
-              variante="vidrio-secundario"
-              forma="pildora"
-              className="group h-12 w-full sm:w-auto"
-            >
-              Crear cuenta
-              <Icono
-                nombre="flecha-diagonal"
-                className="h-[17px] w-[17px] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Boton>
-          </Link>
-          <Link to="/login" className="w-full sm:w-auto">
-            <Boton variante="vidrio-glass" forma="pildora" className="h-12 w-full sm:w-auto">
-              Ya tengo cuenta
-            </Boton>
-          </Link>
+          <AccionesDeRegistro textoRegistro="Crear cuenta" />
         </div>
       </Wrap>
     </section>

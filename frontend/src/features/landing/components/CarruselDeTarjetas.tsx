@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import type { TouchEvent } from 'react'
+import type { ReactNode, TouchEvent } from 'react'
 
 import Icono from '@/components/ui/Icono'
 import { useCarrusel } from '@/features/landing/hooks/useCarrusel'
-import { ICONO_POR_AREA, ICONO_POR_DEFECTO } from '@/lib/iconosPorArea'
-import type { Area, Nivel } from '@/types/catalogos'
 
-interface Props {
-  areas: Area[]
-  niveles: Nivel[]
+interface Props<T> {
+  elementos: T[]
+  /** Clave estable de cada elemento, para React. */
+  clave: (elemento: T) => string
+  /** Qué se recorre, para lectores de pantalla ("Puestos"). */
+  etiqueta: string
+  /** Cómo se llama un elemento en los botones ("puesto" → "Puesto anterior"). */
+  nombreDelElemento: string
+  /** Contenido de cada tarjeta; `actual` es la que está al frente. */
+  renderTarjeta: (elemento: T, actual: boolean) => ReactNode
+  /** Contenido opcional a la izquierda de la navegación (p. ej., los niveles). */
+  pie?: ReactNode
 }
 
 const DURACION_MS = 3500
@@ -22,12 +29,22 @@ function calcularPorVista(): number {
 }
 
 /**
- * Carrusel de áreas técnicas: 3/2/1 tarjetas visibles según el ancho,
- * avanza sola cada 3.5s, se puede navegar con flechas, indicadores o
- * deslizando el dedo, y se pausa al pasar el mouse. Solo muestra las áreas
- * reales que llegan por props — nunca agrega áreas de ejemplo.
+ * Carrusel de tarjetas: 3/2/1 visibles según el ancho, avanza solo cada 3.5s,
+ * se navega con flechas, indicadores o deslizando el dedo, y se pausa al pasar
+ * el mouse. Solo muestra los elementos reales que llegan por props.
+ *
+ * Genérico a propósito: nació como carrusel de áreas y la landing pasó a mostrar
+ * puestos. Con dos copias casi iguales, el primer arreglo se haría en una sola;
+ * aquí la mecánica es una y cada sección decide cómo se ve su tarjeta.
  */
-export default function CarruselAreas({ areas, niveles }: Props) {
+export default function CarruselDeTarjetas<T>({
+  elementos,
+  clave,
+  etiqueta,
+  nombreDelElemento,
+  renderTarjeta,
+  pie,
+}: Props<T>) {
   const [porVista, setPorVista] = useState(calcularPorVista)
   useEffect(() => {
     const alRedimensionar = () => setPorVista(calcularPorVista())
@@ -36,7 +53,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
   }, [])
 
   const { indice, maxIndice, ir, siguiente, anterior, pausar, reanudar } = useCarrusel(
-    areas.length,
+    elementos.length,
     porVista,
     DURACION_MS,
   )
@@ -78,10 +95,11 @@ export default function CarruselAreas({ areas, niveles }: Props) {
     inicioToqueRef.current = null
   }
 
-  // Con las áreas reales cabiendo todas a la vez no hay nada que navegar:
-  // se ocultan flechas e indicadores (el avance automático ya se apaga solo
-  // en `useCarrusel` cuando `maxIndice` es 0).
+  // Si todos los elementos caben a la vez no hay nada que navegar: se ocultan
+  // flechas e indicadores (el avance automático ya se apaga solo en
+  // `useCarrusel` cuando `maxIndice` es 0).
   const hayNavegacion = maxIndice > 0
+  const nombre = nombreDelElemento.charAt(0).toUpperCase() + nombreDelElemento.slice(1)
 
   return (
     <div
@@ -89,7 +107,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
       onMouseEnter={pausar}
       onMouseLeave={reanudar}
       aria-roledescription="carrusel"
-      aria-label="Áreas técnicas"
+      aria-label={etiqueta}
     >
       <div ref={viewportRef} className="-m-5 overflow-hidden p-5">
         <div
@@ -98,11 +116,11 @@ export default function CarruselAreas({ areas, niveles }: Props) {
           onTouchStart={manejarInicioToque}
           onTouchEnd={manejarFinToque}
         >
-          {areas.map((area, i) => {
+          {elementos.map((elemento, i) => {
             const actual = i === indice
             return (
               <article
-                key={area.codigo}
+                key={clave(elemento)}
                 className={`relative shrink-0 overflow-hidden rounded-vidrio border bg-vidrio-card p-7 backdrop-blur-[18px] transition-all duration-500 ${
                   actual
                     ? '-translate-y-1.5 border-vidrio-acento/45 bg-white/80 shadow-[0_26px_50px_-24px_rgba(28,47,94,0.45)]'
@@ -110,21 +128,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
                 }`}
                 style={{ width: anchoTarjeta > 0 ? `${anchoTarjeta}px` : undefined }}
               >
-                <span
-                  className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-control transition-colors duration-500 ${
-                    actual
-                      ? 'bg-vidrio-acento text-white'
-                      : 'bg-vidrio-acento-suave text-vidrio-acento'
-                  }`}
-                >
-                  <Icono nombre={ICONO_POR_AREA[area.codigo] ?? ICONO_POR_DEFECTO} />
-                </span>
-                <h3 className="relative z-10 mt-4 text-[1.15rem] font-semibold text-vidrio-ink">
-                  {area.nombre}
-                </h3>
-                <p className="relative z-10 mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
-                  {area.descripcion}
-                </p>
+                {renderTarjeta(elemento, actual)}
               </article>
             )
           })}
@@ -132,19 +136,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
       </div>
 
       <div className="mt-[30px] flex flex-wrap items-center justify-between gap-5">
-        {niveles.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2.5 text-[0.95rem]">
-            <span className="text-vidrio-texto">Niveles disponibles:</span>
-            {niveles.map((n) => (
-              <span
-                key={n.codigo}
-                className="rounded-full border border-vidrio-borde bg-vidrio-field px-3.5 py-1.5 font-medium text-vidrio-ink"
-              >
-                {n.nombre}
-              </span>
-            ))}
-          </div>
-        )}
+        {pie}
 
         {hayNavegacion && (
           <div className="flex items-center gap-[18px]">
@@ -174,7 +166,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
               <button
                 type="button"
                 onClick={anterior}
-                aria-label="Área anterior"
+                aria-label={`${nombre} anterior`}
                 className="grid h-11 w-11 place-items-center rounded-control border border-vidrio-borde bg-vidrio-field text-vidrio-ink transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <Icono nombre="chevron-izquierda" className="h-[18px] w-[18px]" />
@@ -182,7 +174,7 @@ export default function CarruselAreas({ areas, niveles }: Props) {
               <button
                 type="button"
                 onClick={siguiente}
-                aria-label="Área siguiente"
+                aria-label={`${nombre} siguiente`}
                 className="grid h-11 w-11 place-items-center rounded-control border border-vidrio-borde bg-vidrio-field text-vidrio-ink transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <Icono nombre="chevron-derecha" className="h-[18px] w-[18px]" />

@@ -9,7 +9,8 @@ const SECCIONES = [
   { id: 'inicio', etiqueta: 'Inicio' },
   { id: 'como-funciona', etiqueta: 'Cómo funciona' },
   { id: 'que-recibes', etiqueta: 'Qué recibes' },
-  { id: 'areas', etiqueta: 'Áreas' },
+  { id: 'cv', etiqueta: 'Revisión de CV' },
+  { id: 'puestos', etiqueta: 'Puestos' },
 ]
 
 /**

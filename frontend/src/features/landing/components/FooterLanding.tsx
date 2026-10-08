@@ -11,7 +11,8 @@ const ANIO = new Date().getFullYear()
 const ENLACES = [
   { href: '#como-funciona', etiqueta: 'Cómo funciona' },
   { href: '#que-recibes', etiqueta: 'Qué recibes' },
-  { href: '#areas', etiqueta: 'Áreas' },
+  { href: '#cv', etiqueta: 'Revisión de CV' },
+  { href: '#puestos', etiqueta: 'Puestos' },
 ]
 
 /** Footer compacto de dos filas: marca + navegación en línea arriba,
