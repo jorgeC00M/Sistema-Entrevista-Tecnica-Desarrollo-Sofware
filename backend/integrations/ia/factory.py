@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from importlib import import_module
 
-from .base import ProveedorIA
+from .base import ProveedorIA, RevisorDeCV
 from .exceptions import ProveedorNoConfigurado
 
 # nombre -> (módulo, clase). El import es diferido para no exigir el SDK de
@@ -51,3 +51,16 @@ def get_proveedor(nombre: str | None = None) -> ProveedorIA:
         ) from exc
 
     return getattr(modulo, nombre_clase)()
+
+
+def get_revisor_de_cv(nombre: str | None = None) -> RevisorDeCV:
+    """El proveedor configurado, si sabe revisar CV.
+
+    Mismo registro y misma configuración que `get_proveedor()`: no hay un
+    `IA_PROVEEDOR` aparte para currículums. Si el proveedor elegido no cumple
+    `RevisorDeCV`, se dice con el mismo error que un proveedor inexistente.
+    """
+    proveedor = get_proveedor(nombre)
+    if not isinstance(proveedor, RevisorDeCV):
+        raise ProveedorNoDisponible(f"El proveedor de IA '{proveedor.nombre}' no sabe revisar currículums.")
+    return proveedor

@@ -17,12 +17,17 @@ justo los que usa la búsqueda booleana de un reclutador.
 convocatoria que pida algo ausente de la tabla se pierde, y ampliar la cobertura es
 añadir una entrada. Lo que nunca hace es inventar un término que el texto no
 contiene, que es el error que sí importaría.
+
+Al final viven otras dos tablas del mismo tipo: `SIGLAS`, los términos que se
+buscan de dos formas ("AWS" y "Amazon Web Services"), y `CARGOS`, los puestos
+con sus variantes en español e inglés.
 """
 
 from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass
 
 #: Término canónico → variantes con las que aparece escrito.
 #:
@@ -168,3 +173,132 @@ def encontrar(texto: str) -> set[str]:
         for canonico, patrones in _PATRONES.items()
         if any(patron.search(normalizado) for patron in patrones)
     }
+
+
+def _compilar(variantes: tuple[str, ...]) -> tuple[re.Pattern[str], ...]:
+    return tuple(_patron(variante) for variante in variantes)
+
+
+# --- Sigla y nombre largo ----------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Sigla:
+    """Un término que los reclutadores buscan de dos formas.
+
+    La búsqueda booleana de un ATS (Taleo, iCIMS) es literal: si el reclutador
+    escribe "Amazon Web Services" y el CV solo dice "AWS", según el sistema el
+    candidato no aparece. Escribir las dos formas una vez cubre ambas búsquedas.
+    """
+
+    siglas: tuple[str, ...]
+    nombres: tuple[str, ...]
+    #: Cómo sugerir escribirlo.
+    forma_completa: str
+
+
+#: Solo los pares en los que las dos formas se buscan de verdad. "REST" o
+#: "SQL" no están: nadie busca su nombre largo, y avisar sería ruido.
+SIGLAS: dict[str, Sigla] = {
+    "AWS": Sigla(("aws",), ("amazon web services",), "Amazon Web Services (AWS)"),
+    "Google Cloud": Sigla(("gcp",), ("google cloud",), "Google Cloud Platform (GCP)"),
+    "POO": Sigla(
+        ("poo", "oop"),
+        ("programacion orientada a objetos", "object oriented programming", "object-oriented programming"),
+        "Programación Orientada a Objetos (POO)",
+    ),
+    "CI/CD": Sigla(
+        ("ci/cd",),
+        ("integracion continua", "continuous integration"),
+        "Integración y Despliegue Continuos (CI/CD)",
+    ),
+    "IA": Sigla(("ia", "ai"), ("inteligencia artificial", "artificial intelligence"), "Inteligencia Artificial (IA)"),
+    "ML": Sigla(("ml",), ("machine learning", "aprendizaje automatico"), "Machine Learning (ML)"),
+}
+
+_PATRONES_DE_SIGLAS: dict[str, tuple[tuple[re.Pattern[str], ...], tuple[re.Pattern[str], ...]]] = {
+    canonico: (_compilar(sigla.siglas), _compilar(sigla.nombres)) for canonico, sigla in SIGLAS.items()
+}
+
+
+def escritos_de_una_sola_forma(texto: str) -> list[str]:
+    """Las formas completas a sugerir para los términos escritos solo como sigla
+    o solo con su nombre largo, en el orden de `SIGLAS`.
+
+    Un término ausente no se reporta: no se le sugiere a nadie escribir algo que
+    no puso.
+    """
+    normalizado = normalizar(texto)
+    sugerencias = []
+    for canonico, (siglas, nombres) in _PATRONES_DE_SIGLAS.items():
+        con_sigla = any(patron.search(normalizado) for patron in siglas)
+        con_nombre = any(patron.search(normalizado) for patron in nombres)
+        if con_sigla != con_nombre:
+            sugerencias.append(SIGLAS[canonico].forma_completa)
+    return sugerencias
+
+
+# --- Cargos -------------------------------------------------------------------
+
+#: Cargo canónico → variantes con las que se escribe, en español y en inglés.
+#: Un reclutador busca por cargo tanto como por tecnología. Las variantes de un
+#: mismo cargo son intercambiables: "Backend Developer" en la convocatoria y
+#: "Desarrollador Backend" en el CV son el mismo cargo.
+CARGOS: dict[str, tuple[str, ...]] = {
+    "Desarrollador Backend": (
+        "desarrollador backend", "desarrollador back-end", "desarrollador back end",
+        "programador backend", "ingeniero backend", "backend developer",
+        "back-end developer", "backend engineer",
+    ),
+    "Desarrollador Frontend": (
+        "desarrollador frontend", "desarrollador front-end", "desarrollador front end",
+        "programador frontend", "ingeniero frontend", "frontend developer",
+        "front-end developer", "frontend engineer",
+    ),
+    "Desarrollador Full Stack": (
+        "desarrollador full stack", "desarrollador fullstack", "desarrollador full-stack",
+        "ingeniero full stack", "full stack developer", "fullstack developer",
+        "full-stack developer", "full stack engineer",
+    ),
+    "Desarrollador Móvil": (
+        "desarrollador movil", "desarrollador mobile", "desarrollador android",
+        "desarrollador ios", "mobile developer", "android developer", "ios developer",
+    ),
+    "Ingeniero de Software": (
+        "ingeniero de software", "desarrollador de software", "software engineer",
+        "software developer",
+    ),
+    "Analista Programador": ("analista programador", "analista desarrollador"),
+    "Ingeniero QA": (
+        "ingeniero qa", "analista qa", "tester", "analista de calidad", "analista de pruebas",
+        "qa engineer", "qa analyst", "quality assurance",
+    ),
+    "Ingeniero DevOps": ("ingeniero devops", "devops engineer", "sre", "site reliability engineer"),
+    "Ingeniero de Datos": ("ingeniero de datos", "data engineer"),
+    "Analista de Datos": ("analista de datos", "data analyst"),
+}
+
+_PATRONES_DE_CARGOS: dict[str, tuple[re.Pattern[str], ...]] = {
+    canonico: _compilar(variantes) for canonico, variantes in CARGOS.items()
+}
+
+
+def primer_cargo(texto: str) -> str | None:
+    """El cargo que aparece primero en el texto, o `None`.
+
+    El primero y no cualquiera: una convocatoria nombra el puesto al principio y
+    puede mencionar otros después ("trabajarás junto al equipo de QA").
+    """
+    normalizado = normalizar(texto)
+    mejor: tuple[int, str] | None = None
+    for canonico, patrones in _PATRONES_DE_CARGOS.items():
+        for patron in patrones:
+            if (coincidencia := patron.search(normalizado)) and (mejor is None or coincidencia.start() < mejor[0]):
+                mejor = (coincidencia.start(), canonico)
+    return mejor[1] if mejor else None
+
+
+def menciona_cargo(texto: str, cargo: str) -> bool:
+    """Si el texto nombra el cargo con cualquiera de sus variantes."""
+    normalizado = normalizar(texto)
+    return any(patron.search(normalizado) for patron in _PATRONES_DE_CARGOS.get(cargo, ()))

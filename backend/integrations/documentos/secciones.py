@@ -13,7 +13,8 @@ aceptara "Mi trayectoria", el módulo dejaría de avisar del problema que existe
 
 `segmentar()` usa esos mismos títulos para partir el CV en bloques, que es lo que
 permite distinguir una tecnología **demostrada** en la experiencia de una
-simplemente **declarada** en la lista de habilidades.
+simplemente **declarada** en la lista de habilidades. `encabezado()` devuelve lo
+que queda antes del primer título, con el mismo criterio.
 """
 
 from __future__ import annotations
@@ -138,3 +139,22 @@ def segmentar(texto: str) -> dict[str, str]:
         bloques.setdefault(seccion, []).extend(lineas[indice + 1 : fin])
 
     return {seccion: "\n".join(lineas_del_bloque) for seccion, lineas_del_bloque in bloques.items()}
+
+
+def encabezado(texto: str) -> str:
+    """Lo que precede al primer título reconocido: nombre, contacto, ubicación.
+
+    Es exactamente el bloque que `segmentar()` descarta, con el mismo criterio
+    (`titulo_de`). Si cada función decidiera por su cuenta dónde acaba el
+    encabezado, una ciudad podría buscarse en un bloque que `segmentar()` ya
+    considera experiencia, o al revés.
+
+    Devuelve una cadena vacía cuando no se reconoce ningún título: sin títulos no
+    hay forma de saber dónde termina, y quien llama debe decidir qué hacer en vez
+    de recibir el CV entero haciéndose pasar por encabezado.
+    """
+    lineas = texto.splitlines()
+    for indice, linea in enumerate(lineas):
+        if titulo_de(linea) is not None:
+            return "\n".join(lineas[:indice])
+    return ""

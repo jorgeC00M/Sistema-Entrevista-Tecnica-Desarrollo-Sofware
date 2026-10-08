@@ -5,18 +5,29 @@ convocatoria. Lo que cambia entre ellas es una sección del resultado, no si el
 análisis sirve.
 """
 
+import io
+from datetime import date
 from pathlib import Path
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import SimpleTestCase
+from docx import Document
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.curriculums.models import AnalisisATS, Curriculum
+from apps.curriculums.services import construir_analisis
+from integrations.documentos.ats import VERSION_DE_REGLAS
+from integrations.documentos.extractor import DocumentoExtraido
+from integrations.ia.exceptions import ErrorTransitorio
 
 Usuario = get_user_model()
 
 FIXTURES = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "cv"
+
+TIPO_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 CONVOCATORIA_BACKEND = """Desarrollador Backend — Jalasoft
 
@@ -63,13 +74,13 @@ class SoloElCurriculumTest(BaseDeCurriculums):
         respuesta = self.subir("una_columna.pdf")
 
         analisis = respuesta.data["analisis"]
-        self.assertEqual(analisis["parseabilidad"], "7/7")
+        self.assertEqual(analisis["parseabilidad"], "8/8")
         self.assertEqual(analisis["debilidades"], [])
         self.assertTrue(analisis["fortalezas"])
-        campos = {campo["nombre"] for campo in analisis["campos"]}
+        campos = [campo["nombre"] for campo in analisis["campos"]]
         self.assertEqual(
             campos,
-            {"Nombre", "Correo", "Teléfono", "Experiencia", "Educación", "Habilidades", "Antigüedad"},
+            ["Nombre", "Correo", "Teléfono", "Ubicación", "Experiencia", "Educación", "Habilidades", "Antigüedad"],
         )
 
     def test_sin_convocatoria_no_hay_brecha_pero_si_inventario(self):
@@ -137,6 +148,17 @@ class ContraUnaConvocatoriaTest(BaseDeCurriculums):
         deseables = {r["termino"] for r in brecha["deseables"]["requisitos"]}
         self.assertEqual(deseables, {"AWS"})
         self.assertEqual(brecha["deseables"]["cobertura"], "0/1")
+
+    def test_se_publican_los_requisitos_del_puesto(self):
+        convocatoria = CONVOCATORIA_BACKEND.replace("- Docker", "- Docker\n- Mínimo 5 años de experiencia")
+        respuesta = self.subir("habilidades_declaradas.pdf", convocatoria=convocatoria)
+
+        brecha = respuesta.data["analisis"]["brecha"]
+        self.assertEqual(brecha["cargo"], {"termino": "Desarrollador Backend", "estado": "demostrado"})
+        self.assertEqual(brecha["experiencia"]["requeridos"], 5)
+        self.assertEqual(brecha["experiencia"]["estado"], "no_alcanza")
+        self.assertEqual(brecha["experiencia"]["calculados"], "3 años y 3 meses")
+        self.assertFalse(brecha["idioma_distinto"])
 
     def test_la_cobertura_se_publica_en_texto(self):
         """Un porcentaje se leería como probabilidad de contratación."""
@@ -215,6 +237,65 @@ class ContraUnaConvocatoriaTest(BaseDeCurriculums):
         self.assertIn("imagen", str(respuesta.data).lower())
 
 
+class _RevisorQueFalla:
+    nombre = "caido"
+    modelo = "caido-1"
+
+    def __init__(self):
+        self.llamadas = 0
+
+    def revisar_cv(self, entrada):
+        self.llamadas += 1
+        raise ErrorTransitorio("Proveedor caído (simulado)")
+
+
+class RevisionConIATest(BaseDeCurriculums):
+    """La IA es complementaria: nunca tumba el diagnóstico."""
+
+    def test_con_el_proveedor_por_defecto_llegan_sugerencias_rotuladas(self):
+        revision_ia = self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND).data["analisis"]["revision_ia"]
+
+        self.assertEqual(revision_ia["estado"], "ok")
+        self.assertEqual(revision_ia["puesto_sugerido"], "backend")
+        self.assertTrue(revision_ia["preguntas"])
+
+    def test_un_proveedor_caido_no_impide_el_diagnostico(self):
+        with (
+            mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=_RevisorQueFalla()),
+            self.assertLogs("apps.curriculums.revision", level="ERROR"),
+        ):
+            respuesta = self.subir("una_columna.pdf")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        analisis = respuesta.data["analisis"]
+        self.assertEqual(analisis["parseabilidad"], "8/8")
+        self.assertEqual(analisis["revision_ia"]["estado"], "no_disponible")
+        self.assertTrue(analisis["revision_ia"]["motivo"])
+
+    def test_resubir_reintenta_solo_las_sugerencias_que_fallaron(self):
+        with (
+            mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=_RevisorQueFalla()),
+            self.assertLogs("apps.curriculums.revision", level="ERROR"),
+        ):
+            primera = self.subir("una_columna.pdf")
+
+        segunda = self.subir("una_columna.pdf")
+
+        self.assertEqual(primera.data["id"], segunda.data["id"])
+        self.assertEqual(AnalisisATS.objects.count(), 1)
+        self.assertEqual(segunda.data["analisis"]["revision_ia"]["estado"], "ok")
+
+    def test_sugerencias_ya_obtenidas_no_vuelven_a_pedirse(self):
+        self.subir("una_columna.pdf")
+        caido = _RevisorQueFalla()
+
+        with mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=caido):
+            segunda = self.subir("una_columna.pdf")
+
+        self.assertEqual(caido.llamadas, 0)
+        self.assertEqual(segunda.data["analisis"]["revision_ia"]["estado"], "ok")
+
+
 class CacheTest(BaseDeCurriculums):
     def test_resubir_el_mismo_cv_no_crea_un_segundo_analisis(self):
         """El caché es por texto, no por bytes."""
@@ -239,6 +320,45 @@ class CacheTest(BaseDeCurriculums):
         self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND)
 
         self.assertEqual(Curriculum.objects.count(), 2)
+
+    def test_un_analisis_de_reglas_anteriores_se_recalcula_sin_duplicarse(self):
+        """Sin la versión, el caché seguiría mostrando el diagnóstico viejo."""
+        primera = self.subir("una_columna.pdf")
+        AnalisisATS.objects.update(version_reglas=VERSION_DE_REGLAS - 1, campos_intentados=7, campos=[])
+
+        segunda = self.subir("una_columna.pdf")
+
+        self.assertEqual(primera.data["id"], segunda.data["id"])
+        self.assertEqual(segunda.data["analisis"]["parseabilidad"], "8/8")
+        self.assertEqual(Curriculum.objects.count(), 1)
+        self.assertEqual(AnalisisATS.objects.count(), 1)
+        self.assertEqual(AnalisisATS.objects.get().version_reglas, VERSION_DE_REGLAS)
+
+    def test_un_analisis_vigente_no_se_recalcula(self):
+        self.subir("una_columna.pdf")
+        AnalisisATS.objects.update(campos_detectados=0)
+
+        segunda = self.subir("una_columna.pdf")
+
+        # Si se hubiera recalculado, volvería a decir 8/8.
+        self.assertEqual(segunda.data["analisis"]["parseabilidad"], "0/8")
+
+    def test_dos_docx_que_solo_difieren_en_el_encabezado_son_documentos_distintos(self):
+        self.subir_docx("correo_en_encabezado.docx")
+        self.subir_docx("correo_en_encabezado.docx", encabezado="otro@example.com")
+
+        self.assertEqual(Curriculum.objects.count(), 2)
+
+    def subir_docx(self, nombre: str, encabezado: str | None = None):
+        contenido = (FIXTURES / nombre).read_bytes()
+        if encabezado is not None:
+            documento = Document(io.BytesIO(contenido))
+            documento.sections[0].header.paragraphs[0].text = encabezado
+            salida = io.BytesIO()
+            documento.save(salida)
+            contenido = salida.getvalue()
+        archivo = SimpleUploadedFile(nombre, contenido, TIPO_DOCX)
+        return self.client.post("/api/curriculums/", {"archivo": archivo}, format="multipart")
 
 
 class ValidacionDeEntradaTest(BaseDeCurriculums):
@@ -324,3 +444,39 @@ class PertenenciaTest(APITestCase):
         historial = self.client.get("/api/curriculums/")
 
         self.assertEqual(historial.data, [])
+
+
+class ConstruirAnalisisTest(SimpleTestCase):
+    """El contenido del análisis, sin base de datos: es una función pura."""
+
+    CV = (
+        "Jorge Condori Maita\njorge@example.com\n+591 71234567\nCochabamba, Bolivia\n\n"
+        "Experiencia\nDesarrollador Backend, Jalasoft\nEne 2020 - Mar 2023\n"
+        "Desarrollador con experiencia en el diseño de APIs y en la optimización de "
+        "consultas para una base de datos. Trabajé durante dos años como parte de un "
+        "equipo de desarrollo con metodologías ágiles.\n\n"
+        "Habilidades\nPython, Django\n"
+    )
+    CONVOCATORIA = (
+        "We are looking for a Backend Developer with experience in the design of "
+        "APIs. You will work with our team on the migration of services to the "
+        "cloud and the optimization of queries.\nRequirements:\n- Python\n"
+    )
+
+    def _construir(self, convocatoria: str) -> dict:
+        documento = DocumentoExtraido(texto=self.CV, formato="pdf", paginas=1)
+        return construir_analisis(documento, convocatoria, date(2026, 6, 15))
+
+    def test_idiomas_distintos_agregan_su_hallazgo(self):
+        codigos = {h["codigo"] for h in self._construir(self.CONVOCATORIA)["hallazgos"]["debilidades"]}
+
+        self.assertIn("idioma_distinto", codigos)
+
+    def test_sin_convocatoria_no_hay_brecha_ni_aviso_de_idioma(self):
+        valores = self._construir("")
+
+        self.assertIsNone(valores["brecha"])
+        self.assertNotIn("idioma_distinto", {h["codigo"] for h in valores["hallazgos"]["debilidades"]})
+
+    def test_se_guarda_la_version_de_las_reglas(self):
+        self.assertEqual(self._construir("")["version_reglas"], VERSION_DE_REGLAS)

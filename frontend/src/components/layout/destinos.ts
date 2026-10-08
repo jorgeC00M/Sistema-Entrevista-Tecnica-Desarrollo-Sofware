@@ -19,13 +19,6 @@ export const DESTINOS: Destino[] = [
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'usuario' },
 ]
 
-/** Va aparte: es la acción principal y se presenta como botón, no como enlace. */
-export const DESTINO_PRINCIPAL: Destino = {
-  ruta: '/nueva-entrevista',
-  etiqueta: 'Nueva entrevista',
-  icono: 'mas',
-}
-
 /**
  * Destinos condicionales: solo existen cuando el estudiante tiene una
  * entrevista a la que aplican, así que se construyen con su id en vez de

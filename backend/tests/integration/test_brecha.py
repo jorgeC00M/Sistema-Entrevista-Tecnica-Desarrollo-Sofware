@@ -7,19 +7,23 @@ entregue los títulos en líneas propias.
 """
 
 import unittest
+from datetime import date
 from pathlib import Path
 
 from integrations.documentos.brecha import (
     AUSENTE,
+    CUMPLE,
     DECLARADO,
     DEMOSTRADO,
+    NO_ALCANZA,
+    NO_CALCULABLE,
     PRESENTE,
     calcular,
 )
-from integrations.documentos.convocatoria import partir
+from integrations.documentos.convocatoria import anos_requeridos, partir
 from integrations.documentos.extractor import DocumentoExtraido, extraer
-from integrations.documentos.secciones import segmentar
-from integrations.documentos.terminos import encontrar
+from integrations.documentos.secciones import encabezado, segmentar
+from integrations.documentos.terminos import encontrar, primer_cargo
 from integrations.documentos.vinetas import evaluar
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "cv"
@@ -361,6 +365,156 @@ class ContraDocumentoRealTest(unittest.TestCase):
 
     def test_un_cv_escaneado_no_produce_brecha(self):
         self.assertIsNone(self._brecha("escaneado.pdf"))
+
+
+class EncabezadoTest(unittest.TestCase):
+    def test_es_lo_que_precede_al_primer_titulo(self):
+        texto = "Jorge Condori\nCochabamba, Bolivia\n\nExperiencia\nBackend en Jalasoft\n"
+
+        self.assertEqual(encabezado(texto), "Jorge Condori\nCochabamba, Bolivia\n")
+
+    def test_sin_titulos_no_hay_encabezado(self):
+        """Sin títulos no se sabe dónde acaba; devolver el CV entero haciéndose
+        pasar por encabezado sería peor que no devolver nada."""
+        self.assertEqual(encabezado("Jorge Condori\nMi trayectoria\nBackend\n"), "")
+
+
+class AnosRequeridosTest(unittest.TestCase):
+    def test_formas_de_pedir_anos(self):
+        casos = {
+            "Mínimo 3 años de experiencia": 3,
+            "3+ años en desarrollo backend": 3,
+            "Al menos tres años de experiencia": 3,
+            "3 years of experience with Python": 3,
+            "At least 5 years in software development": 5,
+            "3 o más años de experiencia": 3,
+        }
+        for texto, esperado in casos.items():
+            with self.subTest(texto=texto):
+                self.assertEqual(anos_requeridos(texto), esperado)
+
+    def test_una_cifra_que_no_es_un_requisito_no_cuenta(self):
+        self.assertIsNone(anos_requeridos("Somos una empresa con 20 años en el mercado"))
+
+    def test_lo_obligatorio_prevalece_sobre_lo_deseable(self):
+        convocatoria = partir(
+            "Requisitos:\n- 2 años de experiencia\n- Python\n\nDeseable:\n- 5 años de experiencia con AWS\n"
+        )
+
+        self.assertEqual(convocatoria.anos_requeridos, 2)
+
+    def test_anos_solo_en_deseables_no_excluyen(self):
+        convocatoria = partir("Requisitos:\n- Python\n\nDeseable:\n- 5 años de experiencia\n")
+
+        self.assertIsNone(convocatoria.anos_requeridos)
+
+    def test_una_convocatoria_que_solo_pide_anos_tiene_requisitos(self):
+        self.assertTrue(partir("Buscamos a alguien con mínimo 2 años de experiencia").tiene_requisitos)
+
+
+class CargoTest(unittest.TestCase):
+    def test_las_variantes_en_espanol_e_ingles_son_el_mismo_cargo(self):
+        self.assertEqual(primer_cargo("We are hiring a Backend Developer"), "Desarrollador Backend")
+        self.assertEqual(primer_cargo("Buscamos Desarrollador Back-end"), "Desarrollador Backend")
+
+    def test_se_toma_el_primer_cargo_nombrado(self):
+        texto = "Desarrollador Frontend\nTrabajarás junto al equipo de QA Engineer y backend developer."
+
+        self.assertEqual(primer_cargo(texto), "Desarrollador Frontend")
+
+    def test_sin_cargo_reconocible(self):
+        self.assertIsNone(primer_cargo("Buscamos talento"))
+
+
+class RequisitosDelPuestoTest(unittest.TestCase):
+    HOY = date(2026, 6, 15)
+
+    CV = """Jorge Condori
+Desarrollador Backend
+
+Experiencia
+Desarrollador Backend, Jalasoft
+Ene 2020 - Mar 2023
+- Optimice consultas con Python y reduje la latencia 40%
+
+Educacion
+Ingenieria de Sistemas, UMSS
+Feb 2014 - Dic 2019
+
+Habilidades
+Python, Django
+"""
+
+    def _brecha(self, convocatoria: str, cv: str | None = None):
+        return calcular(convocatoria, _cv(cv or self.CV), hoy=self.HOY)
+
+    def test_experiencia_suficiente(self):
+        experiencia = self._brecha("Requisitos:\n- Mínimo 2 años de experiencia\n- Python\n").experiencia
+
+        self.assertEqual(experiencia.estado, CUMPLE)
+        self.assertEqual(experiencia.calculados, "3 años y 3 meses")
+
+    def test_experiencia_insuficiente_muestra_las_dos_cifras(self):
+        experiencia = self._brecha("Requisitos:\n- 5+ años\n- Python\n").experiencia
+
+        self.assertEqual(experiencia.estado, NO_ALCANZA)
+        self.assertEqual(experiencia.requeridos, 5)
+        self.assertEqual(experiencia.calculados_meses, 39)
+        self.assertFalse(experiencia.posible_subestimacion)
+
+    def test_la_educacion_no_cuenta_para_los_anos(self):
+        """Ene 2020 – Mar 2023 son 3 años; sumar la carrera daría 9."""
+        experiencia = self._brecha("Requisitos:\n- 4 años de experiencia\n").experiencia
+
+        self.assertEqual(experiencia.estado, NO_ALCANZA)
+
+    def test_sin_fechas_la_experiencia_no_es_calculable(self):
+        cv = self.CV.replace("Ene 2020 - Mar 2023\n", "").replace("Feb 2014 - Dic 2019\n", "")
+        experiencia = self._brecha("Requisitos:\n- 2 años de experiencia\n", cv).experiencia
+
+        self.assertEqual(experiencia.estado, NO_CALCULABLE)
+        self.assertIsNone(experiencia.calculados_meses)
+
+    def test_fechas_mezcladas_avisan_de_posible_subestimacion(self):
+        cv = self.CV.replace("Ene 2020 - Mar 2023", "Ene 2020 - 03/2023")
+        experiencia = self._brecha("Requisitos:\n- 5 años de experiencia\n", cv).experiencia
+
+        self.assertTrue(experiencia.posible_subestimacion)
+
+    def test_sin_anos_pedidos_no_hay_requisito_de_experiencia(self):
+        self.assertIsNone(self._brecha("Requisitos:\n- Python\n").experiencia)
+
+    def test_el_cargo_ejercido_en_la_experiencia_esta_demostrado(self):
+        cargo = self._brecha("Backend Developer\nRequisitos:\n- Python\n").cargo
+
+        self.assertEqual(cargo.termino, "Desarrollador Backend")
+        self.assertEqual(cargo.estado, DEMOSTRADO)
+
+    def test_el_cargo_solo_como_titular_esta_declarado(self):
+        cv = self.CV.replace("Desarrollador Backend, Jalasoft", "Programador, Jalasoft")
+        cargo = self._brecha("Backend Developer\nRequisitos:\n- Python\n", cv).cargo
+
+        self.assertEqual(cargo.estado, DECLARADO)
+
+    def test_el_cargo_que_no_aparece_esta_ausente(self):
+        cargo = self._brecha("Desarrollador Frontend\nRequisitos:\n- Python\n").cargo
+
+        self.assertEqual(cargo.estado, AUSENTE)
+
+    def test_idioma_distinto(self):
+        convocatoria = (
+            "We are looking for a Backend Developer with experience in the design of "
+            "APIs. You will work with our team on the migration of services to the "
+            "cloud and the optimization of queries.\nRequirements:\n- Python\n"
+        )
+        cv = self.CV + (
+            "\nPerfil\nDesarrollador con experiencia en el diseño de APIs y en la "
+            "optimización de consultas para una base de datos. Trabajé durante dos años "
+            "como parte de un equipo de desarrollo con metodologías ágiles.\n"
+        )
+
+        self.assertTrue(self._brecha(convocatoria, cv).idioma_distinto)
+        self.assertFalse(self._brecha("Requisitos:\n- Python\n").idioma_distinto)
 
 
 if __name__ == "__main__":

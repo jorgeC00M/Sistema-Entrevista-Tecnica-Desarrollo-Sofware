@@ -22,7 +22,7 @@ Settings are split by environment. `manage.py` defaults to `config.settings.loca
 Tests use Django's test runner (not plain `pytest`/`unittest` — several test modules import Django models and need `django.setup()`):
 
 ```powershell
-python manage.py test                                   # full suite (auto-discovery, 232 tests)
+python manage.py test                                   # full suite (auto-discovery, 333 tests)
 python manage.py test apps.entrevistas                  # one app
 python manage.py test tests.integration                 # the Django-free IA and document tests
 python manage.py test apps.entrevistas.tests.test_idempotencia.IdempotenciaTest.test_reintento_tras_fallo_no_duplica_intercambio_ni_evaluacion
@@ -144,9 +144,11 @@ Consequence worth knowing: the chat rebuild in `useEntrevista` filters by `respu
 
 The finding that shapes the whole design is that **real ATS do not auto-reject by score**. Workday parses a CV into fields recruiters search and filter, Taleo runs boolean keyword searches, Greenhouse does not score at all. What eliminates a candidate is that their data never reached the fields, so they do not appear in the recruiter's search. Not rejection — invisibility.
 
-So the module **must not** publish a "Puntaje ATS: 73/100", and for the same reason not a "72% compatible" fit score either. That is what commercial checkers sell and it is indefensible in a thesis defence ("where does the 73 come from?"). Every metric it publishes is a string — `parseabilidad` `"5/7"`, `cobertura` `"4/6"` — deliberately, because a number out of 100 would read as a quality grade or a hiring probability, and nothing in the module can support that claim.
+So the module **must not** publish a "Puntaje ATS: 73/100", and for the same reason not a "72% compatible" fit score either. That is what commercial checkers sell and it is indefensible in a thesis defence ("where does the 73 come from?"). Every metric it publishes is a string — `parseabilidad` `"5/8"`, `cobertura` `"4/6"` — deliberately, because a number out of 100 would read as a quality grade or a hiring probability, and nothing in the module can support that claim.
 
-Nothing in this module uses AI, and that is the point: a language model cannot know whether a PDF has a text layer or is laid out in two columns. Ask it and it answers confidently and partly invents. Every claim here comes from measuring the document, so it is reproducible and explainable rule by rule.
+**The measurement uses no AI**, and that is the point: a language model cannot know whether a PDF has a text layer or is laid out in two columns. Ask it and it answers confidently and partly invents. Every finding, field, state and coverage comes from measuring the document, so it is reproducible and explainable rule by rule.
+
+AI only **suggests**, after the measurement is saved: a rewrite for each bullet without a result, how to close each `declarado`/`ausente` requirement, up to 5 likely interview questions (plus a suggested puesto that preselects `/nueva-entrevista?puesto=`), and spelling/wording fixes. The rule is *the code decides what, the AI proposes how, and the AI never changes a verdict*. Everything it returns is rendered under a "Sugerencia de IA" label, apart from the measured findings.
 
 ### Two routes through the CV module, and only one section differs
 
@@ -154,12 +156,12 @@ The screen asks for the CV and, **optionally**, the convocatoria (job posting) t
 
 | Section | Without convocatoria | With convocatoria |
 |---|---|---|
-| Espejo del ATS | the 7-field ficha | same |
-| Qué corregir / conservar | 11 possible weaknesses, 4 strengths | same |
+| Espejo del ATS | the 8-field ficha | same |
+| Qué corregir / conservar | 16 possible weaknesses, 4 strengths | + `idioma_distinto` |
 | **Third section** | **inventario** of legible terms | **mapa de evidencia** |
 | Viñetas de logro | achievement vs task bullets | same |
 
-Only the third row changes, and the same `terminos.py` dictionary feeds both. That is what makes the convocatoria feel genuinely optional rather than the difference between useful and useless. The inventario also does something the mirror alone cannot: if the skills are in level bars, it comes back empty, which turns `habilidades_en_graficos` from a suspicion into proof.
+Only the third row changes (plus the one weakness that needs both documents), and the same `terminos.py` dictionary feeds both. That is what makes the convocatoria feel genuinely optional rather than the difference between useful and useless. The inventario also does something the mirror alone cannot: if the skills are in level bars, it comes back empty, which turns `habilidades_en_graficos` from a suspicion into proof.
 
 ### The evidence map is three states, not two
 
@@ -169,6 +171,20 @@ The reason: "Django" in a comma-separated list and "Django" inside an achievemen
 
 This needs `secciones.py::segmentar()`, which splits the CV into blocks by its headings. When the headings are not recognised there is nothing to segment, so the state degrades to `presente`/`ausente` **and says so** — chaining with `secciones_no_reconocidas`, which is already reported. A formatting weakness degrades the content analysis, and stating that is more honest than showing a half-map with no explanation.
 
+Above the technology groups the map shows two **requisitos del puesto**, which do not count towards `cobertura`: the years of experience the posting demands (`cumple` / `no_alcanza` / `no_calculable`) — the knockout question is the only real automatic rejection an ATS performs — and the cargo, with the same states as a technology. The years compare against `fechas.experiencia()`, which merges overlapping periods and sums **only the experiencia section** (summing the whole CV would count the degree). When dates are mixed or year-only it flags `posible_subestimacion`; it never suggests changing the experience to reach the minimum.
+
+### Every rule is one function in a registry, and the ruleset is versioned
+
+`ats.py` runs `_VERIFICACIONES` in order over a `_Contexto` (segments, header, experience — computed once). Adding a rule is one `_verificar_*` and one registry entry. `CAMPOS_DE_LA_FICHA` is the only list of fields; a test pins that the verifications emit exactly those, in order. Order matters in one place: `_verificar_zonas_ocultas` runs before `_verificar_contacto`, because if the email is only in the page header the critical finding is *that one*, and it replaces `sin_correo` — one failure, one warning.
+
+`VERSION_DE_REGLAS` is stored on every `AnalisisATS`. A cached analysis from an older version is recomputed **in place** (`update_or_create` on the OneToOne) when the same CV is uploaded again. **Bump it whenever what `analizar()` or `brecha.calcular()` produce changes**, or users keep seeing stale diagnoses.
+
+### What the extractor records apart from `texto`
+
+`DocumentoExtraido.texto` is what a typical parser reads. Text in DOCX text boxes (`w:txbxContent`, read once — Word stores each box twice, in `mc:Choice` and `mc:Fallback`), in DOCX headers/footers, and in PDF lines repeated in the top/bottom band of **every** page goes to `texto_en_cuadros` / `texto_en_encabezado` instead, and white or sub-4pt PDF characters are counted in `caracteres_ocultos` (white text over a filled colour rectangle is excluded). Adding them to `texto` would make the mirror claim the ATS sees an email it does not. A one-page PDF is never checked for header/footer: a PDF does not keep the distinction between a Word header and the CV's first line, and guessing would be worse than not reporting.
+
+The cache hash uses `documento.huella` — the text plus those hidden parts — so two DOCX differing only in their header are different documents. For a CV with no hidden text `huella == texto`, so ordinary CVs keep their cache key.
+
 ### Five things to know before touching this module
 
 - **A scanned PDF is not an error, it is the most valuable finding.** `integrations/documentos/exceptions.py` only covers cases where there is nothing to analyse (unsupported format, unopenable file, over the hard page cap). "No text layer" is reported inside the analysis, and when it happens `ats.py` reports *only* that and stops: running the other rules over empty text would produce a list of false weaknesses drowning the one that matters. `brecha.calcular()` returns `None` for the same reason — "0 of 6 requirements" would be a false claim when the truth is nobody can read the document. That is why it takes the `DocumentoExtraido` and not its text: `tiene_capa_de_texto` is the single place the legibility threshold lives, and an empty-text check is not enough because a scanned PDF carries stray artefacts.
@@ -176,17 +192,21 @@ This needs `secciones.py::segmentar()`, which splits the CV into blocks by its h
 - **The file is never stored.** No `FileField`, no `MEDIA_ROOT`. Render's free tier has an ephemeral disk, a CV carries a real person's phone and address, and the bytes are useless once parsed. Only the extracted text, its hash and the analysis persist. `texto` and `convocatoria` are deliberately excluded from `CurriculumSerializer`.
 - **The cache key is the extracted text plus the convocatoria, and "no convocatoria" stores the hash of the empty string, never NULL.** Re-exporting the same CV from Word yields different bytes and identical text; what matters is whether there is anything new to analyse. Postgres treats NULLs as distinct, so with NULL the `UniqueConstraint(usuario, hash_texto, hash_convocatoria)` would not fire and the cache would break **in the most common case**, silently accumulating duplicates.
 - **The bullet analysis is labelled apart from the ATS sections, and that is a requirement.** An ATS does not care whether a bullet has metrics; that advice is for the human who reads the CV after the machine found it. `vinetas.py` says so in its docstring and `VinetasDeLogro.tsx` renders under its own heading. Mixing it under "filtros ATS" would be imprecise, and precision about what an ATS actually does is what holds up the module's credibility.
-- **`apps/curriculums` must not import `integrations.ia`, and that is enforced.** `tests/test_frontera_con_ia.py` checks it two ways: statically with `ast` over the app's files, and at runtime with a `sys.meta_path` finder that fails if anything in the call chain imports the AI layer. The reason is `Curriculum.texto` — the full CV of a real person. Today nothing sends it, which is a guarantee by omission that the AI phase would break silently. **If that test goes red, it gets rewritten with a spy provider that verifies the masking, never deleted**; its docstring says so.
+- **Only `apps/curriculums/revision.py` may import `integrations.ia`, and what it sends is enforced.** The reason is `Curriculum.texto` — the full CV of a real person. Two barriers, in this order: **minimisation** (only the blocks of recognised sections from `segmentar()`, which drop the header by construction — never the full text, the header/footer text or text boxes) and **masking** (`integrations/documentos/anonimizar.py` replaces emails, links, phones and the detected name, reusing the `ats.py` detectors). With no recognised sections or no text layer, the provider is **not called** (`revision_ia.estado = "omitida"`): there is no safe way to separate personal data from the rest. `tests/test_frontera_con_ia.py` checks it three ways — statically with `ast` (only `revision.py` imports the AI layer), with a spy provider (name, email, phone and city of the fixture never reach it; it is not called on creative titles or a scanned PDF), and with a `sys.meta_path` guard (with an injected reviewer, nothing else in the call chain loads the AI layer). Each was verified by injecting the violation. **If it goes red, fix the leak, never relax the test.**
 
-  Two lessons are baked into it. The first version patched `integrations.ia.factory.get_proveedor` and **passed even with the violation injected**: a module that did `from ... import get_proveedor` already copied the reference, so replacing it at the source intercepts nothing. The second: the static check *does* see a deferred import inside a function, because `ast.walk` traverses function bodies — what the runtime hook actually adds is an import happening **outside** the app's own files. Both claims were verified by injecting violations, not assumed.
+  The AI call runs **after** the transaction, like the evaluation in `responder()`. Any `ErrorProveedorIA` becomes `revision_ia.estado = "no_disponible"` with a 201 — the diagnosis never depends on the provider — and re-uploading the same CV retries **only** the AI part (`revision.necesita_revision()`). The parser in `integrations/ia/prompts/revisor_cv.py` drops anything not anchored to the input (a bullet not sent, a requirement not in the gap, a correction whose original is not literally in the CV, a question whose motive is not in the texts, a puesto outside the enum, anything echoing a mask marker). `RevisorDeCV` is a `Protocol` in `base.py`, implemented by `ProveedorIAporJSON` (so Gemini and Claude get it for free) and `FakeProveedorIA`; it is deliberately not an abstract method of `ProveedorIA`, so the interview test doubles don't have to implement it.
 
-Tests split by level on purpose: the rules are tested by building a `DocumentoExtraido` in code (exact and fast), and the geometry against real PDFs in `backend/tests/fixtures/cv/`, because detecting columns depends on real coordinates. Those fixtures are generated by `generar.py`, which writes the PDFs **by hand** with no library — it adds no test-only dependency and, more importantly, gives exact control over where each word lands, which is what a column detector has to be pinned against.
+  Two lessons from the earlier version of the frontier test are baked into it. The first version patched `integrations.ia.factory.get_proveedor` and **passed even with the violation injected**: a module that did `from ... import get_proveedor` already copied the reference, so replacing it at the source intercepts nothing. The second: the static check *does* see a deferred import inside a function, because `ast.walk` traverses function bodies — what the runtime hook actually adds is an import happening **outside** the app's own files. Both claims were verified by injecting violations, not assumed.
+
+Tests split by level on purpose: the rules are tested by building a `DocumentoExtraido` in code (exact and fast), and the geometry against real PDFs in `backend/tests/fixtures/cv/`, because detecting columns depends on real coordinates. Those fixtures are generated by `generar.py`, which writes the PDFs **by hand** with no library — it adds no test-only dependency and, more importantly, gives exact control over where each word lands (and its colour), which is what a column or hidden-text detector has to be pinned against. The two DOCX fixtures use `python-docx` plus raw XML, since what they pin is *where* a text lives (a text box, the page header), not coordinates.
 
 ### The migrations of `curriculums` are a worked example of Postgres ordering
 
 Worth reading before adding another. `0002` adds the new columns **before** removing `puesto`, because Django emits `SET CONSTRAINTS ... IMMEDIATE` when dropping a foreign key and that leaves the table with pending trigger events — any later `ALTER TABLE` or `CREATE INDEX` on it in the same transaction then fails. Its dedup `DELETE` (needed because rows that only differed by puesto became duplicates) goes last for the same reason, and the new `UniqueConstraint` had to move to `0003` because a migration is the unit of atomicity. `0004` backfills `hash_convocatoria`, which `0002` left as the empty string rather than its hash on pre-existing rows.
 
 Neither `hash_texto` nor `hash_convocatoria` has an index of its own: the only query filters on all three columns together, so the constraint's composite index serves it by prefix. `hash_convocatoria` never had one (its `CREATE INDEX` was what collided with the pending triggers) and `hash_texto`'s was dropped in `0005`, which round-trips cleanly because it drops an index without touching a foreign key or deleting rows.
+
+`0006` adds `version_reglas` with default 1 (what every earlier analysis is) — a plain `ADD COLUMN`, reversible, no backfill. `0007` adds the nullable `revision_ia`; no backfill either, because a migration must never call an external provider.
 
 `0002` is **not reversible** and says so rather than pretending: reversing re-adds `puesto_id` as NOT NULL and existing rows have no value to put there. Dropping a column with nothing to backfill is one-way.
 

@@ -114,7 +114,9 @@ class AnalisisATSSerializer(serializers.ModelSerializer):
     campos = CampoSerializer(many=True, read_only=True)
     fortalezas = serializers.SerializerMethodField()
     debilidades = serializers.SerializerMethodField()
-    parseabilidad = serializers.SerializerMethodField()
+    # Una sola definición, en el modelo: el detalle y el historial no pueden
+    # formatearla distinto.
+    parseabilidad = serializers.CharField(read_only=True)
 
     class Meta:
         model = AnalisisATS
@@ -128,6 +130,7 @@ class AnalisisATSSerializer(serializers.ModelSerializer):
             "brecha",
             "inventario",
             "vinetas",
+            "revision_ia",
             "fecha",
         )
 
@@ -137,19 +140,10 @@ class AnalisisATSSerializer(serializers.ModelSerializer):
     def get_debilidades(self, analisis) -> list[dict]:
         return HallazgoSerializer(analisis.hallazgos.get("debilidades", []), many=True).data
 
-    def get_parseabilidad(self, analisis) -> str:
-        """Campos extraídos sobre campos intentados.
-
-        Se publica como texto ("5/7") y no como porcentaje a propósito: un número
-        sobre 100 se leería como un puntaje de calidad del CV, que es justo lo
-        que este módulo no calcula porque los ATS reales no puntúan.
-        """
-        return f"{analisis.campos_detectados}/{analisis.campos_intentados}"
-
 
 class CurriculumSerializer(serializers.ModelSerializer):
     analisis = AnalisisATSSerializer(read_only=True)
-    con_convocatoria = serializers.SerializerMethodField()
+    con_convocatoria = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Curriculum
@@ -159,28 +153,15 @@ class CurriculumSerializer(serializers.ModelSerializer):
         # de los documentos.
         fields = ("id", "nombre_archivo", "formato", "paginas", "fecha", "con_convocatoria", "analisis")
 
-    def get_con_convocatoria(self, curriculum) -> bool:
-        """Qué ruta se siguió. El cliente lo necesita para decidir si muestra el
-        mapa de requisitos o el inventario, sin tener que inferirlo de si `brecha`
-        vino nula —que también ocurre con una convocatoria sin términos."""
-        return bool(curriculum.convocatoria)
-
 
 class CurriculumListaSerializer(serializers.ModelSerializer):
     """Fila del historial: lo justo para ver si el CV mejoró con el tiempo."""
 
-    parseabilidad = serializers.SerializerMethodField()
-    con_convocatoria = serializers.SerializerMethodField()
+    # Nulo si el análisis quedó a medias: DRF devuelve `None` cuando la relación
+    # inversa no existe.
+    parseabilidad = serializers.CharField(source="analisis.parseabilidad", read_only=True, allow_null=True)
+    con_convocatoria = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Curriculum
         fields = ("id", "nombre_archivo", "fecha", "parseabilidad", "con_convocatoria")
-
-    def get_parseabilidad(self, curriculum) -> str | None:
-        analisis = getattr(curriculum, "analisis", None)
-        if analisis is None:
-            return None
-        return f"{analisis.campos_detectados}/{analisis.campos_intentados}"
-
-    def get_con_convocatoria(self, curriculum) -> bool:
-        return bool(curriculum.convocatoria)

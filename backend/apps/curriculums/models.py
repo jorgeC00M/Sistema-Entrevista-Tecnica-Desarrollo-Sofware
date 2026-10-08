@@ -48,8 +48,8 @@ class Curriculum(models.Model):
     nombre_archivo = models.CharField(max_length=255)
     formato = models.CharField(max_length=10)
     paginas = models.PositiveSmallIntegerField()
-    # Lo que el parser pudo leer del CV. Es la entrada del análisis y lo que se
-    # anonimizaría antes de enviar nada a un proveedor de IA.
+    # Lo que el parser pudo leer del CV: la entrada del análisis. Nunca sale
+    # entero hacia la IA; `revision.py` envía solo secciones y enmascaradas.
     texto = models.TextField()
     # Sin índice propio, por lo mismo que `hash_convocatoria`: la única consulta
     # que lo usa filtra por `(usuario, hash_texto, hash_convocatoria)` a la vez, y
@@ -90,8 +90,15 @@ class Curriculum(models.Model):
         indexes = [models.Index(fields=["usuario", "fecha"])]
 
     def __str__(self) -> str:
-        referencia = "con convocatoria" if self.convocatoria else "sin convocatoria"
+        referencia = "con convocatoria" if self.con_convocatoria else "sin convocatoria"
         return f"CV de {self.usuario} {referencia} ({self.fecha:%Y-%m-%d})"
+
+    @property
+    def con_convocatoria(self) -> bool:
+        """Qué ruta se siguió. El cliente lo necesita para decidir si muestra el
+        mapa de requisitos o el inventario, sin tener que inferirlo de si `brecha`
+        vino nula —que también ocurre con una convocatoria sin requisitos—."""
+        return bool(self.convocatoria)
 
 
 class AnalisisATS(models.Model):
@@ -127,6 +134,17 @@ class AnalisisATS(models.Model):
     # después, y la interfaz debe presentarlo separado.
     vinetas = models.JSONField(null=True, blank=True)
 
+    # Con qué reglas se hizo (`ats.VERSION_DE_REGLAS`). Un análisis de una
+    # versión anterior se recalcula al volver a subir el CV, en vez de seguir
+    # mostrando un diagnóstico que ya no es el vigente. El valor por defecto es 1
+    # porque es lo que son todos los análisis anteriores a esta columna.
+    version_reglas = models.PositiveSmallIntegerField(default=1)
+
+    # Las sugerencias de IA, aparte de todo lo medido: nunca cambian un hallazgo
+    # ni un estado. Forma en `revision.py`. NULL en los análisis anteriores a la
+    # revisión con IA; se completa la próxima vez que el usuario suba ese CV.
+    revision_ia = models.JSONField(null=True, blank=True)
+
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -134,4 +152,14 @@ class AnalisisATS(models.Model):
         verbose_name_plural = "análisis ATS"
 
     def __str__(self) -> str:
-        return f"Análisis {self.campos_detectados}/{self.campos_intentados} de {self.curriculum_id}"
+        return f"Análisis {self.parseabilidad} de {self.curriculum_id}"
+
+    @property
+    def parseabilidad(self) -> str:
+        """Campos extraídos sobre campos intentados.
+
+        Se publica como texto ("5/8") y no como porcentaje a propósito: un número
+        sobre 100 se leería como un puntaje de calidad del CV, que es justo lo que
+        este módulo no calcula porque los ATS reales no puntúan.
+        """
+        return f"{self.campos_detectados}/{self.campos_intentados}"

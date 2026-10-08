@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import { ErrorAPI } from '@/api/client'
 import {
@@ -11,6 +10,7 @@ import {
 import { repartirErrores } from '@/api/errores'
 import Alerta from '@/components/ui/Alerta'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import AvisoDeRevision from '@/features/curriculum/components/AvisoDeRevision'
 import BrechaDeRequisitos from '@/features/curriculum/components/BrechaDeRequisitos'
 import CampoConvocatoria from '@/features/curriculum/components/CampoConvocatoria'
 import EspejoDelATS from '@/features/curriculum/components/EspejoDelATS'
@@ -19,6 +19,8 @@ import InventarioDeTerminos from '@/features/curriculum/components/InventarioDeT
 import ListaDeHallazgos, {
   ResumenDeSeveridad,
 } from '@/features/curriculum/components/ListaDeHallazgos'
+import PreguntasProbables from '@/features/curriculum/components/PreguntasProbables'
+import RevisionDeRedaccion from '@/features/curriculum/components/RevisionDeRedaccion'
 import SubirArchivo from '@/features/curriculum/components/SubirArchivo'
 import VinetasDeLogro from '@/features/curriculum/components/VinetasDeLogro'
 import { usePeticion } from '@/hooks/usePeticion'
@@ -111,6 +113,15 @@ export default function CurriculumPage() {
   }
 
   const analisis = resultado?.analisis ?? null
+  // Las sugerencias de IA se indexan por lo que el usuario ya ve —la viñeta, el
+  // término— para colgarlas bajo su fila. Lo medido no depende de ellas.
+  const revision = analisis?.revision_ia ?? null
+  const sugerenciasDeVinetas = Object.fromEntries(
+    (revision?.vinetas ?? []).map(({ original, sugerida }) => [original, sugerida]),
+  )
+  const sugerenciasDeRequisitos = Object.fromEntries(
+    (revision?.requisitos ?? []).map(({ termino, sugerencia }) => [termino, sugerencia]),
+  )
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -174,6 +185,8 @@ export default function CurriculumPage() {
                 <ResumenDeSeveridad debilidades={analisis.debilidades} />
               </div>
 
+              <AvisoDeRevision revision={revision} />
+
               <EspejoDelATS analisis={analisis} />
 
               {/* Una sola de las secciones depende de la ruta. Si se aportó
@@ -182,7 +195,7 @@ export default function CurriculumPage() {
                   aportado nada. */}
               {resultado?.con_convocatoria ? (
                 analisis.brecha ? (
-                  <BrechaDeRequisitos brecha={analisis.brecha} />
+                  <BrechaDeRequisitos brecha={analisis.brecha} sugerencias={sugerenciasDeRequisitos} />
                 ) : (
                   <Alerta>
                     No se reconoció ningún requisito técnico en la convocatoria que enviaste, así
@@ -209,22 +222,13 @@ export default function CurriculumPage() {
 
             {/* Rotulado aparte dentro del propio componente: a un ATS le da igual
                 si las viñetas traen métricas. */}
-            {analisis.vinetas && <VinetasDeLogro vinetas={analisis.vinetas} />}
+            {analisis.vinetas && (
+              <VinetasDeLogro vinetas={analisis.vinetas} sugerencias={sugerenciasDeVinetas} />
+            )}
 
-            <div className="flex flex-col items-start gap-3 rounded-vidrio bg-vidrio-field p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-vidrio-texto">
-                Con el CV listo, el siguiente paso es practicar la entrevista técnica.
-              </p>
-              {/* Un `Link` con las clases del botón, como en
-                  `SidebarAccionPrincipal`: envolver un `Boton` en un `Link`
-                  anidaría un `<button>` dentro de un `<a>`. */}
-              <Link
-                to="/nueva-entrevista"
-                className="inline-flex shrink-0 items-center justify-center rounded-full bg-vidrio-acento px-4 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-vidrio-acento-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
-              >
-                Practicar la entrevista
-              </Link>
-            </div>
+            <RevisionDeRedaccion revision={revision} />
+
+            <PreguntasProbables revision={revision} />
           </>
         )}
       </div>

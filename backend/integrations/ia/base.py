@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, Protocol, runtime_checkable
 
 from .exceptions import RespuestaIAInvalida
-from .prompts import entrevistador, evaluador
-from collections.abc import Sequence
+from .prompts import entrevistador, evaluador, revisor_cv
+from .prompts.revisor_cv import EntradaDeRevision, RevisionDeCV
 
 from .prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
@@ -76,10 +77,28 @@ class ProveedorIA(ABC):
         """
 
 
+@runtime_checkable
+class RevisorDeCV(Protocol):
+    """Un proveedor capaz de sugerir cómo mejorar un CV.
+
+    Es un contrato aparte de `ProveedorIA`, y no un método abstracto más, a
+    propósito: obligaría a implementarlo en cada doble de prueba de la entrevista
+    (`test_privacidad.py`, `test_errores.py`), que no tienen nada que ver con
+    currículums. Quien lo necesita lo pide con `factory.get_revisor_de_cv()`.
+    """
+
+    nombre: str
+    modelo: str
+
+    def revisar_cv(self, entrada: EntradaDeRevision) -> RevisionDeCV:
+        """Sugiere redacciones para lo que el análisis ya marcó, sin juzgarlo de nuevo."""
+        ...
+
+
 class ProveedorIAporJSON(ProveedorIA):
     """Base de los proveedores que piden JSON estructurado a un modelo.
 
-    Ambas operaciones del contrato son la misma secuencia —armar el prompt,
+    Todas las operaciones del contrato son la misma secuencia —armar el prompt,
     pedir JSON, parsear al esquema— y solo cambia *cómo* se le pide el JSON a
     cada SDK. Eso es lo único que queda abstracto (`_pedir_json`).
 
@@ -127,6 +146,16 @@ class ProveedorIAporJSON(ProveedorIA):
             esquema=evaluador.ESQUEMA_EVALUACION,
         )
         return parsear_evaluacion(datos)
+
+    def revisar_cv(self, entrada: EntradaDeRevision) -> RevisionDeCV:
+        """Implementa `RevisorDeCV` con la misma secuencia que las demás
+        operaciones: así Gemini y Claude lo obtienen sin código propio."""
+        datos = self._pedir_json(
+            sistema=revisor_cv.sistema(),
+            entrada=revisor_cv.usuario(entrada),
+            esquema=revisor_cv.ESQUEMA_REVISION,
+        )
+        return revisor_cv.parsear_revision(datos, entrada)
 
     @abstractmethod
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:

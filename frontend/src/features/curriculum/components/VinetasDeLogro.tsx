@@ -1,10 +1,13 @@
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
 import Tarjeta from '@/components/ui/Tarjeta'
+import SugerenciaIA from '@/features/curriculum/components/SugerenciaIA'
 import type { AnalisisDeVinetas } from '@/types/curriculum'
 
 interface Props {
   vinetas: AnalisisDeVinetas
+  /** Viñeta original → reescritura propuesta por la IA. Sin revisión, vacío. */
+  sugerencias?: Record<string, string>
 }
 
 /**
@@ -17,7 +20,7 @@ interface Props {
  * mezclado con los hallazgos de parseabilidad sería impreciso, y la precisión
  * sobre qué hace un ATS es lo que sostiene la credibilidad del módulo entero.
  */
-export default function VinetasDeLogro({ vinetas }: Props) {
+export default function VinetasDeLogro({ vinetas, sugerencias = {} }: Props) {
   const todasSonLogros = vinetas.logros === vinetas.total
 
   return (
@@ -56,7 +59,10 @@ export default function VinetasDeLogro({ vinetas }: Props) {
                   <span className="mt-0.5 shrink-0 text-progreso-texto">
                     <Icono nombre="mejora" className="h-4 w-4" aria-hidden />
                   </span>
-                  <span className="min-w-0 text-sm text-vidrio-texto italic">«{texto}»</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-vidrio-texto italic">«{texto}»</span>
+                    {sugerencias[texto] && <SugerenciaIA>{sugerencias[texto]}</SugerenciaIA>}
+                  </div>
                 </li>
               ))}
             </ul>

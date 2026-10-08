@@ -12,6 +12,9 @@ indexan igual para la máquina y valen muy distinto para la persona que lee. Un
 reclutador hace esa diferencia; el candidato promedio no sabe que existe. Decírselo
 es lo que ninguna comparación binaria da.
 
+Además de las tecnologías se comparan dos requisitos del puesto: los años de
+experiencia —contra lo que el ATS calcula de las fechas— y el cargo.
+
 Como el resto de la capa, aquí no hay IA: todo sale de buscar términos literales en
 bloques de texto delimitados.
 """
@@ -19,11 +22,13 @@ bloques de texto delimitados.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
+from integrations.documentos import fechas, idioma
 from integrations.documentos.convocatoria import partir
 from integrations.documentos.extractor import DocumentoExtraido
 from integrations.documentos.secciones import SECCIONES_DE_EVIDENCIA, segmentar
-from integrations.documentos.terminos import encontrar
+from integrations.documentos.terminos import encontrar, menciona_cargo
 
 #: Estados de un requisito, del más fuerte al más débil.
 DEMOSTRADO = "demostrado"
@@ -31,6 +36,11 @@ DECLARADO = "declarado"
 AUSENTE = "ausente"
 #: Cuando no se pudo segmentar el CV: se sabe que está, no dónde.
 PRESENTE = "presente"
+
+#: Estados del requisito de experiencia.
+CUMPLE = "cumple"
+NO_ALCANZA = "no_alcanza"
+NO_CALCULABLE = "no_calculable"
 
 
 @dataclass(frozen=True)
@@ -51,22 +61,44 @@ class Requisito:
 
 @dataclass(frozen=True)
 class Grupo:
-    """Un bloque de requisitos con su cobertura."""
+    """Un bloque de requisitos con su cobertura.
+
+    `cubiertos` y `cobertura` son campos y no propiedades para que
+    `dataclasses.asdict` los incluya: así la brecha se serializa entera sin que
+    nadie tenga que acordarse de copiarlos a mano.
+    """
 
     requisitos: tuple[Requisito, ...]
+    cubiertos: int
+    #: En texto ("4/6") y no en porcentaje, por lo mismo que `parseabilidad`. Un
+    #: número sobre 100 se leería como una probabilidad de ser contratado, que es
+    #: justo lo que este módulo no calcula.
+    cobertura: str
 
-    @property
-    def cubiertos(self) -> int:
-        return sum(1 for requisito in self.requisitos if requisito.cubierto)
+    @classmethod
+    def de(cls, requisitos: tuple[Requisito, ...]) -> Grupo:
+        cubiertos = sum(1 for requisito in requisitos if requisito.cubierto)
+        return cls(requisitos=requisitos, cubiertos=cubiertos, cobertura=f"{cubiertos}/{len(requisitos)}")
 
-    @property
-    def cobertura(self) -> str:
-        """En texto ("4/6") y no en porcentaje, por lo mismo que `parseabilidad`.
 
-        Un número sobre 100 se leería como una probabilidad de ser contratado, que
-        es justo lo que este módulo no calcula.
-        """
-        return f"{self.cubiertos}/{len(self.requisitos)}"
+@dataclass(frozen=True)
+class RequisitoDeExperiencia:
+    """Los años que pide la convocatoria frente a los que el ATS calcula.
+
+    Es la versión medible de la pregunta de filtro "¿tienes N años de
+    experiencia?", el único rechazo automático real de un ATS.
+    """
+
+    requeridos: int
+    #: `None` cuando el CV no tiene periodos legibles; no es lo mismo que cero.
+    calculados_meses: int | None
+    #: Para mostrar: "2 años y 4 meses", con "(aprox.)" si hay fechas solo de año.
+    calculados: str
+    estado: str
+    #: Si el cálculo puede quedarse corto por fechas mezcladas o solo con año. No
+    #: se le dice al usuario que cambie su experiencia: se le dice que el ATS
+    #: puede estar contando menos de la que tiene.
+    posible_subestimacion: bool
 
 
 @dataclass(frozen=True)
@@ -84,9 +116,15 @@ class Brecha:
     #: son `presente`/`ausente` y hay que decirle al usuario por qué se perdió el
     #: detalle.
     con_evidencia: bool
+    #: `None` si la convocatoria no pide años de experiencia.
+    experiencia: RequisitoDeExperiencia | None = None
+    #: `None` si la convocatoria no nombra un cargo reconocible.
+    cargo: Requisito | None = None
+    #: Si el CV y la convocatoria están, con claridad, en idiomas distintos.
+    idioma_distinto: bool = False
 
 
-def calcular(texto_convocatoria: str, cv: DocumentoExtraido) -> Brecha | None:
+def calcular(texto_convocatoria: str, cv: DocumentoExtraido, hoy: date | None = None) -> Brecha | None:
     """Compara una convocatoria con un currículum.
 
     Recibe el documento y no su texto a propósito: `tiene_capa_de_texto` es el
@@ -95,13 +133,15 @@ def calcular(texto_convocatoria: str, cv: DocumentoExtraido) -> Brecha | None:
     `ats.analizar()`, por la misma razón.
 
     Devuelve `None` cuando no hay nada que comparar: un CV ilegible, o una
-    convocatoria que no menciona ningún término reconocible. En los dos casos una
-    brecha vacía sería una afirmación falsa — "no cumples ninguno de los 4
+    convocatoria que no menciona ningún requisito reconocible. En los dos casos
+    una brecha vacía sería una afirmación falsa — "no cumples ninguno de los 4
     requisitos" cuando la verdad es que nadie puede leer el documento— y quien
     llama debe informar la causa real en su lugar.
 
     Un PDF escaneado trae algún artefacto suelto, así que comprobar que el texto
     no esté vacío no basta: era el fallo que este cambio corrigió.
+
+    `hoy` fija hasta dónde llega un periodo abierto; por defecto, la fecha actual.
     """
     if not cv.tiene_capa_de_texto:
         return None
@@ -119,19 +159,17 @@ def calcular(texto_convocatoria: str, cv: DocumentoExtraido) -> Brecha | None:
     # formato degrada el análisis de contenido, y decirlo es más honesto que
     # mostrar un mapa a medias sin explicación.
     con_evidencia = bool(bloques)
+    texto_de_evidencia = "\n".join(bloques.get(seccion, "") for seccion in SECCIONES_DE_EVIDENCIA)
 
     if con_evidencia:
-        en_evidencia = encontrar(
-            "\n".join(bloques.get(seccion, "") for seccion in SECCIONES_DE_EVIDENCIA)
-        )
+        en_evidencia = encontrar(texto_de_evidencia)
         en_habilidades = encontrar(bloques.get("habilidades", ""))
-        # El CV completo y no solo los bloques: un término puede estar en una
-        # sección que no se reconoció, y seguiría estando en el CV.
-        en_todo = encontrar(texto_cv)
     else:
         en_evidencia = set()
         en_habilidades = set()
-        en_todo = encontrar(texto_cv)
+    # El CV completo y no solo los bloques: un término puede estar en una sección
+    # que no se reconoció, y seguiría estando en el CV.
+    en_todo = encontrar(texto_cv)
 
     def estado_de(termino: str) -> str:
         if not con_evidencia:
@@ -148,11 +186,8 @@ def calcular(texto_convocatoria: str, cv: DocumentoExtraido) -> Brecha | None:
         # Orden alfabético para que el resultado sea estable entre análisis: los
         # conjuntos no lo garantizan y el usuario vería las filas saltando de
         # sitio al reanalizar el mismo CV.
-        return Grupo(
-            requisitos=tuple(
-                Requisito(termino=termino, estado=estado_de(termino))
-                for termino in sorted(terminos)
-            )
+        return Grupo.de(
+            tuple(Requisito(termino=termino, estado=estado_de(termino)) for termino in sorted(terminos))
         )
 
     pedidos = convocatoria.obligatorios | convocatoria.deseables
@@ -162,4 +197,47 @@ def calcular(texto_convocatoria: str, cv: DocumentoExtraido) -> Brecha | None:
         extras=tuple(sorted(en_todo - pedidos)),
         separada=convocatoria.separada,
         con_evidencia=con_evidencia,
+        experiencia=_experiencia(convocatoria.anos_requeridos, texto_cv, hoy or date.today()),
+        cargo=_cargo(convocatoria.cargo, texto_cv, texto_de_evidencia, con_evidencia),
+        idioma_distinto=idioma.son_distintos(texto_cv, texto_convocatoria),
     )
+
+
+def _experiencia(requeridos: int | None, texto_cv: str, hoy: date) -> RequisitoDeExperiencia | None:
+    if requeridos is None:
+        return None
+
+    calculada = fechas.experiencia(texto_cv, hoy)
+    if calculada.meses is None:
+        estado = NO_CALCULABLE
+    elif calculada.meses >= requeridos * 12:
+        estado = CUMPLE
+    else:
+        estado = NO_ALCANZA
+
+    return RequisitoDeExperiencia(
+        requeridos=requeridos,
+        calculados_meses=calculada.meses,
+        calculados=calculada.descripcion,
+        estado=estado,
+        posible_subestimacion=calculada.aproximado or len(fechas.formatos_presentes(texto_cv)) > 1,
+    )
+
+
+def _cargo(cargo: str | None, texto_cv: str, texto_de_evidencia: str, con_evidencia: bool) -> Requisito | None:
+    """El cargo, con los mismos estados que una tecnología.
+
+    `demostrado` si aparece en la experiencia o los proyectos —se ejerció—;
+    `declarado` si aparece en otro sitio, típicamente como titular bajo el nombre.
+    """
+    if cargo is None:
+        return None
+    if not menciona_cargo(texto_cv, cargo):
+        estado = AUSENTE
+    elif not con_evidencia:
+        estado = PRESENTE
+    elif menciona_cargo(texto_de_evidencia, cargo):
+        estado = DEMOSTRADO
+    else:
+        estado = DECLARADO
+    return Requisito(termino=cargo, estado=estado)

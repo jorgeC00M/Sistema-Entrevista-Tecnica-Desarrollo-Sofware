@@ -6,11 +6,19 @@ from collections.abc import Sequence
 
 from .base import ProveedorIA
 from .exceptions import ErrorTransitorio
+from .prompts.revisor_cv import (
+    EntradaDeRevision,
+    PreguntaProbable,
+    RevisionDeCV,
+    SugerenciaDeRequisito,
+    VinetaReescrita,
+)
 from .prompts.schemas import (
     AreaTecnica,
     ContextoDeEntrevista,
     Evaluacion,
     Pregunta,
+    Puesto,
     TemaEvaluado,
     parsear_evaluacion,
     parsear_pregunta,
@@ -93,4 +101,41 @@ class FakeProveedorIA(ProveedorIA):
                 "debilidades": "Faltan detalles técnicos.",
                 "sugerencias": "Profundiza con un ejemplo concreto.",
             }
+        )
+
+    def revisar_cv(self, entrada: EntradaDeRevision) -> RevisionDeCV:
+        """Una revisión fija, anclada a la entrada como lo estaría una real.
+
+        Solo devuelve elementos que el parser de un proveedor real dejaría pasar:
+        así la interfaz y los tests ven la misma forma sin gastar cuota.
+        """
+        self._contar_llamada()
+        # La primera línea con contenido, no un título de sección ("Experiencia:").
+        primera_linea = next(
+            (
+                linea.strip()
+                for linea in entrada.secciones.splitlines()
+                if linea.strip() and not linea.strip().endswith(":")
+            ),
+            "",
+        )
+        return RevisionDeCV(
+            vinetas=tuple(
+                VinetaReescrita(original=vineta, sugerida=f"{vineta}, lo que redujo [cifra] el tiempo de respuesta.")
+                for vineta in entrada.vinetas
+            ),
+            requisitos=tuple(
+                SugerenciaDeRequisito(
+                    termino=requisito.termino,
+                    sugerencia=f"Menciona {requisito.termino} dentro de un logro de tu experiencia o de un proyecto.",
+                )
+                for requisito in entrada.requisitos
+            ),
+            preguntas=(
+                (PreguntaProbable(pregunta="¿Qué fue lo más difícil de ese trabajo y cómo lo resolviste?", motivo=primera_linea),)
+                if primera_linea
+                else ()
+            ),
+            puesto_sugerido=Puesto.BACKEND,
+            correcciones=(),
         )

@@ -12,25 +12,26 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
 endobj
 5 0 obj
-<< /Length 832 >>
+<< /Length 879 >>
 stream
 BT
 /F1 11 Tf
 1 0 0 1 72.0 732.0 Tm (Jorge Condori Maita) Tj
 1 0 0 1 72.0 712.0 Tm (jorge.condori@example.com) Tj
 1 0 0 1 72.0 692.0 Tm (+591 71234567) Tj
-1 0 0 1 72.0 652.0 Tm (Experiencia) Tj
-1 0 0 1 72.0 632.0 Tm (Desarrollador Backend, Jalasoft) Tj
-1 0 0 1 72.0 612.0 Tm (Ene 2020 - Mar 2023) Tj
-1 0 0 1 72.0 592.0 Tm (Optimice consultas PostgreSQL y reduje la latencia 40%.) Tj
-1 0 0 1 72.0 552.0 Tm (Desarrollador Junior, AssureSoft) Tj
-1 0 0 1 72.0 532.0 Tm (Abr 2023 - Actualidad) Tj
-1 0 0 1 72.0 512.0 Tm (Implemente endpoints REST con Django y escribi sus pruebas.) Tj
-1 0 0 1 72.0 472.0 Tm (Educacion) Tj
-1 0 0 1 72.0 452.0 Tm (Ingenieria de Sistemas, UMSS) Tj
-1 0 0 1 72.0 432.0 Tm (Feb 2016 - Dic 2021) Tj
-1 0 0 1 72.0 392.0 Tm (Habilidades) Tj
-1 0 0 1 72.0 372.0 Tm (Python, Django, PostgreSQL, Git, Docker, REST) Tj
+1 0 0 1 72.0 672.0 Tm (Cochabamba, Bolivia) Tj
+1 0 0 1 72.0 632.0 Tm (Experiencia) Tj
+1 0 0 1 72.0 612.0 Tm (Desarrollador Backend, Jalasoft) Tj
+1 0 0 1 72.0 592.0 Tm (Ene 2020 - Mar 2023) Tj
+1 0 0 1 72.0 572.0 Tm (Optimice consultas PostgreSQL y reduje la latencia 40%.) Tj
+1 0 0 1 72.0 532.0 Tm (Desarrollador Junior, AssureSoft) Tj
+1 0 0 1 72.0 512.0 Tm (Abr 2023 - Actualidad) Tj
+1 0 0 1 72.0 492.0 Tm (Implemente endpoints REST con Django y escribi sus pruebas.) Tj
+1 0 0 1 72.0 452.0 Tm (Educacion) Tj
+1 0 0 1 72.0 432.0 Tm (Ingenieria de Sistemas, UMSS) Tj
+1 0 0 1 72.0 412.0 Tm (Feb 2016 - Dic 2021) Tj
+1 0 0 1 72.0 372.0 Tm (Habilidades) Tj
+1 0 0 1 72.0 352.0 Tm (Python, Django, PostgreSQL, Git, Docker, REST) Tj
 ET
 endstream
 endobj
@@ -45,5 +46,5 @@ xref
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-1194
+1241
 %%EOF

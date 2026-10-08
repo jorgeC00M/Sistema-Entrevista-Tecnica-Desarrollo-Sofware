@@ -12,15 +12,43 @@ booleanas, Greenhouse no puntúa. El mecanismo real por el que un candidato qued
 fuera no es un rechazo con nota, es que sus datos no entraron a los campos y por
 eso no aparece en la búsqueda. Lo que se reporta, entonces, es **qué campos se
 extrajeron y qué los rompió**.
+
+Cada regla es una función `_verificar_*` registrada en `_VERIFICACIONES`, que
+`analizar()` recorre en orden. Añadir una regla es escribir una función y
+añadirla al registro; el flujo no cambia.
 """
 
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date
 
+from integrations.documentos import fechas, ubicaciones
 from integrations.documentos.extractor import DocumentoExtraido, Palabra
-from integrations.documentos.secciones import SECCIONES_CRITICAS, titulo_de
+from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado, segmentar, titulo_de
+from integrations.documentos.terminos import escritos_de_una_sola_forma
+
+#: Versión del conjunto de reglas. Se guarda con cada análisis para que uno hecho
+#: con reglas anteriores se recalcule al volver a subir el mismo CV, en vez de
+#: mostrarle al usuario un diagnóstico que ya no es el vigente. **Hay que subirla
+#: cada vez que cambie lo que el análisis o la brecha producen.**
+VERSION_DE_REGLAS = 2
+
+#: Los campos de la ficha que arma el ATS, en el orden en que se muestran. Es la
+#: única lista: el caso sin capa de texto la recorre y un test comprueba que las
+#: verificaciones emiten exactamente estos.
+CAMPOS_DE_LA_FICHA = (
+    "Nombre",
+    "Correo",
+    "Teléfono",
+    "Ubicación",
+    "Experiencia",
+    "Educación",
+    "Habilidades",
+    "Antigüedad",
+)
 
 # Severidades, de mayor a menor. `critica` es "el ATS no te ve"; `alta` es "pierde
 # parte de tu información"; `media` es "puede revolverla"; `info` no es un
@@ -29,7 +57,13 @@ SEVERIDADES = ("critica", "alta", "media", "info")
 
 MAXIMO_PAGINAS_RECOMENDADO = 2
 
-_CORREO = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+#: Menos que esto puede ser un espacio o un punto blanco suelto de la plantilla.
+MINIMO_CARACTERES_OCULTOS = 20
+
+#: Cuántas líneas se miran como encabezado cuando no hay títulos que lo delimiten.
+LINEAS_DE_ENCABEZADO_SIN_TITULOS = 8
+
+CORREO = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 # Tolerante a propósito: separadores variados y prefijo internacional opcional,
 # porque un número boliviano se escribe de muchas formas (+591 7xx xx xxx,
 # 7xxxxxxx, 7-xxx-xxxx).
@@ -37,29 +71,9 @@ _CORREO = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 # un número escrito «+591 7 123 4567» empezaba a encajar recién en «123 4567» y
 # el espejo le mostraba al usuario su teléfono truncado. Lo que evita que el
 # patrón se desborde no es su rigidez sino el mínimo de dígitos que exige
-# `_detectar_telefono`.
+# `detectar_telefono`.
 _TELEFONO = re.compile(r"(?:\+\s?\d{1,3}[\s.-]?)?(?:\(?\d{1,4}\)?[\s.-]?){2,5}\d{2,4}")
-_URL = re.compile(r"(?:https?://|www\.|linkedin\.com|github\.com)", re.IGNORECASE)
-
-_MESES = (
-    "ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic"
-    "|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre"
-    "|jan|apr|aug|dec|january|february|march|april|june|july|august|september|october|november|december"
-)
-
-# Familias de formato de fecha. Mezclarlas es la causa más común de que un ATS
-# no pueda calcular la antigüedad: el candidato con ocho años de experiencia
-# aparece en la base con tres.
-_FORMATOS_DE_FECHA = {
-    "mes_año": re.compile(rf"\b(?:{_MESES})\.?\s+\d{{4}}\b", re.IGNORECASE),
-    "mes_año_corto": re.compile(rf"\b(?:{_MESES})\.?\s*['’]\d{{2}}\b", re.IGNORECASE),
-    "numerico": re.compile(r"\b\d{1,2}[/-]\d{4}\b"),
-    "iso": re.compile(r"\b\d{4}-\d{1,2}\b"),
-    "solo_año": re.compile(r"(?<![\d/-])\b(?:19|20)\d{2}\b(?![\d/-])"),
-}
-
-_SEPARADOR_DE_RANGO = r"(?:\s*(?:-|–|—|a|al|hasta|to)\s*)"
-_FIN_ABIERTO = r"(?:actualidad|presente|actual|hoy|present|current|now)"
+URL = re.compile(r"(?:https?://|www\.|linkedin\.com|github\.com)", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -123,8 +137,46 @@ class Analisis:
         return [h for h in self.hallazgos if h.favorable]
 
 
-def analizar(documento: DocumentoExtraido) -> Analisis:
-    """Aplica las verificaciones de parseabilidad sobre un documento extraído."""
+@dataclass
+class _Contexto:
+    """Lo que varias reglas necesitan, calculado una sola vez por análisis."""
+
+    documento: DocumentoExtraido
+    hoy: date
+    secciones: dict[str, str]
+    encabezado: str
+    experiencia: fechas.Experiencia
+    #: Campo de contacto → zona que el ATS no lee donde sí aparece. Lo llena la
+    #: verificación de zonas ocultas, que corre antes que la de contacto.
+    contacto_oculto: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def texto(self) -> str:
+        return self.documento.texto
+
+
+#: Hallazgo que necesita el CV y la convocatoria a la vez, así que no lo emite
+#: `analizar()` sino quien los combina. Vive aquí para que todos los hallazgos
+#: estén en el mismo sitio.
+IDIOMA_DISTINTO = Hallazgo(
+    codigo="idioma_distinto",
+    severidad="alta",
+    titulo="Tu CV y la convocatoria están en idiomas distintos",
+    detalle=(
+        "La búsqueda del reclutador usa las palabras de la convocatoria. Los nombres "
+        "de tecnologías coinciden en cualquier idioma, pero «experiencia en desarrollo "
+        "de APIs» no encuentra «API development experience». Si la oferta está en "
+        "otro idioma, envía tu CV en ese idioma."
+    ),
+)
+
+
+def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
+    """Aplica las verificaciones de parseabilidad sobre un documento extraído.
+
+    `hoy` fija hasta cuándo llega un periodo abierto ("– Actualidad"); por
+    defecto, la fecha actual.
+    """
     analisis = Analisis(paginas=documento.paginas, formato=documento.formato)
 
     # Sin capa de texto no hay nada más que verificar: el resto de las reglas
@@ -146,42 +198,131 @@ def analizar(documento: DocumentoExtraido) -> Analisis:
             )
         )
         analisis.campos = [
-            Campo(nombre=nombre, detectado=False, nota="sin texto que leer")
-            for nombre in ("Nombre", "Correo", "Teléfono", "Experiencia", "Educación", "Habilidades", "Antigüedad")
+            Campo(nombre=nombre, detectado=False, nota="sin texto que leer") for nombre in CAMPOS_DE_LA_FICHA
         ]
         return analisis
 
+    hoy = hoy or date.today()
     texto = documento.texto
+    contexto = _Contexto(
+        documento=documento,
+        hoy=hoy,
+        secciones=segmentar(texto),
+        # Sin títulos no hay dónde cortar: se toman las primeras líneas, que es
+        # donde cualquier plantilla pone los datos personales.
+        encabezado=encabezado(texto)
+        or "\n".join(texto.splitlines()[:LINEAS_DE_ENCABEZADO_SIN_TITULOS]),
+        experiencia=fechas.experiencia(texto, hoy),
+    )
 
-    _verificar_contacto(texto, analisis)
-    _verificar_secciones(texto, analisis)
-    _verificar_fechas(texto, analisis)
-    _verificar_geometria(documento, analisis)
-    _verificar_formato(documento, analisis)
+    for verificar in _VERIFICACIONES:
+        verificar(contexto, analisis)
 
     return analisis
 
 
-def _verificar_contacto(texto: str, analisis: Analisis) -> None:
-    nombre = _detectar_nombre(texto)
+def _extracto(texto: str, largo: int = 80) -> str:
+    plano = " ".join(texto.split())
+    return plano if len(plano) <= largo else plano[: largo - 1].rstrip() + "…"
+
+
+def _contacto_en(texto: str) -> dict[str, bool]:
+    return {
+        "Nombre": bool(detectar_nombre(texto)),
+        "Correo": bool(CORREO.search(texto)),
+        "Teléfono": bool(detectar_telefono(texto)),
+    }
+
+
+def _verificar_zonas_ocultas(contexto: _Contexto, analisis: Analisis) -> None:
+    """Cuadros de texto y encabezado/pie de página: lo que muchos ATS no leen.
+
+    Corre antes que la verificación de contacto porque decide el motivo de que un
+    dato falte. Si el correo está en el encabezado, el hallazgo crítico es este y
+    reemplaza al genérico "no se detectó tu correo": un mismo fallo con dos avisos
+    le haría creer al usuario que tiene dos problemas.
+    """
+    documento = contexto.documento
+    en_el_cuerpo = _contacto_en(contexto.texto)
+
+    zonas = (
+        ("texto_en_cuadros", documento.texto_en_cuadros, "un cuadro de texto", "alta"),
+        ("texto_en_encabezado", documento.texto_en_encabezado, "el encabezado o pie de página", "media"),
+    )
+
+    for codigo, texto_de_la_zona, zona, severidad in zonas:
+        if not texto_de_la_zona.strip():
+            continue
+
+        escondidos = [
+            campo
+            for campo, esta in _contacto_en(texto_de_la_zona).items()
+            if esta and not en_el_cuerpo[campo] and campo not in contexto.contacto_oculto
+        ]
+        for campo in escondidos:
+            contexto.contacto_oculto[campo] = zona
+
+        if escondidos:
+            datos = " y ".join(campo.lower() for campo in escondidos)
+            analisis.hallazgos.append(
+                Hallazgo(
+                    codigo=codigo,
+                    severidad="critica",
+                    titulo=f"Tu {datos} {'está' if len(escondidos) == 1 else 'están'} en {zona}",
+                    detalle=(
+                        f"Muchos ATS no leen {zona}, así que para el reclutador tu "
+                        f"{datos} no existe aunque se vea en el documento. Escríbelo "
+                        "como texto normal en el cuerpo del CV, debajo de tu nombre. "
+                        f"Lo que hay ahí: «{_extracto(texto_de_la_zona)}»."
+                    ),
+                )
+            )
+        else:
+            analisis.hallazgos.append(
+                Hallazgo(
+                    codigo=codigo,
+                    severidad=severidad,
+                    titulo=f"Parte de tu CV está en {zona}",
+                    detalle=(
+                        f"Muchos ATS no leen {zona}: lo que pongas ahí puede no llegar "
+                        "a la búsqueda del reclutador. Pásalo al cuerpo del documento "
+                        f"como texto normal. Lo que hay ahí: «{_extracto(texto_de_la_zona)}»."
+                    ),
+                )
+            )
+
+
+def _nota_de_contacto(contexto: _Contexto, campo: str, sin_dato: str) -> str:
+    if zona := contexto.contacto_oculto.get(campo):
+        return f"está en {zona}, que el ATS no lee"
+    return sin_dato
+
+
+def _verificar_contacto(contexto: _Contexto, analisis: Analisis) -> None:
+    texto = contexto.texto
+
+    nombre = detectar_nombre(texto)
     analisis.campos.append(
         Campo(
             nombre="Nombre",
             detectado=bool(nombre),
             valor=nombre,
-            nota="" if nombre else "no se encontró un nombre en las primeras líneas",
+            nota="" if nombre else _nota_de_contacto(
+                contexto, "Nombre", "no se encontró un nombre en las primeras líneas"
+            ),
         )
     )
 
-    correo = _CORREO.search(texto)
+    correo = CORREO.search(texto)
     analisis.campos.append(
         Campo(
             nombre="Correo",
             detectado=bool(correo),
             valor=correo.group(0) if correo else "",
+            nota="" if correo else _nota_de_contacto(contexto, "Correo", ""),
         )
     )
-    if not correo:
+    if not correo and "Correo" not in contexto.contacto_oculto:
         analisis.hallazgos.append(
             Hallazgo(
                 codigo="sin_correo",
@@ -195,11 +336,16 @@ def _verificar_contacto(texto: str, analisis: Analisis) -> None:
             )
         )
 
-    telefono = _detectar_telefono(texto)
+    telefono = detectar_telefono(texto)
     analisis.campos.append(
-        Campo(nombre="Teléfono", detectado=bool(telefono), valor=telefono)
+        Campo(
+            nombre="Teléfono",
+            detectado=bool(telefono),
+            valor=telefono,
+            nota="" if telefono else _nota_de_contacto(contexto, "Teléfono", ""),
+        )
     )
-    if not telefono:
+    if not telefono and "Teléfono" not in contexto.contacto_oculto:
         analisis.hallazgos.append(
             Hallazgo(
                 codigo="sin_telefono",
@@ -225,29 +371,74 @@ def _verificar_contacto(texto: str, analisis: Analisis) -> None:
         )
 
 
-def _detectar_telefono(texto: str) -> str:
-    """Busca un teléfono descartando antes lo que se le parece.
+def _verificar_ubicacion(contexto: _Contexto, analisis: Analisis) -> None:
+    """La ciudad, en el encabezado: es un filtro del reclutador.
+
+    Solo en el encabezado y sin la línea del nombre: "Santa Cruz" en una
+    experiencia puede ser una empresa, y "Lima" o "Pando" son también apellidos.
+    """
+    nombre = detectar_nombre(contexto.texto)
+    lineas = [linea for linea in contexto.encabezado.splitlines() if linea.strip() != nombre]
+    lugares = ubicaciones.encontrar("\n".join(lineas))
+
+    analisis.campos.append(
+        Campo(
+            nombre="Ubicación",
+            detectado=bool(lugares),
+            valor=", ".join(lugares),
+            nota="" if lugares else "no se encontró una ciudad o país junto a tus datos",
+        )
+    )
+
+    if not lugares:
+        analisis.hallazgos.append(
+            Hallazgo(
+                codigo="sin_ubicacion",
+                severidad="media",
+                titulo="No se detectó tu ciudad",
+                detalle=(
+                    "Los reclutadores filtran candidatos por ubicación antes de leer "
+                    "nada más, y un CV sin ciudad queda fuera de ese filtro. Escribe tu "
+                    "ciudad y país junto a tus datos de contacto, por ejemplo "
+                    "«Cochabamba, Bolivia». Si buscas trabajo remoto, dilo también."
+                ),
+            )
+        )
+
+
+def telefonos(texto: str) -> list[str]:
+    """Todos los teléfonos del texto, descartando antes lo que se les parece.
 
     Un rango de fechas como «2016-02 – 2021» encaja en cualquier patrón de
     teléfono razonablemente tolerante, y un correo o una URL también traen
     dígitos. Se eliminan primero, y al final se exige un mínimo de dígitos: en
     Bolivia un celular tiene ocho y una línea fija siete, así que menos de siete
     no es un teléfono.
+
+    Devuelve todos y no solo el primero porque el enmascarado que precede a
+    cualquier envío a la IA tiene que taparlos todos.
     """
     MINIMO_DE_DIGITOS = 7
 
-    sin_ruido = _URL.sub(" ", _CORREO.sub(" ", texto))
-    for patron in _FORMATOS_DE_FECHA.values():
+    sin_ruido = URL.sub(" ", CORREO.sub(" ", texto))
+    for patron in fechas.FORMATOS_DE_FECHA.values():
         sin_ruido = patron.sub(" ", sin_ruido)
 
-    for candidato in _TELEFONO.finditer(sin_ruido):
-        encontrado = candidato.group(0).strip()
-        if sum(1 for caracter in encontrado if caracter.isdigit()) >= MINIMO_DE_DIGITOS:
-            return encontrado
-    return ""
+    candidatos = (candidato.group(0).strip() for candidato in _TELEFONO.finditer(sin_ruido))
+    return [
+        candidato
+        for candidato in candidatos
+        if sum(1 for caracter in candidato if caracter.isdigit()) >= MINIMO_DE_DIGITOS
+    ]
 
 
-def _detectar_nombre(texto: str) -> str:
+def detectar_telefono(texto: str) -> str:
+    """El primer teléfono del texto, o cadena vacía: el que vería el ATS."""
+    encontrados = telefonos(texto)
+    return encontrados[0] if encontrados else ""
+
+
+def detectar_nombre(texto: str) -> str:
     """Heurística: el nombre es de las primeras líneas con aspecto de nombre.
 
     Es una heurística declarada, no un reconocedor de entidades. Un ATS real usa
@@ -260,15 +451,14 @@ def _detectar_nombre(texto: str) -> str:
         candidato = linea.strip()
         if not candidato or len(candidato) > 60:
             continue
-        if _CORREO.search(candidato) or _URL.search(candidato) or any(c.isdigit() for c in candidato):
+        if CORREO.search(candidato) or URL.search(candidato) or any(c.isdigit() for c in candidato):
             continue
         palabras = candidato.split()
         if 2 <= len(palabras) <= 5 and all(palabra[:1].isupper() for palabra in palabras):
             return candidato
     return ""
 
-
-def _verificar_secciones(texto: str, analisis: Analisis) -> None:
+def _verificar_secciones(contexto: _Contexto, analisis: Analisis) -> None:
     # `titulo_de` vive en `secciones.py` y es el mismo criterio que usa
     # `segmentar()`. Compartirlo no es solo evitar duplicación: si los dos
     # divergieran, el análisis podría reportar una sección como reconocida y a la
@@ -276,7 +466,7 @@ def _verificar_secciones(texto: str, analisis: Analisis) -> None:
     # contradicen.
     encontradas = {
         seccion
-        for linea in texto.splitlines()
+        for linea in contexto.texto.splitlines()
         if (seccion := titulo_de(linea)) is not None
     }
 
@@ -319,26 +509,27 @@ def _verificar_secciones(texto: str, analisis: Analisis) -> None:
         )
 
 
-def _verificar_fechas(texto: str, analisis: Analisis) -> None:
-    presentes = {nombre for nombre, patron in _FORMATOS_DE_FECHA.items() if patron.search(texto)}
+def _verificar_fechas(contexto: _Contexto, analisis: Analisis) -> None:
+    """La antigüedad que calcularía el ATS, y si las fechas se pueden sumar.
 
-    # "solo_año" no cuenta como formato propio cuando hay uno más específico: un
-    # CV con "Ene 2020 – Mar 2023" también contiene los años sueltos, y tratarlo
-    # como mezcla sería un falso positivo.
-    if len(presentes) > 1:
-        presentes.discard("solo_año")
+    Se calcula sobre la sección de experiencia (`fechas.experiencia`): sumar el CV
+    completo contaría la carrera universitaria. Si la sección no se reconoce se
+    cae al texto completo, y la nota del campo lo dice.
+    """
+    experiencia = contexto.experiencia
+    calculable = experiencia.meses is not None
 
-    rangos = _contar_rangos(texto)
+    nota = ""
+    if not calculable:
+        nota = "no se encontró ningún periodo con fecha de inicio y fin"
+    elif not experiencia.desde_la_seccion:
+        nota = "calculada sobre todo el CV porque no se reconoció la sección de experiencia; puede incluir estudios"
+
     analisis.campos.append(
-        Campo(
-            nombre="Antigüedad",
-            detectado=rangos > 0,
-            valor=f"{rangos} periodo{'s' if rangos != 1 else ''} con fechas de inicio y fin" if rangos else "",
-            nota="" if rangos else "no se encontró ningún periodo con fecha de inicio y fin",
-        )
+        Campo(nombre="Antigüedad", detectado=calculable, valor=experiencia.descripcion, nota=nota)
     )
 
-    if rangos == 0:
+    if not calculable:
         analisis.hallazgos.append(
             Hallazgo(
                 codigo="antiguedad_no_calculable",
@@ -354,6 +545,7 @@ def _verificar_fechas(texto: str, analisis: Analisis) -> None:
             )
         )
 
+    presentes = fechas.formatos_presentes(contexto.texto)
     if len(presentes) > 1:
         analisis.hallazgos.append(
             Hallazgo(
@@ -369,40 +561,25 @@ def _verificar_fechas(texto: str, analisis: Analisis) -> None:
                 ),
             )
         )
-    elif rangos > 0:
+    elif calculable:
         analisis.hallazgos.append(
             Hallazgo(
                 codigo="fechas_consistentes",
                 severidad="info",
                 titulo="Tus fechas son consistentes y se pueden sumar",
-                detalle=f"Un solo formato en todo el CV y {rangos} periodos delimitados.",
+                detalle=f"Un solo formato en todo el CV: el ATS calcula {experiencia.descripcion} de experiencia.",
                 favorable=True,
             )
         )
 
 
-def _contar_rangos(texto: str) -> int:
-    """Cuenta periodos con inicio y fin, incluyendo los abiertos ("– Actualidad").
-
-    Se usa un único patrón que admite cualquiera de los formatos a cada lado del
-    separador, en vez de contar por formato y sumar. Sumar contaba dos veces el
-    mismo rango: "Ene 2020 – Mar 2023" encaja en `mes_año` y sus años sueltos
-    encajan además en `solo_año`.
-    """
-    cualquier_fecha = "|".join(patron.pattern for patron in _FORMATOS_DE_FECHA.values())
-    rango = re.compile(
-        rf"(?:{cualquier_fecha}){_SEPARADOR_DE_RANGO}(?:(?:{cualquier_fecha})|{_FIN_ABIERTO})",
-        re.IGNORECASE,
-    )
-    return len(rango.findall(texto))
-
-
-def _verificar_geometria(documento: DocumentoExtraido, analisis: Analisis) -> None:
+def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
     """Columnas y tablas: lo que revuelve el orden de lectura.
 
     Solo aplica a PDF. Un DOCX no tiene coordenadas absolutas; su maquetación en
     columnas se hace con tablas, que se verifican aparte.
     """
+    documento = contexto.documento
     if documento.formato == "pdf" and documento.palabras and _hay_dos_columnas(documento.palabras):
         analisis.hallazgos.append(
             Hallazgo(
@@ -523,8 +700,53 @@ def _hay_dos_columnas(palabras: list[Palabra]) -> bool:
 
     return False
 
+def _verificar_texto_oculto(contexto: _Contexto, analisis: Analisis) -> None:
+    """Texto blanco o diminuto: invisible para quien lee, no para el ATS."""
+    ocultos = contexto.documento.caracteres_ocultos
+    if ocultos < MINIMO_CARACTERES_OCULTOS:
+        return
+    analisis.hallazgos.append(
+        Hallazgo(
+            codigo="texto_oculto",
+            severidad="alta",
+            titulo="Tu CV tiene texto que no se ve",
+            detalle=(
+                f"Se encontraron {ocultos} caracteres en blanco o en un tamaño menor a "
+                "4 puntos. El ATS los lee igual, y muchos le muestran al reclutador el "
+                "texto extraído: palabras clave escondidas se ven como un intento de "
+                "engañar al filtro y suelen descartar la candidatura. Comprueba si es "
+                "intencional; si no lo es, elimínalo."
+            ),
+        )
+    )
 
-def _verificar_formato(documento: DocumentoExtraido, analisis: Analisis) -> None:
+
+def _verificar_siglas(contexto: _Contexto, analisis: Analisis) -> None:
+    """Términos escritos solo como sigla o solo con su nombre largo.
+
+    Un único hallazgo con todos los términos: uno por término inundaría la lista
+    con avisos que son, en el fondo, el mismo consejo.
+    """
+    sugerencias = escritos_de_una_sola_forma(contexto.texto)
+    if not sugerencias:
+        return
+    analisis.hallazgos.append(
+        Hallazgo(
+            codigo="solo_sigla_o_solo_nombre",
+            severidad="info",
+            titulo="Algunos términos aparecen de una sola forma",
+            detalle=(
+                "La búsqueda de un ATS es literal: quien busca «Amazon Web Services» "
+                "no encuentra «AWS», y al revés. Escríbelos una vez de las dos formas: "
+                + ", ".join(f"«{sugerencia}»" for sugerencia in sugerencias)
+                + "."
+            ),
+        )
+    )
+
+
+def _verificar_formato(contexto: _Contexto, analisis: Analisis) -> None:
+    documento = contexto.documento
     if documento.formato == "pdf" and documento.paginas > MAXIMO_PAGINAS_RECOMENDADO:
         analisis.hallazgos.append(
             Hallazgo(
@@ -551,3 +773,19 @@ def _verificar_formato(documento: DocumentoExtraido, analisis: Analisis) -> None
                 favorable=True,
             )
         )
+
+
+#: El orden importa en dos puntos: las zonas ocultas antes que el contacto —deciden
+#: por qué falta un dato— y las secciones antes que la geometría, que mira si
+#: Habilidades se reconoció. El resto sigue el orden de la ficha.
+_VERIFICACIONES: tuple[Callable[[_Contexto, Analisis], None], ...] = (
+    _verificar_zonas_ocultas,
+    _verificar_contacto,
+    _verificar_ubicacion,
+    _verificar_secciones,
+    _verificar_fechas,
+    _verificar_geometria,
+    _verificar_texto_oculto,
+    _verificar_siglas,
+    _verificar_formato,
+)

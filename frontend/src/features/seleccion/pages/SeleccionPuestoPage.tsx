@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { ErrorAPI } from '@/api/client'
 import { iniciarEntrevista } from '@/api/entrevistas'
@@ -25,22 +25,32 @@ const SIN_PREFERENCIA = ''
  * los enumera para el puesto elegido, de modo que eso queda a la vista antes de
  * empezar.
  *
+ * Acepta `?puesto=<código>` para llegar con el puesto ya elegido: es lo que usa
+ * el módulo de CV para enlazar a practicar el puesto que mejor encaja. Un código
+ * que no está en el catálogo se ignora en silencio: no hay puesto elegido, y no
+ * se puede empezar hasta elegir uno.
+ *
  * El reparto en dos columnas no es decorativo: deja las tres tarjetas de puesto
  * en una sola fila —comparables de un vistazo— y mantiene la acción de comenzar
  * siempre alcanzable dentro del panel, en vez de al final del scroll.
  */
 export default function SeleccionPuestoPage() {
   const navigate = useNavigate()
+  const [parametros] = useSearchParams()
   const { catalogos, cargando: cargandoCatalogo, error: errorCatalogo } = useCatalogos()
 
-  const [puesto, setPuesto] = useState('')
+  // Solo el valor inicial: la URL no se sincroniza con lo que el usuario elija.
+  const [puesto, setPuesto] = useState(() => parametros.get('puesto') ?? '')
   const [nivel, setNivel] = useState('')
   const [tecnologia, setTecnologia] = useState(SIN_PREFERENCIA)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
   const manejarInicio = async () => {
-    if (!puesto || !nivel) return
+    // Contra el catálogo y no contra el texto: un código inválido llegado por la
+    // URL no debe viajar al backend.
+    const puestoValido = catalogos?.puestos.some((p) => p.codigo === puesto) ?? false
+    if (!puestoValido || !nivel) return
     setError('')
     setCargando(true)
     try {

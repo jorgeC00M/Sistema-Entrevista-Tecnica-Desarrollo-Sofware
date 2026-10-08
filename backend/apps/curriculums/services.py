@@ -10,15 +10,17 @@ módulo es el único punto de contacto.
 from __future__ import annotations
 
 from dataclasses import asdict
+from datetime import date
 
 from django.db import transaction
 
 from integrations.documentos import brecha as brecha_de_requisitos
 from integrations.documentos import vinetas as analisis_de_vinetas
-from integrations.documentos.ats import Analisis, analizar as analizar_documento
+from integrations.documentos.ats import IDIOMA_DISTINTO, VERSION_DE_REGLAS, analizar as analizar_documento
 from integrations.documentos.extractor import DocumentoExtraido, extraer
 from integrations.documentos.terminos import encontrar
 
+from . import revision
 from .models import AnalisisATS, Curriculum, hash_de_texto
 
 
@@ -27,23 +29,34 @@ def analizar(
     contenido: bytes,
     nombre_archivo: str,
     convocatoria: str = "",
+    revisor=None,
 ) -> Curriculum:
     """Extrae, verifica y guarda. Devuelve el currículum con su análisis.
 
     La convocatoria llega ya como texto: quien la aporta como archivo la extrae
     antes, en el serializer, porque es ahí donde se validan formato y tamaño.
 
-    Si este usuario ya analizó el mismo texto contra la misma convocatoria, se
-    devuelve el análisis existente sin repetir el trabajo. El criterio es el texto
-    y no los bytes: reexportar el mismo CV desde Word cambia el archivo y no cambia
-    nada de lo que hay que analizar.
+    Si este usuario ya analizó el mismo documento contra la misma convocatoria, se
+    devuelve el análisis existente sin repetir el trabajo — salvo que se hiciera
+    con una versión anterior de las reglas: entonces se recalcula y se reemplaza,
+    sin crear un segundo registro.
+
+    El criterio es el texto y no los bytes: reexportar el mismo CV desde Word
+    cambia el archivo y no cambia nada de lo que hay que analizar. Pero es **todo**
+    el texto, incluido el que el ATS no lee (`huella`): dos DOCX que solo difieren
+    en el encabezado son documentos distintos.
 
     `FormatoNoSoportado`, `DocumentoCorrupto` y `DocumentoDemasiadoGrande` suben
-    sin capturarse; las traduce `apps.common.exceptions.manejador_de_excepciones`,
-    igual que los errores del proveedor de IA.
+    sin capturarse; las traduce `apps.common.exceptions.manejador_de_excepciones`.
+
+    Las sugerencias de IA (`revision.py`) se piden **después** de guardar el
+    diagnóstico y fuera de la transacción, igual que la evaluación en
+    `entrevistas.services.responder()`: un proveedor lento no debe tener una fila
+    bloqueada, y si falla el diagnóstico ya está a salvo. `revisor` se inyecta en
+    los tests; este módulo no conoce la capa de IA.
     """
     documento = extraer(contenido, nombre_archivo)
-    huella_cv = hash_de_texto(documento.texto)
+    huella_cv = hash_de_texto(documento.huella)
     huella_convocatoria = hash_de_texto(convocatoria)
 
     existente = (
@@ -55,14 +68,20 @@ def analizar(
         .select_related("analisis")
         .first()
     )
-    if existente is not None and hasattr(existente, "analisis"):
+    analisis_previo = getattr(existente, "analisis", None) if existente else None
+    if analisis_previo is not None and analisis_previo.version_reglas >= VERSION_DE_REGLAS:
+        # El diagnóstico vigente no se repite; las sugerencias, solo si nunca se
+        # obtuvieron o el proveedor falló la vez anterior.
+        if revision.necesita_revision(analisis_previo.revision_ia):
+            _guardar_revision(analisis_previo, documento, convocatoria, revisor)
         return existente
 
     with transaction.atomic():
         if existente is not None:
-            # Quedó a medias en un intento anterior: tiene el currículum pero no
-            # su análisis. Se completa en vez de insertar un duplicado, que la
-            # restricción de unicidad rechazaría.
+            # O quedó a medias en un intento anterior —tiene el currículum pero no
+            # su análisis— o el análisis es de reglas anteriores. En los dos casos
+            # se completa sobre la misma fila en vez de insertar un duplicado, que
+            # la restricción de unicidad rechazaría.
             curriculum = existente
         else:
             curriculum = Curriculum.objects.create(
@@ -75,35 +94,64 @@ def analizar(
                 convocatoria=convocatoria,
                 hash_convocatoria=huella_convocatoria,
             )
-        _guardar_analisis(curriculum, documento, convocatoria)
+        analisis, _ = AnalisisATS.objects.update_or_create(
+            curriculum=curriculum,
+            defaults=construir_analisis(documento, convocatoria, date.today()),
+        )
 
+    _guardar_revision(analisis, documento, convocatoria, revisor)
+
+    # La relación inversa puede tener cacheado el análisis viejo, que vino con
+    # `select_related`; se reemplaza para que la respuesta muestre el nuevo.
+    curriculum.analisis = analisis
     return curriculum
 
 
-def _guardar_analisis(
-    curriculum: Curriculum, documento: DocumentoExtraido, convocatoria: str
-) -> AnalisisATS:
-    analisis = analizar_documento(documento)
+def _guardar_revision(analisis: AnalisisATS, documento: DocumentoExtraido, convocatoria: str, revisor) -> None:
+    """Pide las sugerencias y guarda solo esa columna.
 
-    return AnalisisATS.objects.create(
-        curriculum=curriculum,
-        campos=[asdict(campo) for campo in analisis.campos],
+    `update` sobre una columna y no `save()`: no reescribe el diagnóstico que se
+    acaba de guardar, ni compite con él.
+    """
+    analisis.revision_ia = revision.revisar(
+        documento, analisis.vinetas, analisis.brecha, convocatoria, revisor=revisor
+    )
+    AnalisisATS.objects.filter(pk=analisis.pk).update(revision_ia=analisis.revision_ia)
+
+
+def construir_analisis(documento: DocumentoExtraido, convocatoria: str, hoy: date) -> dict:
+    """Los valores de un `AnalisisATS`, sin tocar la base de datos.
+
+    Separado de la escritura para que el contenido se pueda probar sin base, y
+    para que crear y recalcular usen exactamente el mismo cálculo.
+    """
+    analisis = analizar_documento(documento, hoy=hoy)
+    brecha = _brecha(convocatoria, documento, hoy)
+
+    # Es el único hallazgo que necesita los dos documentos, así que se añade
+    # aquí, donde se combinan, y no en `ats.analizar()`, que solo ve el CV.
+    if brecha is not None and brecha.idioma_distinto:
+        analisis.hallazgos.append(IDIOMA_DISTINTO)
+
+    return {
+        "campos": [asdict(campo) for campo in analisis.campos],
         # Se guardan ya ordenados —fortalezas aparte, debilidades por severidad—
         # para que el cliente no repita ese criterio y pueda divergir del que
         # aplica el admin o un reporte futuro.
-        hallazgos={
+        "hallazgos": {
             "fortalezas": [asdict(h) for h in analisis.fortalezas],
             "debilidades": [asdict(h) for h in analisis.debilidades],
         },
-        campos_detectados=analisis.campos_detectados,
-        campos_intentados=len(analisis.campos),
-        brecha=_brecha_serializada(convocatoria, documento),
-        inventario=_inventario(documento, analisis),
-        vinetas=_vinetas_serializadas(documento),
-    )
+        "campos_detectados": analisis.campos_detectados,
+        "campos_intentados": len(analisis.campos),
+        "brecha": asdict(brecha) if brecha is not None else None,
+        "inventario": _inventario(documento),
+        "vinetas": _vinetas_serializadas(documento),
+        "version_reglas": VERSION_DE_REGLAS,
+    }
 
 
-def _brecha_serializada(convocatoria: str, documento: DocumentoExtraido) -> dict | None:
+def _brecha(convocatoria: str, documento: DocumentoExtraido, hoy: date):
     """El mapa de evidencia, o `None` si no hay nada que comparar.
 
     `calcular()` recibe el documento y no su texto porque es dueño del criterio de
@@ -112,28 +160,10 @@ def _brecha_serializada(convocatoria: str, documento: DocumentoExtraido) -> dict
     """
     if not convocatoria.strip():
         return None
-
-    resultado = brecha_de_requisitos.calcular(convocatoria, documento)
-    if resultado is None:
-        return None
-
-    def grupo(bloque) -> dict:
-        return {
-            "requisitos": [asdict(requisito) for requisito in bloque.requisitos],
-            "cubiertos": bloque.cubiertos,
-            "cobertura": bloque.cobertura,
-        }
-
-    return {
-        "obligatorios": grupo(resultado.obligatorios),
-        "deseables": grupo(resultado.deseables),
-        "extras": list(resultado.extras),
-        "separada": resultado.separada,
-        "con_evidencia": resultado.con_evidencia,
-    }
+    return brecha_de_requisitos.calcular(convocatoria, documento, hoy=hoy)
 
 
-def _inventario(documento: DocumentoExtraido, analisis: Analisis) -> list[str]:
+def _inventario(documento: DocumentoExtraido) -> list[str]:
     """Los términos técnicos que el CV declara de forma legible.
 
     Vacío cuando el documento no tiene capa de texto, para no contradecir al

@@ -7,7 +7,7 @@
  * Greenhouse no puntúa en absoluto. Lo que deja fuera a un candidato no es una
  * nota baja sino que sus datos no entraron a los campos, y entonces no aparece en
  * la búsqueda. Por eso lo que se publica es `campos` —la ficha que el ATS
- * armaría— y las métricas como texto ("5/7"), que son hechos medibles.
+ * armaría— y las métricas como texto ("5/8"), que son hechos medibles.
  *
  * Tampoco hay puesto: lo hubo y no afectaba a nada.
  */
@@ -55,6 +55,20 @@ export interface GrupoDeRequisitos {
   cobertura: string
 }
 
+/** Los años que pide la convocatoria frente a los que el ATS calcula. */
+export type EstadoDeExperiencia = 'cumple' | 'no_alcanza' | 'no_calculable'
+
+export interface RequisitoDeExperiencia {
+  requeridos: number
+  /** Nulo cuando el CV no tiene periodos legibles, que no es lo mismo que cero. */
+  calculados_meses: number | null
+  /** Ya formateado ("2 años y 4 meses", con "(aprox.)" si hay fechas solo de año). */
+  calculados: string
+  estado: EstadoDeExperiencia
+  /** Si el ATS puede estar contando menos experiencia de la que hay, por cómo están escritas las fechas. */
+  posible_subestimacion: boolean
+}
+
 export interface Brecha {
   obligatorios: GrupoDeRequisitos
   deseables: GrupoDeRequisitos
@@ -64,6 +78,13 @@ export interface Brecha {
   separada: boolean
   /** Si se pudo precisar dónde está cada término, o solo si aparece. */
   con_evidencia: boolean
+  // Los tres siguientes son opcionales porque un análisis guardado con reglas
+  // anteriores no los trae; se completan cuando el usuario vuelve a subir ese CV.
+  /** Nulo si la convocatoria no pide años de experiencia. */
+  experiencia?: RequisitoDeExperiencia | null
+  /** Nulo si la convocatoria no nombra un cargo reconocible. */
+  cargo?: Requisito | null
+  idioma_distinto?: boolean
 }
 
 export interface AnalisisDeVinetas {
@@ -71,6 +92,34 @@ export interface AnalisisDeVinetas {
   logros: number
   proporcion: string
   sin_resultado: string[]
+}
+
+/**
+ * `ok`: hay sugerencias. `no_disponible`: el proveedor falló y volver a subir el
+ * CV lo reintenta. `omitida`: no se envió nada (CV ilegible o sin secciones
+ * reconocidas), y `motivo` dice por qué.
+ */
+export type EstadoDeRevision = 'ok' | 'no_disponible' | 'omitida'
+
+export type TipoDeCorreccion = 'ortografia' | 'persona' | 'tiempo_verbal'
+
+/**
+ * Sugerencias de IA, siempre aparte de lo medido: nunca cambian un hallazgo, un
+ * estado ni una cobertura. Todo lo que trae está anclado a lo que el usuario ve
+ * —el backend descarta lo que la IA devuelva y no se pueda señalar en su CV—.
+ */
+export interface RevisionIA {
+  estado: EstadoDeRevision
+  motivo: string
+  /** `original` es exactamente una de `vinetas.sin_resultado`. */
+  vinetas: { original: string; sugerida: string }[]
+  /** `termino` es un requisito o cargo de la brecha, o `"experiencia"` para el de años. */
+  requisitos: { termino: string; sugerencia: string }[]
+  /** `motivo` es el fragmento del CV o de la convocatoria que motiva la pregunta. */
+  preguntas: { pregunta: string; motivo: string }[]
+  /** Código de un puesto del catálogo, o nulo si ninguno encaja. */
+  puesto_sugerido: string | null
+  correcciones: { original: string; sugerido: string; tipo: TipoDeCorreccion }[]
 }
 
 export interface AnalisisATS {
@@ -87,6 +136,8 @@ export interface AnalisisATS {
   inventario: string[]
   /** Nulo cuando el CV no usa viñetas: así la sección se omite en vez de mostrar "0/0". */
   vinetas: AnalisisDeVinetas | null
+  /** Nulo en análisis anteriores a la revisión con IA, hasta que se vuelve a subir el CV. */
+  revision_ia: RevisionIA | null
   fecha: string
 }
 
