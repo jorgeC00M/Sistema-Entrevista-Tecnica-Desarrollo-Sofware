@@ -1,0 +1,440 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T22:32:35+00:00",
+  "title": "Design System: Antesala",
+  "extensions": {
+    "colorMeta": {
+      "tinta-de-evaluador": {
+        "role": "primary",
+        "displayName": "Tinta de Evaluador",
+        "tonalRamp": [
+          "#10203d",
+          "#1c386b",
+          "#285099",
+          "#3468c7",
+          "#6089d5",
+          "#8face1",
+          "#bdceee",
+          "#ebf0fa"
+        ]
+      },
+      "tinta-de-evaluador-hover": {
+        "role": "primary",
+        "displayName": "Tinta Asentada",
+        "tonalRamp": [
+          "#10203d",
+          "#1b386b",
+          "#27519a",
+          "#3369c8",
+          "#5f8bd6",
+          "#8eace2",
+          "#bcceee",
+          "#ebf0fa"
+        ]
+      },
+      "tinta-de-evaluador-suave": {
+        "role": "primary",
+        "displayName": "Tinta Diluida",
+        "note": "Color translúcido: se usa sobre Papel Azulado; no tiene rampa propia."
+      },
+      "azul-pizarra": {
+        "role": "neutral",
+        "displayName": "Azul Pizarra",
+        "tonalRamp": [
+          "#121d3b",
+          "#1f3468",
+          "#2c4a95",
+          "#3a61c2",
+          "#6584d1",
+          "#92a8de",
+          "#becbec",
+          "#ebeff9"
+        ]
+      },
+      "texto-de-cuaderno": {
+        "role": "neutral",
+        "displayName": "Texto de Cuaderno",
+        "tonalRamp": [
+          "#1e232e",
+          "#353d52",
+          "#4c5775",
+          "#637298",
+          "#8691b0",
+          "#a9b1c7",
+          "#ccd1de",
+          "#f0f1f5"
+        ]
+      },
+      "nota-al-margen": {
+        "role": "neutral",
+        "displayName": "Nota al Margen",
+        "tonalRamp": [
+          "#21242c",
+          "#393f4d",
+          "#525b6f",
+          "#6b7690",
+          "#8c95aa",
+          "#aeb4c2",
+          "#cfd3db",
+          "#f0f2f4"
+        ]
+      },
+      "papel-azulado": {
+        "role": "neutral",
+        "displayName": "Papel Azulado",
+        "tonalRamp": [
+          "#172335",
+          "#293d5e",
+          "#3b5887",
+          "#4c72af",
+          "#7392c2",
+          "#9cb2d4",
+          "#c5d1e6",
+          "#edf1f7"
+        ]
+      },
+      "vidrio-tarjeta": {
+        "role": "neutral",
+        "displayName": "Vidrio Tarjeta",
+        "note": "Color translúcido: se usa sobre Papel Azulado; no tiene rampa propia."
+      },
+      "vidrio-campo": {
+        "role": "neutral",
+        "displayName": "Vidrio Campo",
+        "note": "Color translúcido: se usa sobre Papel Azulado; no tiene rampa propia."
+      },
+      "renglon": {
+        "role": "neutral",
+        "displayName": "Renglón",
+        "note": "Color translúcido: se usa sobre Papel Azulado; no tiene rampa propia."
+      },
+      "canto-de-vidrio": {
+        "role": "neutral",
+        "displayName": "Canto de Vidrio",
+        "note": "Color translúcido: se usa sobre Papel Azulado; no tiene rampa propia."
+      },
+      "pizarra-atenuada": {
+        "role": "neutral",
+        "displayName": "Pizarra Atenuada",
+        "tonalRamp": [
+          "#1a2333",
+          "#2d3d5a",
+          "#405781",
+          "#5471a8",
+          "#7991bc",
+          "#a0b1d0",
+          "#c7d1e3",
+          "#eef1f7"
+        ]
+      },
+      "exito-texto": {
+        "role": "semantic",
+        "displayName": "Éxito (texto)",
+        "tonalRamp": [
+          "#0b421f",
+          "#137437",
+          "#1ba64f",
+          "#23d867",
+          "#53e389",
+          "#85ebab",
+          "#b7f3ce",
+          "#e9fbf0"
+        ]
+      },
+      "exito-fondo": {
+        "role": "semantic",
+        "displayName": "Éxito (fondo)",
+        "tonalRamp": [
+          "#06461c",
+          "#0b7c32",
+          "#0fb247",
+          "#14e85d",
+          "#46ef80",
+          "#7cf4a5",
+          "#b2f8ca",
+          "#e8fdef"
+        ]
+      },
+      "progreso-texto": {
+        "role": "semantic",
+        "displayName": "Progreso (texto)",
+        "tonalRamp": [
+          "#492204",
+          "#803b06",
+          "#b85509",
+          "#ef6e0c",
+          "#f58f40",
+          "#f8af78",
+          "#fbd0af",
+          "#fef1e7"
+        ]
+      },
+      "progreso-fondo": {
+        "role": "semantic",
+        "displayName": "Progreso (fondo)",
+        "tonalRamp": [
+          "#4b3c01",
+          "#846a02",
+          "#be9803",
+          "#f7c604",
+          "#fbd53a",
+          "#fde173",
+          "#feedad",
+          "#fffae6"
+        ]
+      },
+      "error-texto": {
+        "role": "semantic",
+        "displayName": "Error (texto)",
+        "tonalRamp": [
+          "#420a0a",
+          "#751212",
+          "#a81919",
+          "#da2121",
+          "#e55151",
+          "#ec8484",
+          "#f4b6b6",
+          "#fce9e9"
+        ]
+      },
+      "error-fondo": {
+        "role": "semantic",
+        "displayName": "Error (fondo)",
+        "tonalRamp": [
+          "#4a0303",
+          "#820404",
+          "#bb0606",
+          "#f30808",
+          "#f83d3d",
+          "#fa7676",
+          "#fcaeae",
+          "#fee6e6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Solo el título del hero de la landing."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de cada página de la aplicación."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Títulos de sección y de tarjetas importantes (Fraunces)."
+      },
+      "title-sm": {
+        "displayName": "Title pequeño",
+        "purpose": "Títulos de tarjetas y bloques de formulario (Figtree)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrido; 16px en introducciones."
+      },
+      "body-sm": {
+        "displayName": "Body pequeño",
+        "purpose": "Notas al pie y aclaraciones."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadatos, fases, estados y 'Sugerencia de IA', en mayúsculas."
+      },
+      "metric": {
+        "displayName": "Metric",
+        "purpose": "Contadores y cifras exactas como '03 / 05'."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambiental-reposo",
+        "value": "0 8px 24px -12px rgba(28,47,94,0.18)",
+        "purpose": "Tarjetas de la landing en reposo."
+      },
+      {
+        "name": "elevacion-hover",
+        "value": "0 26px 50px -26px rgba(28,47,94,0.4)",
+        "purpose": "Tarjeta de la landing al subir 6px con el puntero encima."
+      },
+      {
+        "name": "carrusel-activa",
+        "value": "0 26px 50px -24px rgba(28,47,94,0.45)",
+        "purpose": "Tarjeta al frente del carrusel de puestos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "estado-rapido",
+        "value": "150ms",
+        "purpose": "Cambios de color en botones, enlaces y campos."
+      },
+      {
+        "name": "tarjeta",
+        "value": "300ms",
+        "purpose": "Elevación de tarjetas al pasar el puntero."
+      },
+      {
+        "name": "ease-carrusel",
+        "value": "cubic-bezier(.2,.7,.2,1)",
+        "purpose": "Desplazamiento del carrusel (700ms) y llenado de barras."
+      },
+      {
+        "name": "respirar",
+        "value": "7s ease-in-out infinite",
+        "purpose": "Resplandor del hero y del cierre; se anula con reducir movimiento."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "carrusel-una-tarjeta",
+        "value": "700px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal: una sola por zona. Píldora en Tinta de Evaluador.",
+      "html": "<button class=\"ds-btn-primary\">Comenzar entrevista</button>",
+      "css": ".ds-btn-primary { background: var(--color-vidrio-acento, #2b55a3); color: #fff; border: none; border-radius: 9999px; padding: 10px 16px; font: 500 14px/20px Figtree, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms; } .ds-btn-primary:hover { background: var(--color-vidrio-acento-hover, #234889); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-vidrio-acento, #2b55a3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción alternativa sobre superficies claras.",
+      "html": "<button class=\"ds-btn-secondary\">Ver historial</button>",
+      "css": ".ds-btn-secondary { background: #fff; color: var(--color-vidrio-ink, #1c2f5e); border: none; box-shadow: 0 0 0 1px rgba(28,47,94,0.12); border-radius: 9999px; padding: 10px 16px; font: 500 14px/20px Figtree, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms; } .ds-btn-secondary:hover { background: rgba(255,255,255,0.72); } .ds-btn-secondary:focus-visible { outline: 2px solid #2b55a3; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón de vidrio (sobre fondo oscuro)",
+      "kind": "button",
+      "refersTo": "button-glass",
+      "description": "Acción secundaria sobre el hero o el cierre de la landing.",
+      "html": "<div class=\"ds-fondo-oscuro\"><button class=\"ds-btn-glass\">Ya tengo cuenta</button></div>",
+      "css": ".ds-fondo-oscuro { background: #1c2f5e; padding: 16px; border-radius: 18px; } .ds-btn-glass { background: rgba(255,255,255,0.1); color: #fff; border: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.25); border-radius: 9999px; padding: 10px 16px; font: 500 14px/20px Figtree, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms; } .ds-btn-glass:hover { background: rgba(255,255,255,0.2); } .ds-btn-glass:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Tarjeta de vidrio",
+      "kind": "card",
+      "refersTo": "card-elevated",
+      "description": "Unidad de la landing: vidrio translúcido; se eleva solo con el puntero encima.",
+      "html": "<div class=\"ds-papel\"><article class=\"ds-card\"><span class=\"ds-card-icono\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5l10 -10\"/></svg></span><h3 class=\"ds-card-titulo\">Tus fortalezas</h3><p class=\"ds-card-texto\">Qué demostraste saber y qué partes de tu respuesta funcionaron bien.</p></article></div>",
+      "css": ".ds-papel { background: #e8edf5; padding: 24px; } .ds-card { background: rgba(255,255,255,0.55); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.8); border-radius: 18px; padding: 28px; box-shadow: 0 8px 24px -12px rgba(28,47,94,0.18); transition: transform 300ms, box-shadow 300ms, border-color 300ms; max-width: 320px; } .ds-card:hover { transform: translateY(-6px); border-color: rgba(43,85,163,0.35); box-shadow: 0 26px 50px -26px rgba(28,47,94,0.4); } .ds-card-icono { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: #dcfce7; color: #15803d; margin-bottom: 16px; } .ds-card-titulo { margin: 0; font: 600 18px/1.3 Figtree, ui-sans-serif, sans-serif; color: #1c2f5e; } .ds-card-texto { margin: 8px 0 0; font: 400 15px/1.6 Figtree, ui-sans-serif, sans-serif; color: #4a5572; }"
+    },
+    {
+      "name": "Campo de acceso",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con icono a la izquierda; el borde pasa a Tinta de Evaluador al enfocarlo.",
+      "html": "<label class=\"ds-campo\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10M3 7l9 6l9 -6\"/></svg><input class=\"ds-campo-input\" type=\"email\" placeholder=\"tu@correo.com\"></label>",
+      "css": ".ds-campo { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(28,47,94,0.12); background: rgba(255,255,255,0.72); color: #4a5572; transition: border-color 150ms; max-width: 360px; } .ds-campo:focus-within { border-color: #2b55a3; } .ds-campo-input { flex: 1; border: none; background: transparent; outline: none; font: 400 15px/1 Figtree, ui-sans-serif, sans-serif; color: #1c2f5e; } .ds-campo-input::placeholder { color: #8a93a8; }"
+    },
+    {
+      "name": "Navegación lateral",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Barra lateral Azul Pizarra; el destino activo es una píldora de tinta.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-activo\" aria-current=\"page\" href=\"#\">Revisar mi CV</a><a class=\"ds-nav-item\" href=\"#\">Historial y progreso</a><a class=\"ds-nav-item\" href=\"#\">Retroalimentación</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; background: #1c2f5e; padding: 12px; border-radius: 18px; width: 220px; } .ds-nav-item { display: block; padding: 8px 14px; border-radius: 9999px; color: #9fb0cf; font: 500 14px/20px Figtree, ui-sans-serif, sans-serif; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; } .ds-nav-activo, .ds-nav-activo:hover { background: #2b55a3; color: #fff; } .ds-nav-item:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Etiqueta de metadato",
+      "kind": "chip",
+      "refersTo": "chip-metadata-marca",
+      "description": "Rótulos en mono y mayúsculas: fases, estados y 'Sugerencia de IA'.",
+      "html": "<span class=\"ds-chip ds-chip-marca\">Sugerencia de IA</span> <span class=\"ds-chip\">Opcional</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.72); color: #8a93a8; font: 500 11px/14px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.04em; text-transform: uppercase; } .ds-chip-marca { background: rgba(43,85,163,0.1); color: #2b55a3; }"
+    },
+    {
+      "name": "Chip de puntaje",
+      "kind": "chip",
+      "refersTo": "chip-metadata",
+      "description": "Puntaje en mono con el par de color de su banda; un dato, no un trofeo.",
+      "html": "<span class=\"ds-puntaje ds-banda-alta\">82 · Bien</span> <span class=\"ds-puntaje ds-banda-media\">58 · A mejorar</span> <span class=\"ds-puntaje ds-banda-baja\">31 · Insuficiente</span>",
+      "css": ".ds-puntaje { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font: 500 11px/16px 'JetBrains Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.04em; } .ds-banda-alta { background: #dcfce7; color: #15803d; } .ds-banda-media { background: #fef3c7; color: #b45309; } .ds-banda-baja { background: #fee2e2; color: #b91c1c; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El cuaderno del evaluador",
+    "overview": "Antesala se ve como el cuaderno de alguien que evalúa con cuidado: ordenado, preciso y honesto. Las anotaciones se hacen en una sola tinta azul. Los datos exactos —puntajes, contadores, etiquetas— se escriben en monoespaciada, como quien anota medidas. Lo medido y lo sugerido nunca se mezclan en la misma línea. Las páginas son hojas de vidrio claro apoyadas sobre un papel azulado, y solo el margen —la barra lateral— es oscuro, color pizarra.\n\nLa precisión no vuelve frío al cuaderno. Los botones son píldoras redondeadas, las tarjetas reaccionan cuando el puntero pasa sobre ellas, y los estados se dicen en verde, ámbar y rojo suaves en vez de alarmas. El tono es el de un evaluador que quiere que el estudiante mejore: claro sobre lo que falla, cálido al acompañarlo.\n\nLa densidad es media. Mucho aire en la landing, que persuade, y más compacta en la aplicación, que se usa para trabajar. Títulos en serif con carácter; todo lo demás en una sans legible.",
+    "keyCharacteristics": [
+      "Una sola tinta de acción: Tinta de Evaluador (#2b55a3).",
+      "Vidrio translúcido con desenfoque sobre papel azulado; la profundidad viene de las capas, no de las sombras.",
+      "Tres voces tipográficas con papeles fijos: Fraunces titula, Figtree explica y JetBrains Mono mide.",
+      "Color semántico solo para estados, siempre en pareja de texto y fondo.",
+      "Formas suaves: tarjetas de 18px, botones en píldora y chips casi rectos."
+    ],
+    "rules": [
+      {
+        "name": "The One Ink Rule",
+        "section": "colors",
+        "body": "Tinta de Evaluador es la única tinta de acción. No existe un segundo color de marca; si algo necesita destacar, se usa Tinta Diluida o el peso tipográfico, no otro tono."
+      },
+      {
+        "name": "The State-Only Color Rule",
+        "section": "colors",
+        "body": "Verde, ámbar y rojo solo comunican estado, nunca decoran, y siempre van como pareja de texto y fondo."
+      },
+      {
+        "name": "The Gradient Boundary Rule",
+        "section": "colors",
+        "body": "Los degradados solo existen en el hero y en el cierre de la landing, y solo con la familia azul (#16254b, #1c2f5e, #2b55a3; acentos #5b86d4, #bcd0f5, #dfe8fb). En la aplicación no hay degradados."
+      },
+      {
+        "name": "The Three Voices Rule",
+        "section": "typography",
+        "body": "Fraunces titula, Figtree explica, JetBrains Mono mide. Una cifra exacta nunca va en Figtree; un párrafo nunca va en mono."
+      },
+      {
+        "name": "The Quiet Score Rule",
+        "section": "typography",
+        "body": "Un puntaje es un dato del cuaderno, no un trofeo: se escribe en mono, a tamaño de métrica o título, nunca como la pieza más grande de la pantalla."
+      },
+      {
+        "name": "The Glass-Not-Shadow Rule",
+        "section": "elevation",
+        "body": "La jerarquía la dan la transparencia, el desenfoque y el canto claro. Una sombra marcada solo aparece como respuesta a la interacción, nunca para decorar."
+      }
+    ],
+    "dos": [
+      "Do usar Tinta de Evaluador (#2b55a3) como único color de acción, y Tinta Diluida para los fondos suaves de marca.",
+      "Do escribir toda cifra exacta (puntajes, contadores, conteos como \"5/8\") en JetBrains Mono.",
+      "Do construir la profundidad con vidrio translúcido, desenfoque de 18px y canto claro; la sombra marcada solo con el puntero encima.",
+      "Do rotular siempre como \"Sugerencia de IA\" lo que no es medido.",
+      "Do hacer que cada estado se lea sin depender solo del color: icono o texto además del par de color.",
+      "Do cumplir WCAG 2.1 AA y respetar \"reducir movimiento\" (las animaciones se anulan)."
+    ],
+    "donts": [
+      "Don't usar degradados morados, neón ni la estética genérica de \"app de IA\".",
+      "Don't presentar un puntaje grande y llamativo como protagonista de la pantalla.",
+      "Don't usar ilustraciones genéricas ni fotos de stock.",
+      "Don't introducir un segundo color de marca ni otros tonos de azul fuera de esta paleta.",
+      "Don't usar verde, ámbar o rojo como decoración.",
+      "Don't poner degradados en la aplicación; solo en el hero y en el cierre de la landing."
+    ]
+  }
+}

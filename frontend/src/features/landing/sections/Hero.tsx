@@ -51,7 +51,7 @@ export default function Hero({ totalPreguntas }: Props) {
         <h1
           className={`mx-auto max-w-[5000px] font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance sm:text-[2.8rem] lg:text-[3.8rem] ${clasesRevelado(visible)}`}
         >
-          Prepárate para tu próxima entrevista, antes de la evaluación real
+          Practica tu próxima entrevista, antes de la evaluación real
         </h1>
 
         <p
