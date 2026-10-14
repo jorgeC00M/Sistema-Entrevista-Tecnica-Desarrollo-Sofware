@@ -11,14 +11,18 @@ excepción que interesa.
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import anthropic
 import httpx
+import httpx2
+import openai
 from google.genai import errors as genai_errors
 
 from integrations.ia import claude, gemini
 from integrations.ia.claude import AnthropicProveedorIA
+from integrations.ia.compatible_openai import DeepSeekProveedorIA, OpenRouterProveedorIA
 from integrations.ia.exceptions import (
     ErrorPermanente,
     ErrorTransitorio,
@@ -168,3 +172,85 @@ class GeminiErroresTest(unittest.TestCase):
         proveedor._cliente.models.generate_content.return_value = MagicMock(text="")
         with self.assertRaises(RespuestaIAInvalida):
             proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 1, [])
+
+
+def _error_de_openai(codigo: int) -> openai.APIStatusError:
+    respuesta = httpx2.Response(status_code=codigo, request=httpx2.Request("POST", "https://api.deepseek.com"))
+    return openai.APIStatusError("fallo simulado", response=respuesta, body=None)
+
+
+def _completado(contenido, finish_reason="stop"):
+    """Una respuesta de Chat Completions con la forma mínima que lee el adaptador."""
+    mensaje = SimpleNamespace(content=contenido)
+    return SimpleNamespace(choices=[SimpleNamespace(message=mensaje, finish_reason=finish_reason)])
+
+
+class CompatibleOpenAIErroresTest(unittest.TestCase):
+    """DeepSeek y OpenRouter comparten adaptador: se prueba con DeepSeek."""
+
+    def _proveedor(self, **devuelve) -> DeepSeekProveedorIA:
+        with patch("openai.OpenAI"):
+            proveedor = DeepSeekProveedorIA(api_key="clave-de-prueba")
+        proveedor._cliente = MagicMock()
+        if "efecto" in devuelve:
+            proveedor._cliente.chat.completions.create.side_effect = devuelve["efecto"]
+        else:
+            proveedor._cliente.chat.completions.create.return_value = devuelve["respuesta"]
+        return proveedor
+
+    def _pregunta(self, proveedor):
+        return proveedor.generar_pregunta(CONTEXTO, AreaTecnica.PROGRAMACION, 3, [])
+
+    def test_sin_credencial_no_se_construye(self):
+        with patch.dict("os.environ", {"DEEPSEEK_API_KEY": ""}, clear=False):
+            with self.assertRaises(ProveedorNoConfigurado):
+                DeepSeekProveedorIA(api_key=None)
+
+    def test_modelo_vacio_en_el_entorno_usa_el_valor_por_defecto(self):
+        with patch.dict("os.environ", {"DEEPSEEK_MODEL": ""}, clear=False), patch("openai.OpenAI"):
+            self.assertEqual(DeepSeekProveedorIA(api_key="x").modelo, "deepseek-chat")
+
+    def test_cuota_agotada_y_caidas_son_transitorias(self):
+        for codigo in (429, 500, 503):
+            with self.subTest(codigo=codigo):
+                with self.assertRaises(ErrorTransitorio):
+                    self._pregunta(self._proveedor(efecto=_error_de_openai(codigo)))
+
+    def test_clave_invalida_y_modelo_inexistente_son_permanentes(self):
+        for codigo in (401, 404):
+            with self.subTest(codigo=codigo):
+                with self.assertRaises(ErrorPermanente):
+                    self._pregunta(self._proveedor(efecto=_error_de_openai(codigo)))
+
+    def test_fallo_de_conexion_es_transitorio(self):
+        error = openai.APIConnectionError(request=httpx2.Request("POST", "https://api.deepseek.com"))
+        with self.assertRaises(ErrorTransitorio):
+            self._pregunta(self._proveedor(efecto=error))
+
+    def test_respuesta_cortada_por_longitud_es_invalida(self):
+        with self.assertRaises(RespuestaIAInvalida):
+            self._pregunta(self._proveedor(respuesta=_completado('{"pregunta": "¿Qué', "length")))
+
+    def test_respuesta_vacia_o_no_json_es_invalida(self):
+        for contenido in ("", None, "no es json"):
+            with self.subTest(contenido=contenido):
+                with self.assertRaises(RespuestaIAInvalida):
+                    self._pregunta(self._proveedor(respuesta=_completado(contenido)))
+
+    def test_respuesta_valida_se_parsea(self):
+        proveedor = self._proveedor(respuesta=_completado('{"pregunta": "¿Qué es una clausura?"}'))
+        self.assertEqual(self._pregunta(proveedor).texto, "¿Qué es una clausura?")
+
+    def test_pide_modo_json_y_describe_el_esquema_en_el_prompt(self):
+        proveedor = self._proveedor(respuesta=_completado('{"pregunta": "¿Qué es una clausura?"}'))
+        self._pregunta(proveedor)
+
+        argumentos = proveedor._cliente.chat.completions.create.call_args.kwargs
+        self.assertEqual(argumentos["response_format"], {"type": "json_object"})
+        sistema = argumentos["messages"][0]["content"]
+        self.assertIn("json", sistema)
+        self.assertIn('"pregunta"', sistema)
+
+    def test_no_es_apto_para_datos_personales(self):
+        self.assertFalse(DeepSeekProveedorIA.apto_para_datos_personales)
+        self.assertFalse(OpenRouterProveedorIA.apto_para_datos_personales)

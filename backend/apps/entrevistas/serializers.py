@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.catalogos.models import Nivel, Puesto, Tecnologia
 from apps.evaluaciones.serializers import EvaluacionSerializer
+from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from .models import Entrevista, Intercambio
 
@@ -60,6 +61,20 @@ class EntrevistaSerializer(serializers.ModelSerializer):
         source="tecnologia.nombre", read_only=True, default=None
     )
     estado_display = serializers.CharField(source="get_estado_display", read_only=True)
+    # Sobre cuántas preguntas se calculó `puntuacion_promedio`. En una
+    # finalizada coincide con las previstas; en una abandonada, la nota es
+    # parcial y la interfaz lo dice en vez de presentarla como completa.
+    preguntas_calificadas = serializers.SerializerMethodField()
+    preguntas_previstas = serializers.SerializerMethodField()
+
+    def get_preguntas_calificadas(self, entrevista) -> int:
+        anotado = getattr(entrevista, "preguntas_calificadas", None)
+        if anotado is not None:
+            return anotado
+        return entrevista.intercambios.filter(evaluacion__isnull=False).count()
+
+    def get_preguntas_previstas(self, entrevista) -> int:
+        return PREGUNTAS_POR_ENTREVISTA
 
     class Meta:
         model = Entrevista
@@ -76,6 +91,8 @@ class EntrevistaSerializer(serializers.ModelSerializer):
             "fecha_inicio",
             "fecha_fin",
             "puntuacion_promedio",
+            "preguntas_calificadas",
+            "preguntas_previstas",
         ]
         read_only_fields = fields
 

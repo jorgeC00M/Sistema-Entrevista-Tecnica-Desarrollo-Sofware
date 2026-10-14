@@ -12,6 +12,8 @@ from __future__ import annotations
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from integrations.ia.prompts.schemas import CRITERIOS
+
 
 class Evaluacion(models.Model):
     intercambio = models.OneToOneField(
@@ -40,3 +42,16 @@ class Evaluacion(models.Model):
 
     def __str__(self) -> str:
         return f"Evaluación de {self.intercambio_id}: {self.puntuacion}/100"
+
+    @property
+    def niveles(self) -> dict[str, int] | None:
+        """Los niveles por criterio guardados en `evaluacion_json`, o `None`.
+
+        Las evaluaciones anteriores a la rúbrica por niveles no los tienen; un
+        único lugar decide qué cuenta como "tiene niveles" para que el reporte y
+        el resumen no puedan discrepar.
+        """
+        niveles = (self.evaluacion_json or {}).get("niveles")
+        if not isinstance(niveles, dict) or not all(isinstance(niveles.get(c), int) for c in CRITERIOS):
+            return None
+        return {criterio: niveles[criterio] for criterio in CRITERIOS}

@@ -27,6 +27,10 @@ from .prompts.schemas import (
 class ProveedorIA(ABC):
     nombre: str
     modelo: str
+    # Si puede recibir texto derivado de un currículum (ya minimizado y
+    # enmascarado). Falso por omisión: un proveedor nuevo no recibe datos
+    # personales hasta que alguien lo declare apto a conciencia.
+    apto_para_datos_personales: bool = False
 
     @abstractmethod
     def generar_preguntas_iniciales(

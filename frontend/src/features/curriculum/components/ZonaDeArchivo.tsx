@@ -172,7 +172,7 @@ export default function ZonaDeArchivo({
           clic en la X lo capturaría el botón de soltado abriendo el diálogo. */}
       {archivo && (
         <div className="mt-3 flex items-center gap-2 rounded-control bg-vidrio-field px-3 py-2">
-          <Icono nombre="resultados" className="h-4 w-4 shrink-0 text-vidrio-muted" aria-hidden />
+          <Icono nombre="resultados" className="h-4 w-4 shrink-0 text-vidrio-tenue" aria-hidden />
           <span className="min-w-0 flex-1 truncate font-mono-vidrio text-sm text-vidrio-texto">
             {archivo.name}
           </span>

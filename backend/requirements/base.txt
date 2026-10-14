@@ -27,3 +27,6 @@ python-docx==1.2.0
 # el paquete instalado no implica usarlo ni consumir cuota.
 anthropic==1.6.0
 google-genai==2.23.0
+# DeepSeek y OpenRouter hablan el formato de Chat Completions de OpenAI: un
+# solo SDK cubre ambos con `base_url`.
+openai==3.31.0

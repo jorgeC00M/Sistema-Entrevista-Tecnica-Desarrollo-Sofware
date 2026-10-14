@@ -6,13 +6,17 @@ import Boton from '@/components/ui/Boton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import PanelCualitativo from '@/features/resultados/components/PanelCualitativo'
-import TarjetaResumen from '@/features/resultados/components/TarjetaResumen'
+import ResumenFinal from '@/features/resultados/components/ResumenFinal'
 import { useResultados } from '@/features/resultados/hooks/useResultados'
+import { useCatalogos } from '@/hooks/useCatalogos'
 import { formatearDuracion, TONO_POR_ESTADO } from '@/lib/estados'
 
 export default function ResultadosPage() {
   const { id } = useParams<{ id: string }>()
   const { datos, cargando, error } = useResultados(id)
+  // Solo para los descriptores de "¿Cómo se calcula?": si el catálogo falla,
+  // el reporte se muestra igual, con los niveles y sin la explicación.
+  const { catalogos } = useCatalogos()
 
   if (error) return <Alerta>{error}</Alerta>
   if (cargando || !datos) return <Spinner texto="Cargando resultados…" />
@@ -42,18 +46,29 @@ export default function ResultadosPage() {
         </div>
       </div>
 
-      <TarjetaResumen entrevista={entrevista} />
+      {datos.resumen && (
+        <ResumenFinal entrevista={entrevista} resumen={datos.resumen} rubrica={catalogos?.rubrica ?? null} />
+      )}
 
       <div className="space-y-4">
         {intercambios.map((intercambio) => (
-          <PanelCualitativo key={intercambio.numero} intercambio={intercambio} />
+          <PanelCualitativo
+            key={intercambio.numero}
+            intercambio={intercambio}
+            rubrica={catalogos?.rubrica ?? null}
+          />
         ))}
       </div>
 
       <div className="mt-6 flex justify-center gap-3">
-        <Link to="/nueva-entrevista">
+        {/* Mismo puesto y nivel ya elegidos: lo natural tras leer qué mejorar
+            es volver a intentarlo en las mismas condiciones. Se pueden cambiar
+            antes de empezar; la entrevista no arranca sola. */}
+        <Link
+          to={`/nueva-entrevista?${new URLSearchParams({ puesto: entrevista.puesto, nivel: entrevista.nivel })}`}
+        >
           <Boton variante="vidrio-secundario" forma="pildora">
-            Nueva entrevista
+            Practicar de nuevo este puesto
           </Boton>
         </Link>
         <Link to="/historial">

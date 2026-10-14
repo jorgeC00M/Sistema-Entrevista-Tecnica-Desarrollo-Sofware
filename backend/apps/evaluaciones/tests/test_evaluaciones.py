@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.entrevistas import services as servicio
-from tests.conftest import nivel_de, puesto_de
+from tests.conftest import nivel_de, niveles_para, puesto_de
 from integrations.ia.fake import FakeProveedorIA
 from integrations.ia.prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
@@ -35,10 +35,11 @@ class ProveedorPuntuacionFija(FakeProveedorIA):
 
         return parsear_evaluacion(
             {
-                "puntuacion": self._puntuacion,
+                "niveles": niveles_para(self._puntuacion),
                 "fortalezas": "ok",
                 "debilidades": "ok",
                 "sugerencias": "ok",
+                "puntos_clave": ["Primer punto", "Segundo punto"],
             }
         )
 
@@ -82,13 +83,13 @@ class EstadisticasConDatosTest(APITestCase):
         self.client.force_authenticate(self.usuario)
 
     def test_promedio_general_es_el_promedio_real_de_las_evaluaciones(self):
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 60)
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 80)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 58)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 83)
 
         respuesta = self.client.get("/api/estadisticas/")
 
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertEqual(float(respuesta.data["promedio_general"]), 70.0)
+        self.assertEqual(float(respuesta.data["promedio_general"]), 70.5)
         self.assertEqual(respuesta.data["entrevistas_completadas"], 2)
 
     def test_promedio_por_area_desglosa_los_temas_de_la_entrevista(self):
@@ -97,7 +98,7 @@ class EstadisticasConDatosTest(APITestCase):
         las cinco respuestas heredaban esa etiqueta; ahora el desglose dice de
         verdad en qué temas le fue bien o mal al candidato.
         """
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 90)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 92)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -106,20 +107,20 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(set(por_area), esperadas)
         for codigo, fila in por_area.items():
             with self.subTest(area=codigo):
-                self.assertEqual(float(fila["promedio"]), 90.0)
+                self.assertEqual(float(fila["promedio"]), 92.0)
                 # La misma entrevista es la que aportó a cada área.
                 self.assertEqual(fila["entrevistas"], 1)
 
     def test_dos_puestos_distintos_tocan_conjuntos_de_areas_distintos(self):
         """Elegir Backend o Frontend cambia los temas que se evalúan: es lo que
         hace que el puesto signifique algo y no sea solo una etiqueta."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
 
         del_backend = {
             fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
         }
 
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 70)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 67)
         con_ambos = {
             fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
         }
@@ -132,22 +133,22 @@ class EstadisticasConDatosTest(APITestCase):
         entrevistas del mismo puesto, se puede observar la variación de
         desempeño entre ambas.
         """
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 40)
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 95)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 42)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 92)
 
         respuesta = self.client.get("/api/estadisticas/")
 
         evolucion = respuesta.data["evolucion"]
         self.assertEqual(len(evolucion), 2)
         puntuaciones = [float(e["puntuacion_promedio"]) for e in evolucion]
-        self.assertEqual(puntuaciones, [40.0, 95.0])
+        self.assertEqual(puntuaciones, [42.0, 92.0])
         self.assertNotEqual(puntuaciones[0], puntuaciones[1])
 
     def test_la_evolucion_identifica_cada_entrevista_por_su_puesto(self):
         """La evolución es por entrevista, no por tema, así que lo que la
         identifica es el puesto: un punto del gráfico es "mi entrevista de
         Backend", no "mi entrevista de Bases de Datos"."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
 
         punto = self.client.get("/api/estadisticas/").data["evolucion"][0]
 
@@ -155,8 +156,8 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(punto["puesto_display"], "Desarrollador Backend")
 
     def test_evolucion_esta_ordenada_cronologicamente(self):
-        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 70)
-        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 85)
+        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
+        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 83)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -186,3 +187,29 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
+
+
+class TrazabilidadDeLaNotaTest(APITestCase):
+    """Cualquier nota guardada se puede reconstruir a mano desde su JSON: es lo
+    que permite responder "¿de dónde sale el 67?" con una cuenta y no con
+    "lo dijo la IA"."""
+
+    def test_la_formula_aplicada_al_json_da_la_columna_puntuacion(self):
+        from apps.evaluaciones.models import Evaluacion
+        from apps.evaluaciones.rubricas import PESOS, VERSION_DE_RUBRICA, puntuacion_de
+
+        usuario = Usuario.objects.create_user(
+            email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
+        )
+        entrevista = _completar_entrevista(usuario, puesto_de("backend"), nivel_de("basico"), 67)
+
+        evaluaciones = Evaluacion.objects.filter(intercambio__entrevista=entrevista)
+        self.assertEqual(evaluaciones.count(), PREGUNTAS_POR_ENTREVISTA)
+        for evaluacion in evaluaciones:
+            with self.subTest(intercambio=evaluacion.intercambio_id):
+                datos = evaluacion.evaluacion_json
+                self.assertEqual(datos["version_rubrica"], VERSION_DE_RUBRICA)
+                self.assertEqual(datos["pesos"], PESOS)
+                self.assertEqual(puntuacion_de(datos["niveles"], datos["pesos"]), evaluacion.puntuacion)
+                self.assertEqual(evaluacion.puntuacion, 67)
+                self.assertEqual(datos["puntos_clave"], ["Primer punto", "Segundo punto"])

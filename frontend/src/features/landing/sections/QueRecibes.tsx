@@ -1,144 +1,100 @@
-import { CLASES_TARJETA_ELEVADA } from '@/components/ui/Tarjeta'
-import Icono from '@/components/ui/Icono'
+import ChipPuntaje from '@/components/ui/ChipPuntaje'
+import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
+import Tarjeta from '@/components/ui/Tarjeta'
 import EncabezadoSeccion from '@/features/landing/components/EncabezadoSeccion'
+import ListaDeFunciones from '@/features/landing/components/ListaDeFunciones'
+import type { Funcion } from '@/features/landing/components/ListaDeFunciones'
 import NotaAclaratoria from '@/features/landing/components/NotaAclaratoria'
-import TarjetaDeFuncion from '@/features/landing/components/TarjetaDeFuncion'
-import type { Funcion } from '@/features/landing/components/TarjetaDeFuncion'
 import Wrap from '@/features/landing/components/Wrap'
-import { useProgresoAnimado } from '@/features/landing/hooks/useProgresoAnimado'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
 
-const RADIO_GAUGE = 82
-const CIRCUNFERENCIA_GAUGE = 2 * Math.PI * RADIO_GAUGE
-
-const RUBRICA = [
-  { etiqueta: 'Corrección técnica', valor: 90 },
-  { etiqueta: 'Completitud', valor: 78 },
-  { etiqueta: 'Claridad', valor: 87 },
-]
-
-// La tarjeta grande del medidor va aparte; estas cuatro la acompañan.
 const FUNCIONES: Funcion[] = [
   {
-    icono: 'fortaleza',
-    colorIcono: 'bg-exito-fondo text-exito-texto',
-    titulo: 'Tus fortalezas',
-    texto: 'Qué demostraste saber y qué partes de tu respuesta funcionaron bien.',
+    icono: 'evaluacion',
+    colorIcono: 'text-vidrio-acento',
+    titulo: 'Una nota de 0 a 100 por respuesta',
+    texto:
+      'Con la misma rúbrica para todas: corrección técnica, completitud y claridad. Cada respuesta se evalúa sola, sin depender del orden ni de lo que respondiste antes.',
   },
   {
     icono: 'mejora',
-    colorIcono: 'bg-progreso-fondo text-progreso-texto',
-    titulo: 'Tus debilidades',
-    texto: 'Los vacíos concretos que se notaron, sin rodeos y sin generalidades.',
+    colorIcono: 'text-progreso-texto',
+    titulo: 'Fortalezas y debilidades concretas',
+    texto: 'Qué demostraste saber y qué vacíos se notaron, sin rodeos y sin generalidades.',
   },
   {
     icono: 'sugerencia',
-    colorIcono: 'bg-vidrio-acento-suave text-vidrio-acento',
+    colorIcono: 'text-vidrio-acento',
     titulo: 'Sugerencias de mejora',
     texto: 'Qué estudiar o cómo reformular la respuesta la próxima vez.',
   },
   {
     icono: 'historial',
-    colorIcono: 'bg-vidrio-field text-vidrio-ink',
+    colorIcono: 'text-vidrio-ink',
     titulo: 'Tu progreso',
     texto:
       'El historial de tus entrevistas, tu promedio por tema y la retroalimentación acumulada de todas tus respuestas, para ver qué se repite.',
   },
 ]
 
+/**
+ * Lo que se recibe, mostrado con un fragmento del resultado y no con un medidor.
+ *
+ * Antes la pieza central era un anillo animado con un "85 de 100" gigante: una
+ * cifra inventada para la demo y un puntaje convertido en trofeo, contra la regla
+ * "Quiet Score" de DESIGN.md. Ahora se ve lo que de verdad entrega la pantalla de
+ * resultados —la pregunta, la nota en un chip y la retroalimentación—, con los
+ * mismos componentes que usa la aplicación.
+ */
 export default function QueRecibes() {
   const { ref, visible } = useRevelarAlEntrar<HTMLElement>()
-
-  const gaugeValor = useProgresoAnimado(85, visible, 1800)
-  const barraCorreccion = useProgresoAnimado(RUBRICA[0].valor, visible, 1400)
-  const barraCompletitud = useProgresoAnimado(RUBRICA[1].valor, visible, 1400)
-  const barraClaridad = useProgresoAnimado(RUBRICA[2].valor, visible, 1400)
-  const barras = [barraCorreccion, barraCompletitud, barraClaridad]
 
   return (
     <section
       id="que-recibes"
       ref={ref}
-      className="scroll-mt-24 border-y border-vidrio-borde bg-white/45 py-[clamp(64px,8vw,100px)]"
+      className="scroll-mt-24 border-y border-vidrio-linea bg-white/40 py-[clamp(80px,10vw,128px)]"
     >
       <Wrap className={clasesRevelado(visible)}>
         <EncabezadoSeccion
-          indice="02"
           titulo="Qué recibes al terminar"
           descripcion="No es un banco de preguntas: es una evaluación de lo que respondiste."
         />
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr]">
-          {/* Tarjeta grande: puntuación ilustrativa con medidor y rúbrica. */}
-          <article
-            className={`flex flex-col bg-linear-to-br from-white/75 to-white/45 sm:col-span-2 lg:col-span-1 lg:row-span-2 ${CLASES_TARJETA_ELEVADA}`}
-          >
-            <span className="mb-[18px] flex h-11 w-11 items-center justify-center rounded-control bg-vidrio-acento-suave text-vidrio-acento">
-              <Icono nombre="evaluacion" />
-            </span>
-            <h3 className="text-[1.15rem] font-semibold text-vidrio-ink">
-              Una puntuación de 0 a 100
-            </h3>
-            <p className="mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
-              Cada respuesta se califica con la misma rúbrica: corrección técnica, completitud y
-              claridad. Se evalúa sola, sin depender del orden ni de lo que respondiste antes.
+        <div className="grid items-start gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <Tarjeta como="article" className="p-6 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="font-mono-vidrio text-meta text-vidrio-muted">
+                Ejemplo · Pregunta 3 · Bases de datos
+              </p>
+              <ChipPuntaje puntuacion={74} banda="aceptable" conEtiqueta />
+            </div>
+
+            <p className="mt-4 text-tarjeta text-vidrio-ink">
+              ¿Cuándo usarías un índice compuesto y en qué orden pondrías sus columnas?
+            </p>
+            <p className="mt-3 rounded-control bg-vidrio-field p-3 text-cuerpo text-vidrio-texto">
+              Cuando una consulta filtra por varias columnas a la vez. Pondría primero la que más
+              filtra…
             </p>
 
-            <div className="relative mx-auto my-[22px] h-[190px] w-[190px]">
-              <svg width="190" height="190" className="-rotate-90">
-                <circle
-                  cx="95"
-                  cy="95"
-                  r={RADIO_GAUGE}
-                  fill="none"
-                  stroke="rgba(28,47,94,.1)"
-                  strokeWidth="14"
-                />
-                <circle
-                  cx="95"
-                  cy="95"
-                  r={RADIO_GAUGE}
-                  fill="none"
-                  stroke="var(--color-vidrio-acento)"
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                  strokeDasharray={CIRCUNFERENCIA_GAUGE}
-                  strokeDashoffset={CIRCUNFERENCIA_GAUGE * (1 - gaugeValor / 100)}
-                  style={{ transition: 'stroke-dashoffset 1.8s cubic-bezier(.2,.7,.2,1)' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <b className="font-serif text-[3.2rem] leading-none font-semibold text-vidrio-ink">
-                  {gaugeValor}
-                </b>
-                <small className="text-[0.85rem] text-vidrio-muted">de 100</small>
-              </div>
-            </div>
+            <dl className="mt-5 grid gap-3">
+              <ListaRetroalimentacion
+                variante="fortalezas"
+                texto="Identificas bien el caso de uso de un índice compuesto."
+              />
+              <ListaRetroalimentacion
+                variante="debilidades"
+                texto="No mencionas la regla del prefijo izquierdo ni cuándo el índice deja de usarse."
+              />
+              <ListaRetroalimentacion
+                variante="sugerencias"
+                texto="Explica con un ejemplo qué consultas aprovechan el índice y cuáles no."
+              />
+            </dl>
+          </Tarjeta>
 
-            <div className="mt-auto flex flex-col gap-2.5">
-              {RUBRICA.map((item, i) => (
-                <div
-                  key={item.etiqueta}
-                  className="grid grid-cols-[120px_1fr_34px] items-center gap-3 text-[0.86rem]"
-                >
-                  <span className="text-vidrio-texto">{item.etiqueta}</span>
-                  <i className="not-italic h-2 overflow-hidden rounded-full bg-vidrio-linea">
-                    <span
-                      className="block h-full rounded-full bg-vidrio-acento transition-[width] duration-[1400ms] ease-[cubic-bezier(.2,.7,.2,1)]"
-                      style={{ width: `${barras[i]}%` }}
-                    />
-                  </i>
-                  <em className="text-right font-semibold text-vidrio-ink not-italic">
-                    {barras[i]}
-                  </em>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          {FUNCIONES.map((funcion) => (
-            <TarjetaDeFuncion key={funcion.titulo} {...funcion} />
-          ))}
+          <ListaDeFunciones funciones={FUNCIONES} />
         </div>
 
         {/* El alcance del perfil obliga a decirlo, y decirlo aquí —donde se está

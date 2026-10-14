@@ -37,6 +37,7 @@ _CODIGOS_TRANSITORIOS = {429, 500, 502, 503, 504, 529}
 
 class AnthropicProveedorIA(ProveedorIAporJSON):
     nombre = "anthropic"
+    apto_para_datos_personales = True
 
     def __init__(self, api_key: str | None = None, modelo: str | None = None):
         api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")

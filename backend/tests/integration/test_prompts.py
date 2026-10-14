@@ -2,6 +2,8 @@ import unittest
 
 from integrations.ia.prompts import entrevistador, evaluador
 from integrations.ia.prompts.schemas import (
+    CRITERIOS,
+    NIVEL_MAXIMO,
     AreaTecnica,
     ContextoDeEntrevista,
     Nivel,
@@ -89,11 +91,47 @@ class SistemaMencionaRolCorrectoTest(unittest.TestCase):
 
     def test_sistema_del_entrevistador_no_contiene_la_rubrica(self):
         prompt = entrevistador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION, total_preguntas=5)
-        self.assertNotIn("Bandas de puntuación", prompt)
+        self.assertNotIn(evaluador.RUBRICA, prompt)
+        self.assertNotIn("Corrección técnica", prompt)
 
     def test_sistema_del_evaluador_contiene_la_rubrica(self):
         prompt = evaluador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION)
-        self.assertIn("Bandas de puntuación", prompt)
+        self.assertIn(evaluador.RUBRICA, prompt)
+
+
+class RubricaAnaliticaTest(unittest.TestCase):
+    """La rúbrica es el instrumento que justifica la nota: tres criterios, cinco
+    niveles descritos cada uno, y el modelo solo elige niveles."""
+
+    def test_cada_criterio_tiene_un_descriptor_por_nivel(self):
+        for criterio in CRITERIOS:
+            with self.subTest(criterio=criterio):
+                descriptores = evaluador.DESCRIPTORES[criterio]
+                self.assertEqual(len(descriptores), NIVEL_MAXIMO + 1)
+                for descriptor in descriptores:
+                    self.assertIn(descriptor, evaluador.RUBRICA)
+
+    def test_el_esquema_exige_puntos_clave_acotados(self):
+        esquema = evaluador.ESQUEMA_EVALUACION
+        self.assertIn("puntos_clave", esquema["required"])
+        self.assertEqual(esquema["properties"]["puntos_clave"]["minItems"], 2)
+        self.assertEqual(esquema["properties"]["puntos_clave"]["maxItems"], 4)
+
+    def test_el_prompt_pide_lo_esperado_sin_corregir_la_respuesta(self):
+        prompt = evaluador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION)
+        self.assertIn("puntos_clave", prompt)
+        self.assertIn("no repitas ni corrijas la respuesta del candidato", prompt)
+
+    def test_el_esquema_exige_niveles_y_no_pide_nota(self):
+        esquema = evaluador.ESQUEMA_EVALUACION
+        self.assertIn("niveles", esquema["required"])
+        self.assertNotIn("puntuacion", esquema["properties"])
+        niveles = esquema["properties"]["niveles"]
+        self.assertEqual(set(niveles["required"]), set(CRITERIOS))
+        for criterio in CRITERIOS:
+            with self.subTest(criterio=criterio):
+                self.assertEqual(niveles["properties"][criterio]["minimum"], 0)
+                self.assertEqual(niveles["properties"][criterio]["maximum"], NIVEL_MAXIMO)
 
 
 class SistemaDeclaraElEncuadreTest(unittest.TestCase):

@@ -16,6 +16,9 @@
     Arial, sans-serif;
   --font-serif: 'Fraunces', Georgia, serif;
   --font-mono-vidrio: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  /* Cifras tabulares en toda la mono: los contadores "03 / 05" y los puntajes
+     no bailan de ancho al cambiar de valor. */
+  --font-mono-vidrio--font-feature-settings: 'tnum';
 
   /* Semánticos: expresan estado o puntaje, nunca una acción. Cada uno es un
      par texto/fondo pensado para usarse junto, no por separado. */
@@ -35,12 +38,23 @@
   --color-vidrio-acento-suave: rgba(43, 85, 163, 0.1);
   --color-vidrio-ink: #1c2f5e;
   --color-vidrio-texto: #4a5572;
-  --color-vidrio-muted: #8a93a8;
-  --color-vidrio-bg: #e8edf5;
-  --color-vidrio-card: rgba(255, 255, 255, 0.55);
+  /* Texto secundario. Era #8a93a8, que daba 2,62:1 sobre el fondo y 3,08:1
+     sobre blanco, por debajo del 4,5:1 de WCAG AA. Este cumple en los dos
+     (4,65:1 y 5,47:1). */
+  --color-vidrio-muted: #5f6984;
+  /* El gris anterior queda solo para lo que no es texto: iconos decorativos,
+     marcas de lista, bordes. Un icono puede ser más tenue que una letra. */
+  --color-vidrio-tenue: #8a93a8;
+  --color-vidrio-bg: #eef2f8;
+  /* Más opaco que antes (55 %): al 55 % la tarjeta apenas se distinguía del
+     fondo. El desenfoque se conserva; lo que separa ahora es el borde fino. */
+  --color-vidrio-card: rgba(255, 255, 255, 0.78);
   --color-vidrio-field: rgba(255, 255, 255, 0.72);
   --color-vidrio-linea: rgba(28, 47, 94, 0.12);
-  --color-vidrio-borde: rgba(255, 255, 255, 0.8);
+  /* Borde de tarjetas y campos. Era blanco al 80 %, invisible sobre el fondo
+     claro donde viven todas las tarjetas: ahora es un hilo de la misma tinta,
+     un punto más suave que las divisorias (vidrio-linea). */
+  --color-vidrio-borde: rgba(28, 47, 94, 0.1);
   /* Solo para texto atenuado sobre el sidebar oscuro (--ink) — distinto de
      vidrio-muted, que es para superficies claras. */
   --color-vidrio-sidebar-muted: #9fb0cf;
@@ -49,7 +63,9 @@
      de puntaje. vidrio: tarjetas y paneles. */
   --radius-control: 8px;
   --radius-chip: 4px;
-  --radius-vidrio: 18px;
+  /* Era 18px: con tarjetas tan redondeadas y píldoras en todo, la forma no
+     marcaba jerarquía. 12px deja la tarjeta suave sin parecer una burbuja. */
+  --radius-vidrio: 12px;
 
   /* Escala nominal del sistema de diseño. Se nombra por el papel que cumple
      el texto, no por su tamaño, para que `label-mono` sea una clase en vez de
@@ -84,6 +100,36 @@
 
   --text-code-inline: 13px;
   --text-code-inline--line-height: 18px;
+
+  /* Escala de la landing, con proporción cercana a 1,25. Antes la landing usaba
+     quince tamaños sueltos (0.96rem, 1.15rem, 0.86rem...) y había un salto
+     brusco entre el titular del hero (3,8 rem) y los títulos de sección
+     (1,9 rem). Los titulares llevan tracking negativo, como en el resto del
+     sistema. */
+  --text-display: clamp(2.5rem, 5vw, 4.25rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 600;
+
+  --text-seccion: clamp(1.75rem, 3vw, 2.5rem);
+  --text-seccion--line-height: 1.15;
+  --text-seccion--letter-spacing: -0.015em;
+  --text-seccion--font-weight: 600;
+
+  --text-tarjeta: 1.125rem;
+  --text-tarjeta--line-height: 1.4;
+  --text-tarjeta--letter-spacing: -0.005em;
+  --text-tarjeta--font-weight: 600;
+
+  /* Entrada: el párrafo que acompaña a un titular. */
+  --text-entrada: 1.125rem;
+  --text-entrada--line-height: 1.6;
+
+  --text-cuerpo: 1rem;
+  --text-cuerpo--line-height: 1.6;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.45;
 }
 
 /* Desplazamiento suave para los enlaces de ancla del navbar de la landing
@@ -95,23 +141,17 @@ html {
 
 body {
   @apply bg-vidrio-bg font-sans text-vidrio-texto antialiased;
+  caret-color: var(--color-vidrio-acento);
 }
 
-/* Resplandor que "respira" al fondo del hero de la landing — un solo
-   keyframe reutilizable, no depende de ninguna librería de animación. La
-   regla global de `prefers-reduced-motion` de más abajo ya lo neutraliza
-   (fuerza duration a ~0), no necesita su propia excepción. */
-@keyframes respirar {
-  0%,
-  100% {
-    opacity: 0.75;
-  }
-  50% {
-    opacity: 1;
-  }
+/* Lo que el navegador dibuja por su cuenta también lleva la paleta: sin esto,
+   la selección de texto sale en el azul genérico del sistema operativo. */
+::selection {
+  background-color: rgba(43, 85, 163, 0.18);
+  color: var(--color-vidrio-ink);
 }
 
-/* Relleno del indicador activo del carrusel de áreas — se remonta con un
+/* Relleno del indicador activo del carrusel de puestos — se remonta con un
    `key` distinto cada vez que cambia el índice, así el navegador reinicia
    la animación sola. */
 @keyframes llenar {

@@ -172,12 +172,49 @@ class Pregunta:
     numero: int
 
 
+# Escala de cada criterio de la rúbrica: cinco niveles descritos, de 0 a 4.
+# El modelo solo clasifica en uno de ellos; la nota de 0 a 100 la calcula la
+# aplicación con `apps.evaluaciones.rubricas.puntuacion_de`. Una escala corta y
+# descrita es lo que un modelo puede aplicar con fiabilidad — escribir un 0-100
+# libre le pide una precisión que no tiene.
+NIVEL_MAXIMO = 4
+
+# Cuántos puntos clave devuelve el evaluador por respuesta. Menos de dos no
+# orienta a nadie; más de cuatro deja de ser una lista que se lee de un vistazo,
+# así que se recorta en vez de rechazar.
+PUNTOS_CLAVE_MINIMOS = 2
+PUNTOS_CLAVE_MAXIMOS = 4
+
+CRITERIOS = ("correccion", "completitud", "claridad")
+
+
+@dataclass(frozen=True)
+class Niveles:
+    """El nivel (0-4) que el evaluador asignó a cada criterio de la rúbrica."""
+
+    correccion: int
+    completitud: int
+    claridad: int
+
+    def como_dict(self) -> dict[str, int]:
+        return {criterio: getattr(self, criterio) for criterio in CRITERIOS}
+
+
 @dataclass(frozen=True)
 class Evaluacion:
-    puntuacion: int
+    """Lo que devuelve el evaluador: niveles y retroalimentación, sin nota.
+
+    No hay campo `puntuacion` a propósito: si el modelo escribiera la nota, la
+    respuesta a "¿por qué 74 y no 76?" sería "porque lo dijo la IA".
+    """
+
+    niveles: Niveles
     fortalezas: str
     debilidades: str
     sugerencias: str
+    # Lo que una respuesta completa debía cubrir para ese nivel. Es lo que
+    # convierte la nota en algo que estudiar para la próxima entrevista.
+    puntos_clave: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -228,25 +265,51 @@ def parsear_preguntas(datos: dict[str, Any], desde_numero: int, cuantas: int) ->
     ]
 
 
+def _nivel(niveles: dict[str, Any], criterio: str) -> int:
+    valor = niveles.get(criterio)
+    if isinstance(valor, str) and valor.strip().isdigit():
+        valor = int(valor)
+    if not isinstance(valor, int) or isinstance(valor, bool) or not 0 <= valor <= NIVEL_MAXIMO:
+        raise RespuestaIAInvalida(
+            f"Nivel inválido para '{criterio}': {niveles.get(criterio)!r} (se espera entero 0-{NIVEL_MAXIMO})"
+        )
+    return valor
+
+
 def parsear_evaluacion(datos: dict[str, Any]) -> Evaluacion:
     """Valida y normaliza la evaluación devuelta por el proveedor.
 
     El esquema JSON enviado al proveedor ya restringe la forma de la
-    respuesta (decodificación restringida), pero no garantiza el rango
-    numérico ni que los textos no vengan vacíos — eso es lo que se valida aquí.
+    respuesta (decodificación restringida), pero no garantiza el rango de cada
+    nivel ni que los textos no vengan vacíos — eso es lo que se valida aquí.
+
+    Si el modelo añade por su cuenta una `puntuacion`, se ignora: la nota es
+    una fórmula sobre los niveles, no una opinión del modelo.
     """
     if not isinstance(datos, dict):
         raise RespuestaIAInvalida(f"Se esperaba un objeto JSON, se recibió {type(datos).__name__}")
 
-    puntuacion = datos.get("puntuacion")
-    if isinstance(puntuacion, str) and puntuacion.strip().isdigit():
-        puntuacion = int(puntuacion)
-    if not isinstance(puntuacion, int) or isinstance(puntuacion, bool) or not 0 <= puntuacion <= 100:
-        raise RespuestaIAInvalida(f"Puntuación inválida: {datos.get('puntuacion')!r} (se espera entero 0-100)")
+    niveles = datos.get("niveles")
+    if not isinstance(niveles, dict):
+        raise RespuestaIAInvalida(f"Campo 'niveles' ausente o mal formado: {niveles!r}")
 
     return Evaluacion(
-        puntuacion=puntuacion,
+        niveles=Niveles(**{criterio: _nivel(niveles, criterio) for criterio in CRITERIOS}),
         fortalezas=_texto_obligatorio(datos, "fortalezas"),
         debilidades=_texto_obligatorio(datos, "debilidades"),
         sugerencias=_texto_obligatorio(datos, "sugerencias"),
+        puntos_clave=_puntos_clave(datos),
     )
+
+
+def _puntos_clave(datos: dict[str, Any]) -> tuple[str, ...]:
+    puntos = datos.get("puntos_clave")
+    if not isinstance(puntos, list):
+        raise RespuestaIAInvalida(f"Campo 'puntos_clave' ausente o mal formado: {puntos!r}")
+    if any(not isinstance(p, str) or not p.strip() for p in puntos):
+        raise RespuestaIAInvalida("Un punto clave vino vacío o no es texto")
+    if len(puntos) < PUNTOS_CLAVE_MINIMOS:
+        raise RespuestaIAInvalida(
+            f"Se esperaban al menos {PUNTOS_CLAVE_MINIMOS} puntos clave, llegaron {len(puntos)}"
+        )
+    return tuple(p.strip() for p in puntos[:PUNTOS_CLAVE_MAXIMOS])

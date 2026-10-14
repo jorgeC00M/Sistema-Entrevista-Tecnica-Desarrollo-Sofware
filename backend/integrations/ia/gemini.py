@@ -53,6 +53,10 @@ NIVEL_DE_RAZONAMIENTO = types.ThinkingLevel.LOW
 
 class GeminiProveedorIA(ProveedorIAporJSON):
     nombre = "gemini"
+    # Apto con reservas: en la capa gratuita Google puede usar el contenido
+    # para mejorar sus productos. Se acepta porque el CV llega minimizado y
+    # enmascarado (`anonimizar.py`); es un compromiso conocido, no una garantía.
+    apto_para_datos_personales = True
 
     def __init__(self, api_key: str | None = None, modelo: str | None = None):
         api_key = api_key or os.environ.get("GEMINI_API_KEY")

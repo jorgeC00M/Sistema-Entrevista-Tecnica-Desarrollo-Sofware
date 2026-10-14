@@ -102,3 +102,31 @@ class ErroresAlResponderTest(APITestCase):
         )
 
         self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class CadenaDeRespaldoTest(APITestCase):
+    """Con `IA_PROVEEDOR=gemini,deepseek`, una cuota agotada no corta la entrevista
+    y la evaluación registra el proveedor que de verdad respondió."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
+        )
+        self.client.force_authenticate(self.usuario)
+        with mock.patch("apps.entrevistas.services.get_proveedor", return_value=FakeProveedorIA()):
+            inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        self.entrevista_id = inicio.data["entrevista"]["id"]
+
+    def test_responde_el_respaldo_y_queda_registrado(self):
+        from apps.evaluaciones.models import Evaluacion
+        from integrations.ia.cadena import ProveedorEnCadena
+
+        cadena = ProveedorEnCadena([ProveedorQueFalla(ErrorTransitorio("429")), FakeProveedorIA()])
+        with mock.patch("apps.entrevistas.services.get_proveedor", return_value=cadena):
+            respuesta = self.client.post(
+                f"/api/entrevistas/{self.entrevista_id}/responder/", {"respuesta": "Mi respuesta"}
+            )
+
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        evaluacion = Evaluacion.objects.get(intercambio__entrevista_id=self.entrevista_id)
+        self.assertEqual((evaluacion.proveedor_ia, evaluacion.modelo_ia), ("fake", "fake-1"))

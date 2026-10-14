@@ -19,7 +19,7 @@ from integrations.ia.prompts.schemas import (
     Puesto,
     area_de_la_pregunta,
 )
-from tests.conftest import crear_usuario, nivel_de, puesto_de
+from tests.conftest import crear_usuario, nivel_de, niveles_para, puesto_de
 
 Usuario = get_user_model()
 
@@ -34,10 +34,11 @@ class ProveedorPuntuacionFija(FakeProveedorIA):
 
         return parsear_evaluacion(
             {
-                "puntuacion": self._puntuacion,
+                "niveles": niveles_para(self._puntuacion),
                 "fortalezas": "Definiste bien el concepto",
                 "debilidades": "Faltó mencionar la complejidad",
                 "sugerencias": "Repasa costes de las operaciones",
+                "puntos_clave": ["Primer punto", "Segundo punto"],
             }
         )
 
@@ -70,7 +71,7 @@ class RetroalimentacionTest(APITestCase):
     def test_agrupa_por_area_con_promedio_y_bandas(self):
         proveedor = ProveedorPuntuacionFija(90)
         entrevista = servicio.iniciar(self.usuario, self.puesto, self.nivel, proveedor=proveedor)
-        self._responder(entrevista, veces=2, puntuacion=90)
+        self._responder(entrevista, veces=2, puntuacion=92)
 
         respuesta = self.client.get("/api/estadisticas/retroalimentacion/")
 
@@ -86,7 +87,7 @@ class RetroalimentacionTest(APITestCase):
         for codigo, fila in por_area.items():
             with self.subTest(area=codigo):
                 self.assertEqual(fila["total_respuestas"], 1)
-                self.assertEqual(fila["promedio"], 90)
+                self.assertEqual(fila["promedio"], 92)
                 # 90 cae en la banda "solido"; el resto quedan en cero.
                 self.assertEqual(fila["bandas"]["solido"], 1)
                 self.assertEqual(fila["bandas"]["insuficiente"], 0)
@@ -113,7 +114,7 @@ class RetroalimentacionTest(APITestCase):
         abandonada a mitad sigue aportando sus respuestas ya evaluadas."""
         proveedor = ProveedorPuntuacionFija(70)
         entrevista = servicio.iniciar(self.usuario, self.puesto, self.nivel, proveedor=proveedor)
-        self._responder(entrevista, veces=2, puntuacion=70)
+        self._responder(entrevista, veces=2, puntuacion=67)
         Entrevista.objects.filter(pk=entrevista.pk).update(
             estado=Entrevista.Estado.ABANDONADA
         )
@@ -127,7 +128,7 @@ class RetroalimentacionTest(APITestCase):
 
     def test_no_mezcla_datos_de_otro_usuario(self):
         otro = crear_usuario(email="otro@example.com")
-        proveedor = ProveedorPuntuacionFija(85)
+        proveedor = ProveedorPuntuacionFija(83)
         ajena = servicio.iniciar(otro, self.puesto, self.nivel, proveedor=proveedor)
         servicio.responder(ajena, "Una respuesta", proveedor=proveedor)
 

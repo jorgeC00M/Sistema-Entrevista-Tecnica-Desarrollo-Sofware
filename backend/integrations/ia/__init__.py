@@ -7,6 +7,8 @@ from .exceptions import (
     RespuestaIAInvalida,
 )
 from .prompts.schemas import (
+    CRITERIOS,
+    NIVEL_MAXIMO,
     PLAN_POR_PUESTO,
     PREGUNTAS_DE_CALENTAMIENTO,
     PREGUNTAS_POR_ENTREVISTA,
@@ -14,6 +16,7 @@ from .prompts.schemas import (
     ContextoDeEntrevista,
     Evaluacion,
     Nivel,
+    Niveles,
     Pregunta,
     Puesto,
     Tecnologia,
@@ -23,6 +26,8 @@ from .prompts.schemas import (
 )
 
 __all__ = [
+    "CRITERIOS",
+    "NIVEL_MAXIMO",
     "PLAN_POR_PUESTO",
     "PREGUNTAS_DE_CALENTAMIENTO",
     "PREGUNTAS_POR_ENTREVISTA",
@@ -33,6 +38,7 @@ __all__ = [
     "ErrorTransitorio",
     "Evaluacion",
     "Nivel",
+    "Niveles",
     "Pregunta",
     "ProveedorIA",
     "ProveedorIAporJSON",

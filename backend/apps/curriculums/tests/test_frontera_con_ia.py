@@ -29,16 +29,21 @@ inyectando la violación, no se supusieron.
 
 import ast
 import contextlib
+import os
 import sys
 from importlib.abc import MetaPathFinder
 from pathlib import Path
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
 
 from apps.curriculums import revision, services
 from integrations.documentos.extractor import DocumentoExtraido
+from integrations.ia.factory import _REGISTRO
+from integrations.ia.fake import FakeProveedorIA
 from integrations.ia.prompts.revisor_cv import RevisionDeCV
+from tests.conftest import nivel_de, puesto_de
 
 Usuario = get_user_model()
 
@@ -251,3 +256,63 @@ class EnmascaradoDentroDeLasSeccionesTest(SimpleTestCase):
             import integrations.documentos.ats  # noqa: F401
 
         from integrations.ia.factory import get_proveedor  # noqa: F401
+
+
+class ProveedorEspiaNoApto(FakeProveedorIA):
+    """Un proveedor completo que se declara no apto, como DeepSeek y OpenRouter.
+
+    Cuenta a nivel de clase porque la factory lo instancia por su cuenta: el
+    test no tiene la instancia en la mano.
+    """
+
+    nombre = "espia_no_apto"
+    apto_para_datos_personales = False
+    revisiones = 0
+    evaluaciones = 0
+
+    def revisar_cv(self, entrada):
+        type(self).revisiones += 1
+        return super().revisar_cv(entrada)
+
+    def evaluar_respuesta(self, *args):
+        type(self).evaluaciones += 1
+        return super().evaluar_respuesta(*args)
+
+
+class ProveedorNoAptoTest(TestCase):
+    """Que DeepSeek esté configurado no basta para que reciba un currículum.
+
+    El filtro vive en `factory.get_revisor_de_cv`, fuera de esta app; por eso se
+    prueba aquí, por el camino real (sin revisor inyectado) y con un proveedor
+    registrado que se declara no apto.
+    """
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(email="egresado@example.com", password="clave-segura-123")
+        ProveedorEspiaNoApto.revisiones = 0
+        ProveedorEspiaNoApto.evaluaciones = 0
+        registro = {"espia_no_apto": (__name__, "ProveedorEspiaNoApto")}
+        self.enterContext(mock.patch.dict(_REGISTRO, registro))
+        self.enterContext(mock.patch.dict(os.environ, {"IA_PROVEEDOR": "espia_no_apto"}))
+
+    def test_un_proveedor_no_apto_nunca_recibe_el_curriculum(self):
+        curriculum = services.analizar(
+            usuario=self.usuario,
+            contenido=(FIXTURES / "una_columna.pdf").read_bytes(),
+            nombre_archivo="una_columna.pdf",
+            convocatoria="Requisitos:\n- Docker\n",
+        )
+
+        self.assertEqual(ProveedorEspiaNoApto.revisiones, 0)
+        self.assertEqual(curriculum.analisis.revision_ia["estado"], revision.NO_DISPONIBLE)
+        # El diagnóstico medido no depende de la IA: está completo igual.
+        self.assertTrue(curriculum.analisis.campos)
+        self.assertGreater(curriculum.analisis.campos_intentados, 0)
+
+    def test_el_mismo_proveedor_si_sirve_para_entrevistar(self):
+        from apps.entrevistas import services as entrevistas
+
+        entrevista = entrevistas.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"))
+        entrevistas.responder(entrevista, "Una respuesta")
+
+        self.assertEqual(ProveedorEspiaNoApto.evaluaciones, 1)

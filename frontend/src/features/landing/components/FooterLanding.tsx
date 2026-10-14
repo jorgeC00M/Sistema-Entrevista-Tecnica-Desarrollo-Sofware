@@ -25,12 +25,12 @@ export default function FooterLanding() {
         <div className="flex flex-wrap items-center justify-between gap-6">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[0.98rem] font-semibold text-white"
+            className="flex items-center gap-2 text-cuerpo font-semibold text-white"
           >
             <span className="flex h-[30px] w-[30px] items-center justify-center rounded-control bg-white text-vidrio-ink">
               <Icono nombre="marca" className="h-4 w-4" />
             </span>
-            Entrevistas Técnicas
+            Antesala
           </Link>
 
           <nav aria-label="Secciones" className="flex flex-wrap gap-[22px]">
@@ -48,7 +48,7 @@ export default function FooterLanding() {
           </nav>
         </div>
 
-        <div className="mt-[18px] flex flex-wrap justify-between gap-3 border-t border-white/10 pt-4 text-[0.82rem] text-[#8d9cbd]">
+        <div className="mt-[18px] flex flex-wrap justify-between gap-3 border-t border-white/10 pt-4 text-meta text-vidrio-sidebar-muted">
           <span>Proyecto de Grado · Ingeniería de Sistemas · Universidad Mayor de San Simón</span>
           <span>
             {AUTOR} · {ANIO} ·{' '}

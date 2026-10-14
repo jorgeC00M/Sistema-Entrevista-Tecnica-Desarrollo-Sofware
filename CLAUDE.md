@@ -22,7 +22,7 @@ Settings are split by environment. `manage.py` defaults to `config.settings.loca
 Tests use Django's test runner (not plain `pytest`/`unittest` — several test modules import Django models and need `django.setup()`):
 
 ```powershell
-python manage.py test                                   # full suite (auto-discovery, 333 tests)
+python manage.py test                                   # full suite (auto-discovery, 406 tests)
 python manage.py test apps.entrevistas                  # one app
 python manage.py test tests.integration                 # the Django-free IA and document tests
 python manage.py test apps.entrevistas.tests.test_idempotencia.IdempotenciaTest.test_reintento_tras_fallo_no_duplica_intercambio_ni_evaluacion
@@ -48,10 +48,10 @@ TypeScript is `strict` with no `allowJs` — there are zero `.js`/`.jsx` files l
 
 Both `backend/.env` and `frontend/.env` are gitignored; copy from the corresponding `.env.example`. Key variables:
 
-- `IA_PROVEEDOR` (backend) — `fake` | `gemini` | `anthropic`. Defaults to `fake` (deterministic, no network) so nothing ever burns API quota by accident. `anthropic` is the documented production engine; `gemini` is an internal fallback not mentioned in the academic profile.
+- `IA_PROVEEDOR` (backend) — `fake` | `gemini` | `anthropic` | `deepseek` | `openrouter`, or several comma-separated (`gemini,deepseek`) to form a fallback chain. Defaults to `fake` (deterministic, no network) so nothing ever burns API quota by accident. `anthropic` is the documented production engine; the rest are internal fallbacks not mentioned in the academic profile.
 - `DATABASE_URL` — empty selects SQLite, set selects Postgres via `dj_database_url`. Mandatory in production.
 - `GOOGLE_OAUTH_CLIENT_ID` (backend) / `VITE_GOOGLE_CLIENT_ID` (frontend) — same value on both sides. If either is unset, that half degrades on purpose (backend returns 503, frontend hides the Google button) instead of erroring.
-- `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` — only needed when `IA_PROVEEDOR` selects that provider.
+- `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY` (+ the optional `*_MODEL`) — only needed when `IA_PROVEEDOR` selects that provider. `OPENROUTER_MODEL` is required: OpenRouter's free catalog changes, and as of October 2026 it has no free DeepSeek model, so no default is assumed.
 
 ## Architecture
 
@@ -70,7 +70,11 @@ Apps live under `apps/` but keep short labels (`label = "entrevistas"` in `apps.
 
 ### Layering: views never talk to the AI provider directly
 
-`apps/entrevistas/views.py` → `apps/entrevistas/services.py` (the orchestrator) → `integrations/ia/factory.py::get_proveedor()` → one of three interchangeable `ProveedorIA` implementations (`integrations/ia/{fake,gemini,claude}.py`), selected at runtime by `IA_PROVEEDOR`. Nothing outside `factory.py` imports a concrete adapter by name.
+`apps/entrevistas/views.py` → `apps/entrevistas/services.py` (the orchestrator) → `integrations/ia/factory.py::get_proveedor()` → one of the interchangeable `ProveedorIA` implementations (`integrations/ia/{fake,gemini,claude,compatible_openai}.py`), selected at runtime by `IA_PROVEEDOR`. Nothing outside `factory.py` imports a concrete adapter by name.
+
+`compatible_openai.py` covers any Chat-Completions endpoint with the `openai` SDK and a `base_url`; `DeepSeekProveedorIA` and `OpenRouterProveedorIA` only set key, model and URL. Those endpoints have no strict `json_schema`, so it asks for `json_object` and writes the schema into the system prompt — the parsers in `prompts/` are the real guarantee.
+
+Several names in `IA_PROVEEDOR` build an `integrations/ia/cadena.py::ProveedorEnCadena`, itself a `ProveedorIA`: each operation goes to the first link and, on any `ErrorProveedorIA` (including permanent ones — a revoked key in one link must not take the service down), to the next; if all fail the last error propagates. After a success its `nombre`/`modelo` become those of the link that answered, which is what `guardar()` records in `proveedor_ia` — per-instance state, safe because `get_proveedor()` builds one per request. An unknown name or a link without its key aborts before any call: a configuration error should surface at deploy, not hide behind a fallback.
 
 The dependency direction is **apps → integrations, never the reverse**. `integrations/ia/` has zero Django dependency — it's tested independently in `tests/integration/` and can be exercised with plain Python.
 
@@ -107,6 +111,18 @@ Two distinct prompts live in `integrations/ia/prompts/`:
 
 `apps/evaluaciones/rubricas.py` imports `RUBRICA` from the prompt module (apps → integrations) and adds the score bands as queryable data, so backend, admin and frontend agree on what counts as a good score.
 
+### The model picks levels; the code computes the grade
+
+The evaluator never writes a 0–100 number. The rubric is analytic: three equal-weight criteria (`correccion`, `completitud`, `claridad`), each with five described levels 0–4 (`DESCRIPTORES` in `evaluador.py`). The model returns only `niveles` plus the three feedback texts; `parsear_evaluacion()` validates each level and **ignores** any `puntuacion` the model adds. `rubricas.puntuacion_de()` turns levels into the grade — `P = 100·Σ(w·n)/(4·Σw)`, i.e. `100·(n₁+n₂+n₃)/12` with `PESOS` all 1 — so there are only 13 possible grades per answer and `100·S/12` never lands on ,5. The formula lives in `apps/` and not in the IA layer because weights are an evaluation decision, not part of the provider contract.
+
+Why levels and not 0–100: an LLM judge is more reliable choosing among a few described levels than writing a free number (G-Eval and Prometheus score 1–5 against a rubric), and "where does the 74 come from?" now has an arithmetic answer. `guardar()` writes `niveles`, `pesos` and `version_rubrica` (`VERSION_DE_RUBRICA = 2`) into `evaluacion_json`, so any grade can be recomputed by hand — `TrazabilidadDeLaNotaTest` pins that. Evaluations from before (version 1) keep their grade and serialize `niveles: null`; they are never recomputed. The rubric with its descriptors is published under `rubrica` in `/api/catalogos/`, and the results screen shows "¿Cómo se calcula?" with the operation substituted.
+
+The same call also returns `puntos_clave` — 2 to 4 short statements of what a complete answer had to cover for that level (more are cut to 4, fewer is `RespuestaIAInvalida`). They are stored in `evaluacion_json` and shown as "Una respuesta completa cubría"; it is what turns the grade into something to study. The evaluator stays a pure function of (contexto, área, pregunta, respuesta).
+
+`FakeProveedorIA` answers 3/3/3 = 75, the same grade it gave before, and test stubs that need a specific grade use `tests.conftest.niveles_para(nota)`, which **raises** for a grade the formula cannot produce (90, 85…) rather than rounding silently.
+
+`python manage.py medir_consistencia --repeticiones K [--proveedor X]` evaluates the 8 fixed cases in `apps/evaluaciones/consistencia/casos.json` K times and reports per case the mean, sample standard deviation and how often the grade lands in the modal band. It touches no tables. Temperature is deliberately not forced to 0: variability is measured, not assumed away.
+
 `PREGUNTAS_POR_ENTREVISTA` (in `integrations/ia/prompts/schemas.py`) is the single source of truth for interview length (currently 5); the frontend reads it from `/api/catalogos/` rather than hardcoding it.
 
 ### Idempotency is a DB-enforced contract, not just application logic
@@ -135,6 +151,8 @@ The evaluation runs after every answer — that is what feeds adaptivity — but
 - `ResultadosView` passes `con_evaluacion=False` to `IntercambioSerializer`, which then resolves `evaluacion` to `null` (the key stays, so the response shape does not change with state). `ABANDONADA` interviews **do** show theirs, consistent with `calcular_retroalimentacion` deliberately including unfinished ones.
 
 Hiding it only in the UI would not work: `/resultados/` is what the chat uses to rebuild itself on reload, so the score would sit in the browser's network tab. This is what the profile's *"para su posterior análisis"* (Alcance) and the *"módulo de análisis de resultados"* (objetivo 5) describe, and it is what a real interview does — nobody reads your score out loud mid-session.
+
+The consolidated report follows the same rule: `/resultados/` carries a `resumen` key — `null` while `EN_PROGRESO` — built by `selectors.resumen_de()` from the saved evaluations with **no AI call** (a spy test pins it): band and mean, mean level per criterion over the answers that have levels, the weakest criterion, the *prioridad* (área and sugerencia of the lowest-graded answer, ties to the lower `numero`) and the difference with `anterior_comparable()` — the previous `FINALIZADA` interview with the same puesto **and** nivel. A partial (abandoned) mean is never compared with a complete one, so `comparacion` is `null` there. The results screen offers "Practicar de nuevo este puesto", which preselects `?puesto=&nivel=` in `SeleccionPuestoPage` without starting anything.
 
 Consequence worth knowing: the chat rebuild in `useEntrevista` filters by `respuesta !== ''`, **not** by `evaluacion !== null`. With grades hidden, the latter would discard the whole history.
 
@@ -192,6 +210,7 @@ The cache hash uses `documento.huella` — the text plus those hidden parts — 
 - **The file is never stored.** No `FileField`, no `MEDIA_ROOT`. Render's free tier has an ephemeral disk, a CV carries a real person's phone and address, and the bytes are useless once parsed. Only the extracted text, its hash and the analysis persist. `texto` and `convocatoria` are deliberately excluded from `CurriculumSerializer`.
 - **The cache key is the extracted text plus the convocatoria, and "no convocatoria" stores the hash of the empty string, never NULL.** Re-exporting the same CV from Word yields different bytes and identical text; what matters is whether there is anything new to analyse. Postgres treats NULLs as distinct, so with NULL the `UniqueConstraint(usuario, hash_texto, hash_convocatoria)` would not fire and the cache would break **in the most common case**, silently accumulating duplicates.
 - **The bullet analysis is labelled apart from the ATS sections, and that is a requirement.** An ATS does not care whether a bullet has metrics; that advice is for the human who reads the CV after the machine found it. `vinetas.py` says so in its docstring and `VinetasDeLogro.tsx` renders under its own heading. Mixing it under "filtros ATS" would be imprecise, and precision about what an ATS actually does is what holds up the module's credibility.
+- **Not every configured provider may receive a CV.** Every `ProveedorIA` declares `apto_para_datos_personales` (default `False`). DeepSeek and OpenRouter are `False` — DeepSeek stores data in China and trains on it by default, with no opt-out outside the EU/UK/CH. `factory.get_revisor_de_cv()` filters the configured list **by class, before instantiating**, keeping only apt providers that implement `revisar_cv`; with none left it raises `ProveedorNoDisponible`, which `revision.py` already turns into `no_disponible`. So `IA_PROVEEDOR=gemini,deepseek` interviews with both but reviews CVs only with Gemini, and `IA_PROVEEDOR=deepseek` alone leaves CV review unavailable while the measured diagnosis is still complete. `ProveedorNoAptoTest` in `test_frontera_con_ia.py` pins it through the real factory path.
 - **Only `apps/curriculums/revision.py` may import `integrations.ia`, and what it sends is enforced.** The reason is `Curriculum.texto` — the full CV of a real person. Two barriers, in this order: **minimisation** (only the blocks of recognised sections from `segmentar()`, which drop the header by construction — never the full text, the header/footer text or text boxes) and **masking** (`integrations/documentos/anonimizar.py` replaces emails, links, phones and the detected name, reusing the `ats.py` detectors). With no recognised sections or no text layer, the provider is **not called** (`revision_ia.estado = "omitida"`): there is no safe way to separate personal data from the rest. `tests/test_frontera_con_ia.py` checks it three ways — statically with `ast` (only `revision.py` imports the AI layer), with a spy provider (name, email, phone and city of the fixture never reach it; it is not called on creative titles or a scanned PDF), and with a `sys.meta_path` guard (with an injected reviewer, nothing else in the call chain loads the AI layer). Each was verified by injecting the violation. **If it goes red, fix the leak, never relax the test.**
 
   The AI call runs **after** the transaction, like the evaluation in `responder()`. Any `ErrorProveedorIA` becomes `revision_ia.estado = "no_disponible"` with a 201 — the diagnosis never depends on the provider — and re-uploading the same CV retries **only** the AI part (`revision.necesita_revision()`). The parser in `integrations/ia/prompts/revisor_cv.py` drops anything not anchored to the input (a bullet not sent, a requirement not in the gap, a correction whose original is not literally in the CV, a question whose motive is not in the texts, a puesto outside the enum, anything echoing a mask marker). `RevisorDeCV` is a `Protocol` in `base.py`, implemented by `ProveedorIAporJSON` (so Gemini and Claude get it for free) and `FakeProveedorIA`; it is deliberately not an abstract method of `ProveedorIA`, so the interview test doubles don't have to implement it.
@@ -235,6 +254,8 @@ Band counts are grouped in SQL with a range filter built from `rubricas.BANDAS`,
 ### Statistics are computed in the database, not in Python
 
 `apps/evaluaciones/services.py::calcular_estadisticas()` uses Django's `Avg`/`Count` directly on `Evaluacion` rows (weighted per answer), not by averaging each interview's already-averaged score — deliberate, since the latter would misweight interviews with different numbers of scored answers.
+
+An interview's own grade is the simple mean of its answers' grades (`promedio_de_evaluaciones`). An `ABANDONADA` interview never stores `puntuacion_promedio`; the results screen computes the same mean from its published evaluations and labels it **parcial**, "sobre k de 5", using `preguntas_calificadas` / `preguntas_previstas` from `EntrevistaSerializer` (annotated in `selectors._con_conteo` so the history list stays one query).
 
 ### Authenticated shell: dark sidebar, header names the section
 

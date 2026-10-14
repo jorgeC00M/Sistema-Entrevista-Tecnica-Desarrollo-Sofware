@@ -1,6 +1,8 @@
 import unittest
 
+from apps.evaluaciones.rubricas import puntuacion_de
 from integrations.ia import (
+    NIVEL_MAXIMO,
     PREGUNTAS_POR_ENTREVISTA,
     AreaTecnica,
     ContextoDeEntrevista,
@@ -36,7 +38,9 @@ def _recorrer_entrevista(proveedor: FakeProveedorIA, contexto: ContextoDeEntrevi
         respuesta = f"Respuesta del candidato a la pregunta {numero}"
         evaluacion = proveedor.evaluar_respuesta(contexto, area, pregunta.texto, respuesta)
         evaluaciones.append(evaluacion)
-        previas.append(TemaEvaluado(pregunta=pregunta.texto, puntuacion=evaluacion.puntuacion))
+        # La nota no la da el proveedor: la calcula la aplicación con la fórmula,
+        # igual que hace `guardar()` antes de que el entrevistador la lea de la BD.
+        previas.append(TemaEvaluado(pregunta=pregunta.texto, puntuacion=puntuacion_de(evaluacion.niveles)))
 
     return evaluaciones, previas, areas_recorridas
 
@@ -80,7 +84,8 @@ class FlujoCompletoTest(unittest.TestCase):
         self.assertEqual(len(evaluaciones), PREGUNTAS_POR_ENTREVISTA)
         self.assertEqual(len(previas), PREGUNTAS_POR_ENTREVISTA)
         for evaluacion in evaluaciones:
-            self.assertTrue(0 <= evaluacion.puntuacion <= 100)
+            for nivel in evaluacion.niveles.como_dict().values():
+                self.assertTrue(0 <= nivel <= NIVEL_MAXIMO)
 
     def test_la_entrevista_recorre_las_areas_del_puesto(self):
         proveedor = FakeProveedorIA()
@@ -97,7 +102,7 @@ class FlujoCompletoTest(unittest.TestCase):
         )
         evaluaciones, _, _ = _recorrer_entrevista(proveedor, contexto)
 
-        promedio = sum(e.puntuacion for e in evaluaciones) / len(evaluaciones)
+        promedio = sum(puntuacion_de(e.niveles) for e in evaluaciones) / len(evaluaciones)
         self.assertTrue(0 <= promedio <= 100)
 
     def test_evaluador_no_depende_del_orden_de_la_entrevista(self):

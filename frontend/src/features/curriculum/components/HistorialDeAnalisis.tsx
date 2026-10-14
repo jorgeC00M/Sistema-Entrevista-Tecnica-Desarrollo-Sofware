@@ -62,7 +62,7 @@ export default function HistorialDeAnalisis({ analisis, cargando, onAbrir }: Pro
             >
               <Icono
                 nombre="resultados"
-                className="h-4 w-4 shrink-0 text-vidrio-muted"
+                className="h-4 w-4 shrink-0 text-vidrio-tenue"
                 aria-hidden
               />
 

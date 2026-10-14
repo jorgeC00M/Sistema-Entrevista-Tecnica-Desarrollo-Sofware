@@ -4,7 +4,7 @@ from django.test import TestCase
 from apps.entrevistas import services as servicio
 from tests.conftest import nivel_de, puesto_de
 from integrations.ia.base import ProveedorIA
-from integrations.ia.prompts.schemas import Evaluacion, Pregunta
+from integrations.ia.prompts.schemas import Evaluacion, Niveles, Pregunta
 
 Usuario = get_user_model()
 
@@ -39,7 +39,13 @@ class ProveedorEspiaIA(ProveedorIA):
     def evaluar_respuesta(self, contexto, area, pregunta, respuesta):
         self.textos_recibidos.append(pregunta)
         self.textos_recibidos.append(respuesta)
-        return Evaluacion(puntuacion=70, fortalezas="ok", debilidades="ok", sugerencias="ok")
+        return Evaluacion(
+            niveles=Niveles(correccion=3, completitud=2, claridad=3),
+            fortalezas="ok",
+            debilidades="ok",
+            sugerencias="ok",
+            puntos_clave=("Primer punto", "Segundo punto"),
+        )
 
 
 class PrivacidadTest(TestCase):

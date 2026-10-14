@@ -63,17 +63,17 @@ export default function HeaderLanding() {
     >
       <Wrap>
         <div
-          className={`flex items-center gap-5 rounded-[18px] border py-2.5 pr-2.5 pl-4 transition-[background-color,border-color,box-shadow] duration-[350ms] ${
+          className={`flex items-center gap-5 rounded-vidrio border py-2.5 pr-2.5 pl-4 transition-[background-color,border-color,box-shadow] duration-[350ms] ${
             sobreHero
               ? 'border-white/20 bg-white/10 text-white shadow-[0_10px_30px_-18px_rgba(0,0,0,0.4)] backdrop-blur-md'
               : 'border-[rgba(255,255,255,.6)] bg-[rgba(232,237,245,.55)] text-vidrio-ink shadow-[0_8px_24px_-18px_rgba(28,47,94,.25)] backdrop-blur-[16px] backdrop-saturate-[1.4]'
           }`}
         >
           <Link to="/" className="flex shrink-0 items-center gap-2 font-semibold">
-            <span className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-white text-vidrio-acento">
+            <span className="flex h-[34px] w-[34px] items-center justify-center rounded-control bg-white text-vidrio-acento">
               <Icono nombre="marca" className="h-[18px] w-[18px]" />
             </span>
-            <span className="text-sm sm:text-base">Entrevistas Técnicas</span>
+            <span className="text-sm sm:text-base">Antesala</span>
           </Link>
 
           <nav className="mx-auto hidden items-center gap-1 md:flex">
@@ -81,7 +81,7 @@ export default function HeaderLanding() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className={`rounded-[10px] border px-4 py-2 text-sm transition-colors duration-200 ${
+                className={`rounded-control border px-4 py-2 text-sm transition-colors duration-200 ${
                   seccionActiva === s.id
                     ? sobreHero
                       ? 'border-white/25 bg-white/15 text-white'
@@ -99,7 +99,7 @@ export default function HeaderLanding() {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/login"
-              className={`hidden rounded-[10px] px-3.5 py-2.5 text-sm font-medium transition-colors duration-200 sm:block ${
+              className={`hidden rounded-control px-3.5 py-2.5 text-sm font-medium transition-colors duration-200 sm:block ${
                 sobreHero
                   ? 'text-white/90 hover:bg-white/10'
                   : 'text-vidrio-ink hover:bg-vidrio-acento-suave'

@@ -56,7 +56,7 @@ const TITULOS: TituloDeRuta[] = [
   },
 ]
 
-const TITULO_POR_DEFECTO: TituloDeRuta = { patron: '*', titulo: 'Entrevistas Técnicas' }
+const TITULO_POR_DEFECTO: TituloDeRuta = { patron: '*', titulo: 'Antesala' }
 
 export function resolverTitulo(pathname: string): TituloDeRuta {
   for (const entrada of TITULOS) {

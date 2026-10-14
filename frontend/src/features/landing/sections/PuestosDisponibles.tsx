@@ -30,7 +30,7 @@ export default function PuestosDisponibles({ puestos, areas, niveles }: Props) {
 
   const pieDeNiveles =
     niveles.length > 0 ? (
-      <div className="flex flex-wrap items-center gap-2.5 text-[0.95rem]">
+      <div className="flex flex-wrap items-center gap-2.5 text-cuerpo">
         <span className="text-vidrio-texto">Niveles disponibles:</span>
         {niveles.map((nivel) => (
           <span
@@ -44,10 +44,9 @@ export default function PuestosDisponibles({ puestos, areas, niveles }: Props) {
     ) : undefined
 
   return (
-    <section id="puestos" ref={ref} className="scroll-mt-24 py-[clamp(64px,8vw,100px)]">
+    <section id="puestos" ref={ref} className="scroll-mt-24 py-[clamp(80px,10vw,128px)]">
       <Wrap className={clasesRevelado(visible)}>
         <EncabezadoSeccion
-          indice="04"
           titulo="Puestos que puedes practicar"
           descripcion="Eliges el puesto y el nivel; cada pregunta de la entrevista toca una de sus áreas."
         />
@@ -60,17 +59,16 @@ export default function PuestosDisponibles({ puestos, areas, niveles }: Props) {
           pie={pieDeNiveles}
           renderTarjeta={(puesto, actual) => (
             <>
-              <span
-                className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-control transition-colors duration-500 ${
-                  actual ? 'bg-vidrio-acento text-white' : 'bg-vidrio-acento-suave text-vidrio-acento'
-                }`}
-              >
-                <Icono nombre={ICONO_POR_PUESTO[puesto.codigo] ?? ICONO_POR_DEFECTO} />
-              </span>
-              <h3 className="relative z-10 mt-4 text-[1.15rem] font-semibold text-vidrio-ink">
+              <h3 className="relative z-10 flex items-center gap-2.5 text-tarjeta text-vidrio-ink">
+                <Icono
+                  nombre={ICONO_POR_PUESTO[puesto.codigo] ?? ICONO_POR_DEFECTO}
+                  className={`h-5 w-5 shrink-0 transition-colors duration-500 ${
+                    actual ? 'text-vidrio-acento' : 'text-vidrio-tenue'
+                  }`}
+                />
                 {puesto.nombre}
               </h3>
-              <p className="relative z-10 mt-2 text-[0.96rem] leading-[1.6] text-vidrio-texto">
+              <p className="relative z-10 mt-2 text-cuerpo text-vidrio-texto">
                 {puesto.descripcion}
               </p>
               {puesto.areas.length > 0 && (
@@ -78,7 +76,7 @@ export default function PuestosDisponibles({ puestos, areas, niveles }: Props) {
                   {puesto.areas.map((codigo) => (
                     <li
                       key={codigo}
-                      className="rounded-chip bg-vidrio-field px-2 py-0.5 text-xs text-vidrio-muted"
+                      className="rounded-chip bg-vidrio-field px-2 py-0.5 text-meta text-vidrio-muted"
                     >
                       {nombrePorArea.get(codigo) ?? codigo}
                     </li>

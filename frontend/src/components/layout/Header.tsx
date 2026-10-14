@@ -58,7 +58,7 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate">
             <EtiquetaMono tono="suelto">Simulador técnico</EtiquetaMono>
-            <span aria-hidden="true" className="text-vidrio-muted">
+            <span aria-hidden="true" className="text-vidrio-tenue">
               /
             </span>
             <span className="truncate text-base font-semibold text-vidrio-ink">{titulo}</span>

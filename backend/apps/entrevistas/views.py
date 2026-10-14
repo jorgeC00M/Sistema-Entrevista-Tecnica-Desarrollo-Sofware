@@ -142,13 +142,17 @@ class ResultadosView(APIView):
         # hace la retroalimentación acumulada con las dejadas a medias.
         en_progreso = entrevista.estado == Entrevista.Estado.EN_PROGRESO
 
+        intercambios = list(selectors.intercambios_de(entrevista))
         return Response(
             {
                 "entrevista": EntrevistaSerializer(entrevista).data,
                 "intercambios": IntercambioSerializer(
-                    selectors.intercambios_de(entrevista),
+                    intercambios,
                     many=True,
                     context={"con_evaluacion": not en_progreso},
                 ).data,
+                # Misma condición que las notas por pregunta: el resumen se
+                # calcula con ellas, así que publicarlo antes las filtraría.
+                "resumen": None if en_progreso else selectors.resumen_de(entrevista, intercambios),
             }
         )

@@ -82,7 +82,7 @@ export default function PanelDeSesion({
             <ul className="mt-2 space-y-1.5">
               {areas.map((area) => (
                 <li key={area} className="flex items-start gap-2 text-sm text-vidrio-texto">
-                  <Icono nombre="area" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-vidrio-muted" />
+                  <Icono nombre="area" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-vidrio-tenue" />
                   {area}
                 </li>
               ))}

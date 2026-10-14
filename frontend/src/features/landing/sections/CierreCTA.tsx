@@ -2,41 +2,30 @@ import AccionesDeRegistro from '@/features/landing/components/AccionesDeRegistro
 import Wrap from '@/features/landing/components/Wrap'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
 
+/**
+ * El cierre, sobre el mismo fondo claro que el resto de la página.
+ *
+ * Antes era un bloque azul con dos manchas desenfocadas y un resplandor: una
+ * sección de color pegada en mitad de una página clara, con relleno decorativo
+ * que no decía nada. Ahora la invitación la sostienen el titular y una sola
+ * acción.
+ */
 export default function CierreCTA() {
   const { ref, visible } = useRevelarAlEntrar<HTMLElement>()
 
   return (
-    <section
-      ref={ref}
-      className="relative overflow-hidden bg-vidrio-acento py-[clamp(88px,11vw,128px)] text-[#dfe8fb]"
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 -left-24 h-[420px] w-[420px] rounded-full bg-[#5b86d4] opacity-50 blur-[70px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -bottom-44 h-[380px] w-[380px] rounded-full bg-vidrio-ink opacity-50 blur-[70px]"
-      />
-      {/* Resplandor central detrás del título — respira igual que el del
-          hero (mismo keyframe `respirar`, ya neutralizado por la regla
-          global de prefers-reduced-motion). */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-1/2 h-[420px] w-[min(720px,90vw)] -translate-x-1/2 -translate-y-1/2 animate-[respirar_7s_ease-in-out_infinite] rounded-full bg-white/15 blur-[80px]"
-      />
-
-      <Wrap className={`relative text-center ${clasesRevelado(visible)}`}>
-        <h2 className="mx-auto max-w-[900px] font-serif text-[clamp(2rem,3.6vw,3rem)] leading-[1.15] font-semibold text-white">
-          ¿Quieres iniciar con la entrevista?
+    <section ref={ref} className="border-t border-vidrio-linea py-[clamp(96px,12vw,152px)]">
+      <Wrap className={`flex flex-col items-center text-center ${clasesRevelado(visible)}`}>
+        <h2 className="max-w-[22ch] font-serif text-seccion text-balance text-vidrio-ink">
+          Tu próxima entrevista empieza aquí, no frente al reclutador
         </h2>
-        <p className="mx-auto mt-[14px] max-w-[560px] text-[1.05rem] leading-[1.6]">
+        <p className="mt-5 max-w-[52ch] text-entrada text-pretty text-vidrio-texto">
           Crea tu cuenta y empieza la primera simulación ahora mismo. No necesitas tarjeta ni
           agendar con nadie.
         </p>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <AccionesDeRegistro textoRegistro="Crear cuenta" />
+        <div className="mt-10 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row">
+          <AccionesDeRegistro textoRegistro="Crear cuenta" fondo="claro" />
         </div>
       </Wrap>
     </section>

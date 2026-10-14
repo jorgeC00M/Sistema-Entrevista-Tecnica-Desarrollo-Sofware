@@ -42,7 +42,9 @@ export default function SeleccionPuestoPage() {
 
   // Solo el valor inicial: la URL no se sincroniza con lo que el usuario elija.
   const [puesto, setPuesto] = useState(() => parametros.get('puesto') ?? '')
-  const [nivel, setNivel] = useState('')
+  // "Practicar de nuevo este puesto" llega con `?puesto=…&nivel=…`; ambos son
+  // solo una preselección que el candidato puede cambiar antes de empezar.
+  const [nivel, setNivel] = useState(() => parametros.get('nivel') ?? '')
   const [tecnologia, setTecnologia] = useState(SIN_PREFERENCIA)
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -51,7 +53,8 @@ export default function SeleccionPuestoPage() {
     // Contra el catálogo y no contra el texto: un código inválido llegado por la
     // URL no debe viajar al backend.
     const puestoValido = catalogos?.puestos.some((p) => p.codigo === puesto) ?? false
-    if (!puestoValido || !nivel) return
+    const nivelValido = catalogos?.niveles.some((n) => n.codigo === nivel) ?? false
+    if (!puestoValido || !nivelValido) return
     setError('')
     setCargando(true)
     try {

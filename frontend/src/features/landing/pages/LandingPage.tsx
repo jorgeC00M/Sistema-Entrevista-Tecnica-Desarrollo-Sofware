@@ -1,5 +1,4 @@
 import FooterLanding from '@/features/landing/components/FooterLanding'
-import FranjaDatos from '@/features/landing/components/FranjaDatos'
 import HeaderLanding from '@/features/landing/components/HeaderLanding'
 import CierreCTA from '@/features/landing/sections/CierreCTA'
 import ComoFunciona from '@/features/landing/sections/ComoFunciona'
@@ -20,9 +19,9 @@ export default function LandingPage() {
 
   return (
     // Sistema "vidrio": fondo y tipografía propios de toda la landing,
-    // fijados una sola vez aquí — el resto del árbol hereda por cascada,
+    // fijados una sola vez aquí; el resto del árbol hereda por cascada,
     // igual que RutaProtegida.tsx en el dashboard y TarjetaAuth.tsx en
-    // login/registro. tinta/iris no aparecen en ningún hijo de este nodo.
+    // login/registro.
     <div className="min-h-screen bg-vidrio-bg text-vidrio-texto">
       <a href="#contenido" className="salto-al-contenido">
         Saltar al contenido
@@ -32,14 +31,9 @@ export default function LandingPage() {
 
       <main id="contenido">
         <Hero totalPreguntas={totalPreguntas} />
-        {catalogos && (
-          <FranjaDatos
-            puestos={catalogos.puestos.length}
-            preguntas={catalogos.preguntas_por_entrevista}
-            areas={catalogos.areas.length}
-            niveles={catalogos.niveles.length}
-          />
-        )}
+        {/* Sin franja de cifras: "3 puestos, 5 preguntas" con un contador animado
+            restaba credibilidad, y esos datos ya aparecen con su contexto en el
+            hero y en "Puestos". */}
         <ComoFunciona totalPreguntas={totalPreguntas} />
         <QueRecibes />
         {/* No depende del catálogo: sin él, la sección sigue explicando el módulo. */}

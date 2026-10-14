@@ -1,5 +1,5 @@
 import type { FechaISO } from './api'
-import type { Evaluacion } from './evaluacion'
+import type { BandaDeRubrica, CodigoDeCriterio, Evaluacion, Niveles } from './evaluacion'
 
 export type EstadoEntrevista = 'en_progreso' | 'finalizada' | 'abandonada'
 
@@ -30,6 +30,12 @@ export interface Entrevista {
    * pantallas lo redondean antes de mostrarlo.
    */
   puntuacion_promedio: number | null
+  /**
+   * Sobre cuántas preguntas se calculó `puntuacion_promedio`. En una
+   * abandonada es menor que `preguntas_previstas` y la nota es parcial.
+   */
+  preguntas_calificadas: number
+  preguntas_previstas: number
 }
 
 export interface Pregunta {
@@ -88,6 +94,37 @@ export interface RespuestaResponder {
 export interface RespuestaResultados {
   entrevista: Entrevista
   intercambios: Intercambio[]
+  /**
+   * El reporte consolidado. `null` mientras la entrevista sigue en curso
+   * —misma regla que las notas por pregunta— o si nada llegó a calificarse.
+   */
+  resumen: ResumenEntrevista | null
+}
+
+/** Calculado en el servidor a partir de las evaluaciones guardadas, sin IA. */
+export interface ResumenEntrevista {
+  /** Media simple de las notas; en una abandonada, solo de las respondidas. */
+  promedio: number
+  banda: BandaDeRubrica
+  banda_display: string
+  /**
+   * Nivel medio (sobre `rubrica.nivel_maximo`) de cada criterio. `null` si
+   * ninguna evaluación tiene niveles: son anteriores a la rúbrica por niveles.
+   */
+  criterios: Niveles | null
+  /** Sobre cuántas respuestas se calculó `criterios`. */
+  criterios_sobre: number
+  criterio_mas_debil: { codigo: CodigoDeCriterio; nombre: string } | null
+  /** La respuesta con peor nota: su área y su sugerencia son lo primero a trabajar. */
+  prioridad: {
+    numero: number
+    area: string
+    area_display: string
+    puntuacion: number
+    sugerencia: string
+  }
+  /** Diferencia con la entrevista finalizada anterior del mismo puesto y nivel. */
+  comparacion: { entrevista_id: number; diferencia: number } | null
 }
 
 export interface DatosIniciarEntrevista {

@@ -93,3 +93,21 @@ class TestDeAPI(TestCase):
     def tearDown(self):
         cache.clear()
         super().tearDown()
+
+
+def niveles_para(nota: int) -> dict[str, int]:
+    """Los niveles por criterio que producen exactamente `nota` con la fórmula.
+
+    Con niveles 0-4 solo existen 13 notas por respuesta (0, 8, 17, 25, 33, 42,
+    50, 58, 67, 75, 83, 92, 100). Pedir otra es un error del test, no algo que
+    redondear en silencio: así un escenario no promete una nota imposible.
+    """
+    from apps.evaluaciones.rubricas import NIVEL_MAXIMO, puntuacion_de
+
+    for suma in range(3 * NIVEL_MAXIMO + 1):
+        correccion = min(NIVEL_MAXIMO, suma)
+        completitud = min(NIVEL_MAXIMO, suma - correccion)
+        niveles = {"correccion": correccion, "completitud": completitud, "claridad": suma - correccion - completitud}
+        if puntuacion_de(niveles) == nota:
+            return niveles
+    raise ValueError(f"La nota {nota} no se puede obtener con la fórmula de niveles 0-{NIVEL_MAXIMO}")

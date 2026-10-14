@@ -24,7 +24,7 @@ export default function SidebarMarca({ plegado, onAlternarPlegado }: Props) {
         {!plegado && (
           <span className="min-w-0">
             <span className="block truncate font-serif text-sm font-semibold text-white">
-              Entrevistas Técnicas
+              Antesala
             </span>
             <span className="block truncate text-xs text-vidrio-sidebar-muted">
               Simulador con IA

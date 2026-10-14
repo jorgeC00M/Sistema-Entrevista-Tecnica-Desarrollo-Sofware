@@ -36,6 +36,8 @@ class FakeProveedorIA(ProveedorIA):
 
     nombre = "fake"
     modelo = "fake-1"
+    # No sale de la máquina: no hay a quién filtrar nada.
+    apto_para_datos_personales = True
 
     def __init__(self, fallar_en: int | None = None):
         self._fallar_en = fallar_en
@@ -96,10 +98,17 @@ class FakeProveedorIA(ProveedorIA):
         self._contar_llamada()
         return parsear_evaluacion(
             {
-                "puntuacion": 75,
+                # 3/3/3 da 75 con la fórmula: la misma nota que daba antes de
+                # que el evaluador pasara a niveles, para no mover los tests.
+                "niveles": {"correccion": 3, "completitud": 3, "claridad": 3},
                 "fortalezas": "Respuesta simulada con estructura adecuada.",
                 "debilidades": "Faltan detalles técnicos.",
                 "sugerencias": "Profundiza con un ejemplo concreto.",
+                "puntos_clave": [
+                    "Definir el concepto con precisión.",
+                    "Explicar cuándo conviene usarlo y cuándo no.",
+                    "Ilustrarlo con un ejemplo concreto.",
+                ],
             }
         )
 

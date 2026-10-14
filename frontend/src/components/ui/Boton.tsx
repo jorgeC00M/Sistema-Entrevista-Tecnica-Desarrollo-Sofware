@@ -15,10 +15,6 @@ const VARIANTES = {
   vidrio: 'bg-vidrio-acento text-white hover:bg-vidrio-acento-hover',
   // Acción secundaria sobre superficie clara: blanco con filete.
   'vidrio-secundario': 'bg-white text-vidrio-ink ring-1 ring-vidrio-linea hover:bg-vidrio-field',
-  // Sobre fondos oscuros o de color (hero, CTA final de la landing) — blanco translúcido en vez de sólido, para no competir con el
-  // botón blanco sólido que ya lleva la acción principal en esas mismas
-  // secciones.
-  'vidrio-glass': 'bg-white/10 text-white ring-1 ring-white/25 hover:bg-white/20',
 } as const
 
 export type VarianteDeBoton = keyof typeof VARIANTES

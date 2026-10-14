@@ -1,3 +1,5 @@
+import type { CodigoDeCriterio } from './evaluacion'
+
 /**
  * El catálogo es dato en tiempo de ejecución, no un tipo.
  *
@@ -37,6 +39,21 @@ export interface Catalogos {
   areas: Area[]
   /** Fuente única de la duración de una entrevista; el cliente no la asume. */
   preguntas_por_entrevista: number
+  /** La rúbrica con la que se califica, con los mismos descriptores que lee el evaluador. */
+  rubrica: Rubrica
+}
+
+export interface CriterioDeRubrica {
+  codigo: CodigoDeCriterio
+  nombre: string
+  peso: number
+  /** Uno por nivel: `descriptores[n]` describe el nivel `n`. */
+  descriptores: string[]
+}
+
+export interface Rubrica {
+  nivel_maximo: number
+  criterios: CriterioDeRubrica[]
 }
 
 /**

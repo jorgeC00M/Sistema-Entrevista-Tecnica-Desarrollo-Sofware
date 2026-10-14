@@ -1,27 +1,20 @@
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
-
 interface Props {
-  indice: string
   titulo: string
   descripcion: string
 }
 
 /**
- * Encabezado compacto compartido por las secciones de contenido de la
- * landing (Cómo funciona / Qué recibes / Revisa tu CV / Puestos): número de
- * fase en píldora, título en Fraunces y descripción, cerrado con una línea
- * inferior.
+ * Titular y entrada de una sección de la landing, alineados a la izquierda.
+ *
+ * Sin número de sección ni rótulo encima: las secciones no son pasos y el
+ * "01 / 02 / 03" era decoración sin significado, el patrón más reconocible de
+ * una landing de plantilla. El titular se sostiene solo.
  */
-export default function EncabezadoSeccion({ indice, titulo, descripcion }: Props) {
+export default function EncabezadoSeccion({ titulo, descripcion }: Props) {
   return (
-    <div className="mb-9 grid grid-cols-[auto_1fr] items-baseline gap-x-[18px] gap-y-[6px] border-b border-vidrio-linea pb-[22px] text-left">
-      <EtiquetaMono tono="marca" className="row-span-2 mt-1 self-start">
-        {indice}
-      </EtiquetaMono>
-      <h2 className="font-serif text-[clamp(1.5rem,2.2vw,1.9rem)] leading-[1.2] font-semibold tracking-[-0.01em] text-vidrio-ink">
-        {titulo}
-      </h2>
-      <p className="max-w-[640px] text-base leading-[1.55] text-vidrio-texto">{descripcion}</p>
+    <div className="mb-10 max-w-[62ch]">
+      <h2 className="font-serif text-seccion text-balance text-vidrio-ink">{titulo}</h2>
+      <p className="mt-4 text-entrada text-pretty text-vidrio-texto">{descripcion}</p>
     </div>
   )
 }

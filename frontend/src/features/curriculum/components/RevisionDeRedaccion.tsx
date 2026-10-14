@@ -32,7 +32,7 @@ export default function RevisionDeRedaccion({ revision }: { revision: RevisionIA
             <EtiquetaMono tono="suelto">{ETIQUETA_DE_TIPO[tipo]}</EtiquetaMono>
             <p className="mt-0.5 text-sm">
               <span className="text-error-texto line-through">{original}</span>
-              <span className="mx-1.5 text-vidrio-muted" aria-hidden>
+              <span className="mx-1.5 text-vidrio-tenue" aria-hidden>
                 →
               </span>
               <span className="sr-only">se corrige como</span>
