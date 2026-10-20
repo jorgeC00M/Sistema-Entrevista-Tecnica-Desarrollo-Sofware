@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from importlib import import_module
 
-from .base import ProveedorIA, RevisorDeCV
+from .base import AnalizadorDeConvocatoria, ProveedorIA, RevisorDeCV
 from .exceptions import ProveedorNoConfigurado
 
 # nombre -> (módulo, clase). El import es diferido para no exigir el SDK de
@@ -79,6 +79,26 @@ def get_revisor_de_cv(nombre: str | None = None) -> RevisorDeCV:
     from .cadena import ProveedorEnCadena
 
     return ProveedorEnCadena([clase() for clase in aptas])
+
+
+def get_analizador_de_convocatoria(nombre: str | None = None) -> AnalizadorDeConvocatoria:
+    """El proveedor configurado, si sabe analizar convocatorias.
+
+    Mismo registro y configuración que `get_proveedor()`. A diferencia del CV,
+    no se filtra por `apto_para_datos_personales`: un aviso de trabajo no es un
+    dato personal del candidato y llega enmascarado, así que DeepSeek y
+    OpenRouter también sirven.
+    """
+    nombres = _nombres(nombre)
+    clases = [c for c in (_clase(n) for n in nombres) if callable(getattr(c, "analizar_convocatoria", None))]
+    if not clases:
+        raise ProveedorNoDisponible(f"Ningún proveedor de '{','.join(nombres)}' sabe analizar convocatorias.")
+    if len(clases) == 1:
+        return clases[0]()
+
+    from .cadena import ProveedorEnCadena
+
+    return ProveedorEnCadena([clase() for clase in clases])
 
 
 def _nombres(nombre: str | None) -> list[str]:

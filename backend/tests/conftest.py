@@ -42,7 +42,9 @@ def crear_usuario(email: str = "egresado@example.com", **extra) -> Usuario:
     return Usuario.objects.create_user(email=email, **extra)
 
 
-def crear_entrevista(usuario, puesto="full_stack", nivel="basico", tecnologia=None, **extra):
+def crear_entrevista(
+    usuario, puesto="full_stack", nivel="junior", tecnologia=None, segunda_tecnologia=None, **extra
+):
     """Entrevista con el catálogo ya resuelto desde sus códigos.
 
     Centraliza la forma del modelo: cuando la cabecera cambia —como al pasar de
@@ -56,6 +58,7 @@ def crear_entrevista(usuario, puesto="full_stack", nivel="basico", tecnologia=No
         puesto=puesto_de(puesto),
         nivel=nivel_de(nivel),
         tecnologia=tecnologia_de(tecnologia) if tecnologia else None,
+        segunda_tecnologia=tecnologia_de(segunda_tecnologia) if segunda_tecnologia else None,
         **extra,
     )
 

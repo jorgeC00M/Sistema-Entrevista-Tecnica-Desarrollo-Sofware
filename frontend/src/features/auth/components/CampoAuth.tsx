@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import type { InputHTMLAttributes, ReactNode } from 'react'
 
-import Icono from '@/components/ui/Icono'
+import BotonIcono from '@/components/ui/BotonIcono'
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'className'> {
   icono: ReactNode
@@ -44,11 +44,9 @@ export default function CampoAuth({
     // así la distancia al campo siguiente es la misma con o sin mensaje de
     // error debajo.
     <div className="mb-3.5">
-      <label
-        className={`flex h-[52px] items-center gap-3 rounded-[10px] border bg-vidrio-field px-4 transition-colors focus-within:border-vidrio-acento ${
-          error ? 'border-error-texto' : 'border-transparent'
-        }`}
-      >
+      {/* `campo` da caja, foco (`:focus-within`) y el borde de error cuando el
+          input interno tiene `aria-invalid`: el mismo tratamiento que todo campo. */}
+      <label className="campo flex h-12 items-center gap-3 pr-2 pl-4">
         <span className="shrink-0 text-vidrio-texto" aria-hidden="true">
           {icono}
         </span>
@@ -57,22 +55,20 @@ export default function CampoAuth({
           aria-label={ariaLabel}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? idError : undefined}
-          className="min-w-0 flex-1 border-0 bg-transparent font-sans text-[0.95rem] text-vidrio-ink outline-none placeholder:text-vidrio-muted"
+          className="min-w-0 flex-1 border-0 bg-transparent text-cuerpo text-vidrio-ink outline-none placeholder:text-vidrio-muted"
           {...props}
         />
         {alternable && (
-          <button
-            type="button"
-            onClick={() => setMostrar((v) => !v)}
+          <BotonIcono
+            icono={mostrar ? 'ojo-cerrado' : 'ojo'}
             aria-label={mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            className="grid shrink-0 place-items-center rounded p-1 text-vidrio-texto hover:text-vidrio-ink"
-          >
-            <Icono nombre={mostrar ? 'ojo-cerrado' : 'ojo'} />
-          </button>
+            tamano="sm"
+            onClick={() => setMostrar((v) => !v)}
+          />
         )}
       </label>
       {error && (
-        <p id={idError} className="mt-1 text-left text-[0.8rem] text-error-texto">
+        <p id={idError} className="mt-1 text-left text-meta text-error-texto">
           {error}
         </p>
       )}

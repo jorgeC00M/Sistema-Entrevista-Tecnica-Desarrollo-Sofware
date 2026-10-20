@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode, TouchEvent } from 'react'
 
-import Icono from '@/components/ui/Icono'
+import BotonIcono from '@/components/ui/BotonIcono'
 import { useCarrusel } from '@/features/landing/hooks/useCarrusel'
 
 interface Props<T> {
@@ -123,7 +123,7 @@ export default function CarruselDeTarjetas<T>({
                 key={clave(elemento)}
                 className={`relative shrink-0 overflow-hidden rounded-vidrio border bg-vidrio-card p-7 backdrop-blur-[18px] transition-all duration-500 ${
                   actual
-                    ? '-translate-y-1.5 border-vidrio-acento/45 bg-white/80 shadow-[0_26px_50px_-24px_rgba(28,47,94,0.45)]'
+                    ? '-translate-y-1.5 border-vidrio-acento/45 bg-white/80 shadow-flotante'
                     : 'border-vidrio-borde'
                 }`}
                 style={{ width: anchoTarjeta > 0 ? `${anchoTarjeta}px` : undefined }}
@@ -149,7 +149,7 @@ export default function CarruselDeTarjetas<T>({
                   aria-label={`Ir al grupo ${i + 1}`}
                   aria-selected={i === indice}
                   onClick={() => ir(i)}
-                  className={`relative h-1.5 overflow-hidden rounded-full bg-vidrio-linea transition-[width] ${
+                  className={`foco-anillo relative h-1.5 overflow-hidden rounded-full bg-vidrio-linea transition-[width] ${
                     i === indice ? 'w-12' : 'w-7'
                   }`}
                 >
@@ -163,22 +163,20 @@ export default function CarruselDeTarjetas<T>({
               ))}
             </div>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={anterior}
+              <BotonIcono
+                icono="chevron-izquierda"
                 aria-label={`${nombre} anterior`}
-                className="grid h-11 w-11 place-items-center rounded-control border border-vidrio-borde bg-vidrio-field text-vidrio-ink transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                <Icono nombre="chevron-izquierda" className="h-[18px] w-[18px]" />
-              </button>
-              <button
-                type="button"
-                onClick={siguiente}
+                tono="contorno"
+                tamano="lg"
+                onClick={anterior}
+              />
+              <BotonIcono
+                icono="chevron-derecha"
                 aria-label={`${nombre} siguiente`}
-                className="grid h-11 w-11 place-items-center rounded-control border border-vidrio-borde bg-vidrio-field text-vidrio-ink transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                <Icono nombre="chevron-derecha" className="h-[18px] w-[18px]" />
-              </button>
+                tono="contorno"
+                tamano="lg"
+                onClick={siguiente}
+              />
             </div>
           </div>
         )}

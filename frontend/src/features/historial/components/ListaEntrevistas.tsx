@@ -26,10 +26,12 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
             {indice > 0 && <Divisor />}
             <Link
               to={destino}
-              className="flex items-center justify-between gap-3 px-4 py-4 transition hover:bg-vidrio-field"
+              className="flex flex-col gap-2 px-4 py-4 transition hover:bg-vidrio-field sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
-              <div>
-                <p className="text-sm font-medium text-vidrio-ink">
+              {/* `min-w-0` + `break-words`: un puesto largo se parte en vez de
+                  empujar la fila más allá del ancho de la pantalla. */}
+              <div className="min-w-0">
+                <p className="text-sm font-medium break-words text-vidrio-ink">
                   {entrevista.puesto_display} · {entrevista.nivel_display}
                   {entrevista.tecnologia_display && <> · {entrevista.tecnologia_display}</>}
                 </p>
@@ -37,7 +39,7 @@ export default function ListaEntrevistas({ entrevistas }: Props) {
                   {new Date(entrevista.fecha_inicio).toLocaleString('es-BO')}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3">
                 {entrevista.puntuacion_promedio !== null && (
                   <span className="font-mono-vidrio text-sm font-semibold text-vidrio-ink">
                     {Math.round(entrevista.puntuacion_promedio)}

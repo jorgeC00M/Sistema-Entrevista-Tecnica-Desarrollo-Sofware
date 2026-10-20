@@ -18,6 +18,7 @@ export function useEntrevista(id: string) {
   const [totalPreguntas, setTotalPreguntas] = useState(0)
   const [puestoDisplay, setPuestoDisplay] = useState('')
   const [nivelDisplay, setNivelDisplay] = useState('')
+  const [desdeConvocatoria, setDesdeConvocatoria] = useState(false)
   const [cargandoInicial, setCargandoInicial] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
@@ -65,6 +66,7 @@ export function useEntrevista(id: string) {
         setTotalPreguntas(estado.total_preguntas)
         setPuestoDisplay(estado.entrevista.puesto_display)
         setNivelDisplay(estado.entrevista.nivel_display)
+        setDesdeConvocatoria(estado.entrevista.desde_convocatoria)
       } catch (err: unknown) {
         if (!cancelado) {
           setError(err instanceof ErrorAPI ? err.message : 'No se pudo cargar la entrevista.')
@@ -125,6 +127,7 @@ export function useEntrevista(id: string) {
     totalPreguntas,
     puestoDisplay,
     nivelDisplay,
+    desdeConvocatoria,
     cargandoInicial,
     enviando,
     error,

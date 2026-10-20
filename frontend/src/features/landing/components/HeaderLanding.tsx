@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import Boton from '@/components/ui/Boton'
+import { clasesDeBoton } from '@/components/ui/estilosDeBoton'
 import Icono from '@/components/ui/Icono'
 import Wrap from '@/features/landing/components/Wrap'
 
@@ -65,11 +65,14 @@ export default function HeaderLanding() {
         <div
           className={`flex items-center gap-5 rounded-vidrio border py-2.5 pr-2.5 pl-4 transition-[background-color,border-color,box-shadow] duration-[350ms] ${
             sobreHero
-              ? 'border-white/20 bg-white/10 text-white shadow-[0_10px_30px_-18px_rgba(0,0,0,0.4)] backdrop-blur-md'
-              : 'border-[rgba(255,255,255,.6)] bg-[rgba(232,237,245,.55)] text-vidrio-ink shadow-[0_8px_24px_-18px_rgba(28,47,94,.25)] backdrop-blur-[16px] backdrop-saturate-[1.4]'
+              ? 'border-white/20 bg-white/10 text-white shadow-sobre-oscuro-sutil backdrop-blur-md'
+              : 'border-vidrio-reflejo bg-vidrio-cabecera text-vidrio-ink shadow-cabecera backdrop-blur-[16px] backdrop-saturate-[1.4]'
           }`}
         >
-          <Link to="/" className="flex shrink-0 items-center gap-2 font-semibold">
+          <Link
+            to="/"
+            className={`flex shrink-0 items-center gap-2 rounded-control font-semibold ${sobreHero ? 'foco-claro' : 'foco-anillo'}`}
+          >
             <span className="flex h-[34px] w-[34px] items-center justify-center rounded-control bg-white text-vidrio-acento">
               <Icono nombre="marca" className="h-[18px] w-[18px]" />
             </span>
@@ -81,7 +84,7 @@ export default function HeaderLanding() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className={`rounded-control border px-4 py-2 text-sm transition-colors duration-200 ${
+                className={`rounded-control border px-4 py-2 text-sm transition-colors duration-200 ${sobreHero ? 'foco-claro' : 'foco-anillo'} ${
                   seccionActiva === s.id
                     ? sobreHero
                       ? 'border-white/25 bg-white/15 text-white'
@@ -101,25 +104,26 @@ export default function HeaderLanding() {
               to="/login"
               className={`hidden rounded-control px-3.5 py-2.5 text-sm font-medium transition-colors duration-200 sm:block ${
                 sobreHero
-                  ? 'text-white/90 hover:bg-white/10'
-                  : 'text-vidrio-ink hover:bg-vidrio-acento-suave'
+                  ? 'foco-claro text-white/90 hover:bg-white/10'
+                  : 'foco-anillo text-vidrio-ink hover:bg-vidrio-acento-suave'
               }`}
             >
               Iniciar sesión
             </Link>
-            <Link to="/registro">
-              <Boton
-                variante={sobreHero ? 'vidrio-secundario' : 'vidrio'}
-                forma="pildora"
-                tamano="sm"
-                className="group"
-              >
-                Crear cuenta
-                <Icono
-                  nombre="flecha-diagonal"
-                  className="h-[17px] w-[17px] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                />
-              </Boton>
+            {/* Un enlace con apariencia de botón, no un <button> dentro de un <a>. */}
+            <Link
+              to="/registro"
+              className={clasesDeBoton({
+                variante: sobreHero ? 'secundario' : 'primario',
+                tamano: 'sm',
+                className: 'group',
+              })}
+            >
+              Crear cuenta
+              <Icono
+                nombre="flecha-diagonal"
+                className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
             </Link>
           </div>
         </div>

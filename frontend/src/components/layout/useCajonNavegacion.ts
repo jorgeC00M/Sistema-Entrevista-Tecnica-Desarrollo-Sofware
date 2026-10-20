@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { DESDE_TABLET } from '@/hooks/useMediaQuery'
 
 /**
  * Cajón de navegación para pantallas estrechas.
@@ -17,6 +18,17 @@ export function useCajonNavegacion() {
   const abrir = useCallback(() => setAbierto(true), [])
   const cerrar = useCallback(() => setAbierto(false), [])
   const alternar = useCallback(() => setAbierto((v) => !v), [])
+
+  // Al ensanchar a tablet aparece la barra fija y el cajón deja de pintarse
+  // (`md:hidden`): se cierra para no dejar el foco atrapado en algo invisible.
+  useEffect(() => {
+    const lista = window.matchMedia(DESDE_TABLET)
+    const alCambiar = (evento: MediaQueryListEvent) => {
+      if (evento.matches) setAbierto(false)
+    }
+    lista.addEventListener('change', alCambiar)
+    return () => lista.removeEventListener('change', alCambiar)
+  }, [])
 
   const { contenedorRef: cajonRef, disparadorRef } = useFocusTrap<HTMLElement, HTMLButtonElement>(
     abierto,

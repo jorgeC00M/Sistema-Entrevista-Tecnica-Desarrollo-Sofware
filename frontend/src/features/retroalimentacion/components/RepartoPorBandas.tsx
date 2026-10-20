@@ -24,7 +24,7 @@ export default function RepartoPorBandas({ areas }: Props) {
       <div className="mt-4 space-y-5">
         {areas.map((area) => (
           <div key={area.area}>
-            <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
               <span className="font-medium text-vidrio-ink">{area.area_display}</span>
               <span className="text-xs text-vidrio-muted">
                 {area.total_respuestas} respuesta{area.total_respuestas === 1 ? '' : 's'} · promedio{' '}

@@ -58,7 +58,7 @@ class PrivacidadTest(TestCase):
         )
         proveedor = ProveedorEspiaIA()
 
-        entrevista = servicio.iniciar(usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        entrevista = servicio.iniciar(usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
         servicio.responder(entrevista, "Mi respuesta a la primera pregunta", proveedor=proveedor)
 
         texto_completo = " ".join(proveedor.textos_recibidos)

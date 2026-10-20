@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 
+import { clasesDeBoton } from '@/components/ui/estilosDeBoton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
+import Tarjeta from '@/components/ui/Tarjeta'
+import { destinoDePractica } from '@/features/curriculum/practica'
 import type { RevisionIA } from '@/types/curriculum'
 
 /**
@@ -21,10 +24,10 @@ import type { RevisionIA } from '@/types/curriculum'
 export default function PreguntasProbables({ revision }: { revision: RevisionIA | null }) {
   const preguntas = revision?.preguntas ?? []
   const puesto = revision?.puesto_sugerido
-  const destino = puesto ? `/nueva-entrevista?puesto=${encodeURIComponent(puesto)}` : '/nueva-entrevista'
+  const destino = destinoDePractica(revision)
 
   return (
-    <section className="rounded-vidrio bg-vidrio-field p-5">
+    <Tarjeta como="section" className="p-5">
       {preguntas.length > 0 && (
         <>
           <div className="flex flex-wrap items-center gap-2">
@@ -61,15 +64,12 @@ export default function PreguntasProbables({ revision }: { revision: RevisionIA 
             ? 'Practica la entrevista técnica del puesto que mejor encaja con tu CV.'
             : 'Con el CV listo, el siguiente paso es practicar la entrevista técnica.'}
         </p>
-        {/* Un `Link` con las clases del botón, como en `SidebarAccionPrincipal`:
-            envolver un `Boton` en un `Link` anidaría un `<button>` dentro de un `<a>`. */}
-        <Link
-          to={destino}
-          className="inline-flex shrink-0 items-center justify-center rounded-full bg-vidrio-acento px-4 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-vidrio-acento-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
-        >
+        {/* Un enlace con las clases de `Boton` (`clasesDeBoton`): envolver un
+            `Boton` en un `Link` anidaría un botón dentro de un enlace. */}
+        <Link to={destino} className={clasesDeBoton({ className: 'shrink-0' })}>
           Practicar la entrevista
         </Link>
       </div>
-    </section>
+    </Tarjeta>
   )
 }

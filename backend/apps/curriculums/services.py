@@ -13,6 +13,7 @@ from dataclasses import asdict
 from datetime import date
 
 from django.db import transaction
+from django.http import Http404
 
 from integrations.documentos import brecha as brecha_de_requisitos
 from integrations.documentos import vinetas as analisis_de_vinetas
@@ -20,7 +21,7 @@ from integrations.documentos.ats import IDIOMA_DISTINTO, VERSION_DE_REGLAS, anal
 from integrations.documentos.extractor import DocumentoExtraido, extraer
 from integrations.documentos.terminos import encontrar
 
-from . import revision
+from . import revision, selectors
 from .models import AnalisisATS, Curriculum, hash_de_texto
 
 
@@ -29,7 +30,6 @@ def analizar(
     contenido: bytes,
     nombre_archivo: str,
     convocatoria: str = "",
-    revisor=None,
 ) -> Curriculum:
     """Extrae, verifica y guarda. Devuelve el currículum con su análisis.
 
@@ -49,11 +49,12 @@ def analizar(
     `FormatoNoSoportado`, `DocumentoCorrupto` y `DocumentoDemasiadoGrande` suben
     sin capturarse; las traduce `apps.common.exceptions.manejador_de_excepciones`.
 
-    Las sugerencias de IA (`revision.py`) se piden **después** de guardar el
-    diagnóstico y fuera de la transacción, igual que la evaluación en
-    `entrevistas.services.responder()`: un proveedor lento no debe tener una fila
-    bloqueada, y si falla el diagnóstico ya está a salvo. `revisor` se inyecta en
-    los tests; este módulo no conoce la capa de IA.
+    Las sugerencias de IA **no** se piden aquí: van en otra petición,
+    `revisar()`. El diagnóstico es medición pura y responde en un momento; la IA
+    puede tardar decenas de segundos (proveedor lento, cadena de respaldo,
+    arranque en frío). Juntas en una petición, el cliente agotaba su tiempo y
+    mostraba "no se pudo analizar" sobre un análisis que sí se había guardado.
+    Por eso un análisis nuevo sale con `revision_ia = None`: aún no pedida.
     """
     documento = extraer(contenido, nombre_archivo)
     huella_cv = hash_de_texto(documento.huella)
@@ -70,10 +71,8 @@ def analizar(
     )
     analisis_previo = getattr(existente, "analisis", None) if existente else None
     if analisis_previo is not None and analisis_previo.version_reglas >= VERSION_DE_REGLAS:
-        # El diagnóstico vigente no se repite; las sugerencias, solo si nunca se
-        # obtuvieron o el proveedor falló la vez anterior.
-        if revision.necesita_revision(analisis_previo.revision_ia):
-            _guardar_revision(analisis_previo, documento, convocatoria, revisor)
+        # El diagnóstico vigente no se repite. Las sugerencias que falten las
+        # pide el cliente después, con `revisar()`.
         return existente
 
     with transaction.atomic():
@@ -96,15 +95,43 @@ def analizar(
             )
         analisis, _ = AnalisisATS.objects.update_or_create(
             curriculum=curriculum,
-            defaults=construir_analisis(documento, convocatoria, date.today()),
+            # Un diagnóstico recalculado deja sin sugerencias: las anteriores se
+            # anclaban a viñetas y requisitos que pueden haber cambiado.
+            defaults={**construir_analisis(documento, convocatoria, date.today()), "revision_ia": None},
         )
-
-    _guardar_revision(analisis, documento, convocatoria, revisor)
 
     # La relación inversa puede tener cacheado el análisis viejo, que vino con
     # `select_related`; se reemplaza para que la respuesta muestre el nuevo.
     curriculum.analisis = analisis
     return curriculum
+
+
+def revisar(usuario, pk: int, revisor=None) -> dict:
+    """Las sugerencias de IA de un análisis ya guardado, pidiéndolas si hace falta.
+
+    El archivo nunca se guardó, pero lo que la revisión usa sí: el texto que
+    lee el ATS, el formato y las páginas (de donde sale `tiene_capa_de_texto`).
+    Con eso se reconstruye el documento y no hay que volver a subir nada. Las
+    partes ocultas (cuadros de texto, encabezados) no se guardan, y no hacen
+    falta: nunca se envían a la IA.
+
+    Si ya hay una revisión vigente se devuelve sin llamar al proveedor; solo se
+    reintenta la que nunca se pidió o la que falló (`necesita_revision`). Corre
+    fuera de toda transacción, como la evaluación de `responder()`: un
+    proveedor lento no debe tener una fila bloqueada. `revisor` se inyecta en
+    los tests; este módulo no conoce la capa de IA.
+    """
+    curriculum = selectors.curriculum_del_usuario(usuario, pk)
+    analisis = getattr(curriculum, "analisis", None)
+    if analisis is None:
+        # Un alta que quedó a medias: no hay diagnóstico al que sugerir nada.
+        raise Http404("Este currículum todavía no tiene un análisis.")
+    if not revision.necesita_revision(analisis.revision_ia):
+        return analisis.revision_ia
+
+    documento = DocumentoExtraido(texto=curriculum.texto, formato=curriculum.formato, paginas=curriculum.paginas)
+    _guardar_revision(analisis, documento, curriculum.convocatoria, revisor)
+    return analisis.revision_ia
 
 
 def _guardar_revision(analisis: AnalisisATS, documento: DocumentoExtraido, convocatoria: str, revisor) -> None:

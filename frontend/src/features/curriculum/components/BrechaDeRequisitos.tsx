@@ -80,11 +80,15 @@ function FilaDeRequisito({
       >
         <Icono nombre={aspecto.icono} className="h-3 w-3" aria-hidden />
       </span>
-      <span className="w-32 shrink-0 font-mono-vidrio text-sm text-vidrio-ink">{etiqueta}</span>
-      <span className="min-w-0 flex-1 text-sm text-vidrio-texto">
-        {nota}
-        {aclaracion && <span className="mt-0.5 block text-xs text-vidrio-muted">{aclaracion}</span>}
-        {sugerencia && <SugerenciaIA>{sugerencia}</SugerenciaIA>}
+      {/* En móvil se apilan: con una columna fija de 128 px, la sugerencia de
+          IA quedaba en una columna de una palabra por línea. */}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:gap-3">
+        <span className="font-mono-vidrio text-sm text-vidrio-ink sm:w-32 sm:shrink-0">{etiqueta}</span>
+        <span className="min-w-0 flex-1 text-sm text-vidrio-texto">
+          {nota}
+          {aclaracion && <span className="mt-0.5 block text-xs text-vidrio-muted">{aclaracion}</span>}
+          {sugerencia && <SugerenciaIA>{sugerencia}</SugerenciaIA>}
+        </span>
       </span>
     </li>
   )

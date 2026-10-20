@@ -19,16 +19,14 @@ interface Props {
 }
 
 /**
- * Chrome compartido de login/registro — réplica valor por valor de
- * `design/login-card.html` (Fraunces + Figtree, paleta propia del mockup,
- * tarjeta de vidrio), deliberadamente aislada del resto del sistema de
- * diseño (`tinta`/`iris`, IBM Plex): ningún color, radio o fuente de aquí
- * viene de un token compartido, así que nada de lo que se toque en
- * `styles/index.css` o en `components/ui/` puede alterar esta pantalla, y
- * viceversa.
+ * Chrome compartido de login/registro: tarjeta de vidrio con titular serif,
+ * sobre los mismos tokens que el resto del producto (`shadow-tarjeta`,
+ * `rounded-tarjeta`, `text-titulo-auth`). Antes copiaba el mockup con valores
+ * escritos a mano; ahora un cambio de paleta en `styles/tokens.css` la
+ * alcanza como a cualquier otra pantalla.
  *
- * `LoginPage`/`RegistroPage` son solo composición sobre este componente —
- * no pueden divergir visualmente entre sí porque comparten una única
+ * `LoginPage`/`RegistroPage` son solo composición sobre este componente: no
+ * pueden divergir visualmente entre sí porque comparten una única
  * implementación del chrome.
  */
 export default function TarjetaAuth({
@@ -45,12 +43,10 @@ export default function TarjetaAuth({
 }: Props) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-vidrio-bg p-4 sm:p-6">
-      <div className="w-full max-w-[440px] rounded-[22px] border border-vidrio-borde bg-vidrio-card px-6 pt-9 pb-8 text-center font-sans text-vidrio-texto shadow-[0_20px_50px_-20px_rgba(28,47,94,0.25)] backdrop-blur-[18px] backdrop-saturate-[1.4] sm:px-10">
+      <div className="w-full max-w-[440px] rounded-tarjeta border border-vidrio-borde bg-vidrio-card px-6 pt-9 pb-8 text-center text-vidrio-texto shadow-tarjeta backdrop-blur-[18px] backdrop-saturate-[1.4] sm:px-10">
         <Icono nombre="marca" className="mx-auto mb-[14px] h-9 w-9 text-vidrio-acento" />
 
-        <h1 className="font-serif text-[2rem] leading-[1.1] font-semibold tracking-[-0.01em] text-vidrio-ink sm:text-[2.6rem]">
-          {titulo}
-        </h1>
+        <h1 className="font-serif text-titulo-auth text-vidrio-ink">{titulo}</h1>
         <p className="mt-[10px] mb-7 text-base">{subtitulo}</p>
 
         {error && (
@@ -61,10 +57,10 @@ export default function TarjetaAuth({
 
         {children}
 
-        <div className="mt-6 mb-[18px] flex items-center gap-[14px] text-[0.82rem] text-vidrio-muted">
-          <span className="h-px flex-1 bg-[rgba(28,47,94,0.12)]" />
+        <div className="mt-6 mb-[18px] flex items-center gap-[14px] text-meta text-vidrio-muted">
+          <span className="h-px flex-1 bg-vidrio-linea" />
           <span>o</span>
-          <span className="h-px flex-1 bg-[rgba(28,47,94,0.12)]" />
+          <span className="h-px flex-1 bg-vidrio-linea" />
         </div>
 
         <BotonGoogle
@@ -73,9 +69,9 @@ export default function TarjetaAuth({
           etiquetaRespaldo={etiquetaGoogle}
         />
 
-        <p className="mt-6 text-[0.88rem]">
+        <p className="mt-6 text-sm">
           {pregunta}
-          <Link to={rutaEnlace} className="ml-1.5 font-semibold text-vidrio-acento hover:underline">
+          <Link to={rutaEnlace} className="foco-anillo ml-1.5 rounded-chip font-semibold text-vidrio-acento hover:underline">
             {textoEnlace}
           </Link>
         </p>

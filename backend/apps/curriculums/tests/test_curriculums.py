@@ -59,6 +59,9 @@ class BaseDeCurriculums(APITestCase):
             "/api/curriculums/", {"archivo": _subida(nombre), **extra}, format="multipart"
         )
 
+    def pedir_revision(self, pk: int):
+        return self.client.post(f"/api/curriculums/{pk}/revision/")
+
 
 class SoloElCurriculumTest(BaseDeCurriculums):
     """La ruta sin convocatoria, que no debe sentirse como una versión recortada."""
@@ -250,50 +253,75 @@ class _RevisorQueFalla:
 
 
 class RevisionConIATest(BaseDeCurriculums):
-    """La IA es complementaria: nunca tumba el diagnóstico."""
+    """La IA es complementaria y va en otra petición: nunca retrasa ni tumba el
+    diagnóstico."""
+
+    def test_el_alta_devuelve_el_diagnostico_sin_llamar_a_la_ia(self):
+        espia = _RevisorQueFalla()
+
+        with mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=espia):
+            respuesta = self.subir("una_columna.pdf")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(espia.llamadas, 0)
+        self.assertEqual(respuesta.data["analisis"]["parseabilidad"], "8/8")
+        self.assertIsNone(respuesta.data["analisis"]["revision_ia"])
 
     def test_con_el_proveedor_por_defecto_llegan_sugerencias_rotuladas(self):
-        revision_ia = self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND).data["analisis"]["revision_ia"]
+        pk = self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND).data["id"]
+
+        revision_ia = self.pedir_revision(pk).data["revision_ia"]
 
         self.assertEqual(revision_ia["estado"], "ok")
         self.assertEqual(revision_ia["puesto_sugerido"], "backend")
         self.assertTrue(revision_ia["preguntas"])
+        # Queda guardada: abrir el análisis la trae sin pedirla otra vez.
+        detalle = self.client.get(f"/api/curriculums/{pk}/").data
+        self.assertEqual(detalle["analisis"]["revision_ia"]["estado"], "ok")
 
     def test_un_proveedor_caido_no_impide_el_diagnostico(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+
         with (
             mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=_RevisorQueFalla()),
             self.assertLogs("apps.curriculums.revision", level="ERROR"),
         ):
-            respuesta = self.subir("una_columna.pdf")
+            respuesta = self.pedir_revision(pk)
 
-        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
-        analisis = respuesta.data["analisis"]
-        self.assertEqual(analisis["parseabilidad"], "8/8")
-        self.assertEqual(analisis["revision_ia"]["estado"], "no_disponible")
-        self.assertTrue(analisis["revision_ia"]["motivo"])
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data["revision_ia"]["estado"], "no_disponible")
+        self.assertTrue(respuesta.data["revision_ia"]["motivo"])
 
-    def test_resubir_reintenta_solo_las_sugerencias_que_fallaron(self):
+    def test_pedirla_otra_vez_reintenta_solo_si_fallo(self):
+        pk = self.subir("una_columna.pdf").data["id"]
         with (
             mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=_RevisorQueFalla()),
             self.assertLogs("apps.curriculums.revision", level="ERROR"),
         ):
-            primera = self.subir("una_columna.pdf")
+            self.pedir_revision(pk)
 
-        segunda = self.subir("una_columna.pdf")
+        segunda = self.pedir_revision(pk)
 
-        self.assertEqual(primera.data["id"], segunda.data["id"])
+        self.assertEqual(segunda.data["revision_ia"]["estado"], "ok")
         self.assertEqual(AnalisisATS.objects.count(), 1)
-        self.assertEqual(segunda.data["analisis"]["revision_ia"]["estado"], "ok")
 
     def test_sugerencias_ya_obtenidas_no_vuelven_a_pedirse(self):
-        self.subir("una_columna.pdf")
+        pk = self.subir("una_columna.pdf").data["id"]
+        self.pedir_revision(pk)
         caido = _RevisorQueFalla()
 
         with mock.patch("apps.curriculums.revision.get_revisor_de_cv", return_value=caido):
-            segunda = self.subir("una_columna.pdf")
+            segunda = self.pedir_revision(pk)
 
         self.assertEqual(caido.llamadas, 0)
-        self.assertEqual(segunda.data["analisis"]["revision_ia"]["estado"], "ok")
+        self.assertEqual(segunda.data["revision_ia"]["estado"], "ok")
+
+    def test_la_revision_de_otro_usuario_es_404(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+        otro = Usuario.objects.create_user(email="otro@example.com", password="clave-segura-123")
+        self.client.force_authenticate(otro)
+
+        self.assertEqual(self.pedir_revision(pk).status_code, status.HTTP_404_NOT_FOUND)
 
 
 class CacheTest(BaseDeCurriculums):

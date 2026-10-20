@@ -8,6 +8,9 @@ interface Props {
   opciones: Opcion[]
   seleccionado: string
   onSeleccionar: (valor: string) => void
+  /** La leyenda sigue existiendo para el lector de pantalla, pero no se ve. */
+  ocultarEtiqueta?: boolean
+  deshabilitado?: boolean
   className?: string
 }
 
@@ -21,11 +24,13 @@ export default function ControlSegmentado({
   opciones,
   seleccionado,
   onSeleccionar,
+  ocultarEtiqueta = false,
+  deshabilitado = false,
   className = '',
 }: Props) {
   return (
     <fieldset className={className}>
-      <legend className="mb-2 text-sm font-medium text-vidrio-ink">{etiqueta}</legend>
+      <legend className={ocultarEtiqueta ? 'sr-only' : 'mb-2 text-sm font-medium text-vidrio-ink'}>{etiqueta}</legend>
       <div className="flex gap-1 rounded-full bg-vidrio-field p-1">
         {opciones.map((opcion) => {
           const activo = seleccionado === opcion.valor
@@ -34,8 +39,9 @@ export default function ControlSegmentado({
               key={opcion.valor}
               type="button"
               onClick={() => onSeleccionar(opcion.valor)}
+              disabled={deshabilitado}
               aria-pressed={activo}
-              className={`flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento ${
+              className={`flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-150 foco-anillo disabled:cursor-not-allowed disabled:opacity-50 ${
                 activo
                   ? 'bg-vidrio-acento text-white shadow-sm'
                   : 'text-vidrio-texto hover:text-vidrio-ink'

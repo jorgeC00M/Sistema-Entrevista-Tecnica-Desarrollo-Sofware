@@ -1,4 +1,4 @@
-import type { Catalogos, CatalogosPublicos } from '@/types/catalogos'
+import type { CatalogoDePuestos, Catalogos, CatalogosPublicos } from '@/types/catalogos'
 
 import { peticion } from './client'
 
@@ -22,4 +22,12 @@ export function obtenerCatalogosPublicos(signal?: AbortSignal): Promise<Catalogo
     autenticado: false,
     signal,
   })
+}
+
+/**
+ * Puestos con sus tecnologías (cada una con su capa), niveles, áreas y
+ * duración: todo lo que necesita la pantalla de nueva entrevista.
+ */
+export function obtenerPuestos(signal?: AbortSignal): Promise<CatalogoDePuestos> {
+  return peticion<CatalogoDePuestos>('/api/catalogos/puestos/', { signal })
 }

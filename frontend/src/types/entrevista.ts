@@ -10,11 +10,11 @@ export interface Entrevista {
   puesto_display: string
   nivel: string
   nivel_display: string
-  /**
-   * `null` cuando el candidato no fijó un stack, que es una respuesta legítima
-   * y distinta de una tecnología llamada "indiferente".
-   */
+  /** `null` solo en entrevistas anteriores al catálogo por puesto. */
   tecnologia: string | null
+  /** La de backend en un puesto con capas (Full Stack); si no, `null`. */
+  segunda_tecnologia: string | null
+  /** "React", o "React + Node.js" con dos capas. */
   tecnologia_display: string | null
   estado: EstadoEntrevista
   estado_display: string
@@ -36,6 +36,8 @@ export interface Entrevista {
    */
   preguntas_calificadas: number
   preguntas_previstas: number
+  /** Se inició desde una convocatoria: sus requisitos orientaron las preguntas. */
+  desde_convocatoria: boolean
 }
 
 export interface Pregunta {
@@ -130,6 +132,10 @@ export interface ResumenEntrevista {
 export interface DatosIniciarEntrevista {
   puesto: string
   nivel: string
-  /** Opcional: sin stack elegido no se envía el campo. */
-  tecnologia?: string
+  /** Código de una tecnología **del puesto**; en Full Stack, la de frontend. */
+  tecnologia: string
+  /** Solo en un puesto con capas: la de backend. El servidor valida ambas. */
+  segunda_tecnologia?: string | null
+  /** Id de la convocatoria analizada con que se configuró, si hubo una. */
+  convocatoria?: number | null
 }

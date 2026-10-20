@@ -23,8 +23,8 @@ export default function BurbujaPregunta({ autor, children }: Props) {
           // Esquina asimétrica hacia el autor, al estilo del mockup: da la
           // sensación de burbuja de conversación real.
           esSistema
-            ? 'rounded-2xl rounded-tl-sm border border-vidrio-borde bg-vidrio-field text-vidrio-ink backdrop-blur-[18px]'
-            : 'rounded-2xl rounded-tr-sm bg-vidrio-acento text-white'
+            ? 'rounded-burbuja rounded-tl-sm border border-vidrio-borde bg-vidrio-field text-vidrio-ink backdrop-blur-[18px]'
+            : 'rounded-burbuja rounded-tr-sm bg-vidrio-acento text-white'
         }`}
       >
         {children}

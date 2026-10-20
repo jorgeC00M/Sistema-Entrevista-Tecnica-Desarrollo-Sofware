@@ -20,7 +20,11 @@ from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from . import selectors, services
 from .models import Entrevista
+from .convocatorias import analizar_convocatoria
 from .serializers import (
+    AnalizarConvocatoriaSerializer,
+    ConvocatoriaSerializer,
+    ConfiguracionSerializer,
     EntrevistaSerializer,
     IniciarEntrevistaSerializer,
     IntercambioSerializer,
@@ -52,15 +56,16 @@ class EntrevistaListCreateView(APIView):
         )
 
     def post(self, request):
-        entrada = IniciarEntrevistaSerializer(data=request.data)
+        entrada = IniciarEntrevistaSerializer(data=request.data, context={"request": request})
         entrada.is_valid(raise_exception=True)
 
         entrevista = services.iniciar(
             request.user,
             entrada.validated_data["puesto"],
             entrada.validated_data["nivel"],
-            # Opcional en el serializer: si no vino, la entrevista no fija stack.
-            entrada.validated_data.get("tecnologia"),
+            entrada.validated_data["tecnologia"],
+            segunda_tecnologia=entrada.validated_data.get("segunda_tecnologia"),
+            convocatoria=entrada.validated_data.get("convocatoria"),
         )
 
         return Response(
@@ -156,3 +161,69 @@ class ResultadosView(APIView):
                 "resumen": None if en_progreso else selectors.resumen_de(entrevista, intercambios),
             }
         )
+
+
+class UltimaConfiguracionView(APIView):
+    """Puesto, tecnología y nivel de la última entrevista del usuario, o 204.
+
+    204 y no 404: no tener entrevistas no es un error, es el caso normal de un
+    usuario nuevo, y la pantalla simplemente no muestra "Tu última entrevista".
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        entrevista = selectors.ultima_configuracion(request.user)
+        if entrevista is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(ConfiguracionSerializer(entrevista).data)
+
+
+class AbandonarView(APIView):
+    """`POST /api/entrevistas/<id>/abandonar/`: dejar la entrevista a medias.
+
+    La interfaz lo pide solo tras confirmarlo en un modal. 409 si ya no está en
+    curso; 404 si es de otro usuario (la pertenencia se resuelve en la consulta).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        entrevista = selectors.entrevista_del_usuario(request.user, pk)
+        try:
+            services.abandonar(entrevista)
+        except services.EntrevistaNoEnCurso as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+        return Response(EntrevistaSerializer(entrevista).data)
+
+
+class AnalizarConvocatoriaView(APIView):
+    """`POST /api/entrevistas/convocatoria/`: pegar o subir el aviso y detectar su perfil.
+
+    201 con `{id, perfil}`; 422 si no parece un puesto de desarrollo de software
+    (no se inventa uno); 400 si el archivo no sirve. Los fallos de la IA los
+    traduce el manejador central (503/502).
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "analizar-convocatoria"
+
+    def post(self, request):
+        entrada = AnalizarConvocatoriaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+
+        convocatoria = analizar_convocatoria(request.user, entrada.validated_data["texto"])
+        datos = ConvocatoriaSerializer(convocatoria).data
+
+        if not convocatoria.perfil.get("identificado"):
+            return Response(
+                {
+                    "detail": (
+                        "No pudimos identificar el puesto: el aviso no parece ser de desarrollo "
+                        "de software, o no menciona el puesto ni las tecnologías."
+                    ),
+                    **datos,
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        return Response(datos, status=status.HTTP_201_CREATED)

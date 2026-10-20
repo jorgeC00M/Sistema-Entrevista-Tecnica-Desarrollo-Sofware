@@ -1,91 +1,71 @@
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
 import Tarjeta from '@/components/ui/Tarjeta'
-import type { Hallazgo, Severidad } from '@/types/curriculum'
-
-/**
- * Las severidades se muestran con el mismo color que ya usa el producto para
- * evaluar respuestas, no con una escala nueva. `info` no lleva etiqueta: un
- * hallazgo favorable no necesita que se le ponga una gravedad.
- */
-const POR_SEVERIDAD: Record<Severidad, { etiqueta: string; clases: string }> = {
-  critica: { etiqueta: 'Crítico', clases: 'bg-error-fondo text-error-texto' },
-  alta: { etiqueta: 'Importante', clases: 'bg-progreso-fondo text-progreso-texto' },
-  media: { etiqueta: 'Menor', clases: 'bg-vidrio-field text-vidrio-muted' },
-  info: { etiqueta: '', clases: '' },
-}
+import { SEVERIDADES, idDeHallazgo } from '@/features/curriculum/hallazgos'
+import type { Hallazgo } from '@/types/curriculum'
 
 interface Props {
   titulo: string
   hallazgos: Hallazgo[]
-  /** Fortalezas y debilidades se distinguen por el acento, no por el orden. */
-  favorable?: boolean
   /** Qué decir cuando la lista está vacía, que no es lo mismo que un fallo. */
   vacio: string
 }
 
-export default function ListaDeHallazgos({ titulo, hallazgos, favorable = false, vacio }: Props) {
-  const acento = favorable ? 'border-t-exito-texto' : 'border-t-progreso-texto'
-  const color = favorable ? 'text-exito-texto' : 'text-progreso-texto'
-
+/**
+ * Las correcciones que encontró la medición, cada una con su efecto sobre el
+ * ATS ("Impide la lectura", "Resta visibilidad", "Detalle") y lo que hay que
+ * hacer. El color del icono es el de su gravedad: el color solo marca estado,
+ * nunca decora. Las fortalezas no van aquí: el Resumen las muestra aparte.
+ */
+export default function ListaDeHallazgos({ titulo, hallazgos, vacio }: Props) {
   return (
-    <Tarjeta className={`border-t-2 p-5 ${acento}`}>
-      <h2 className={`text-label-mono uppercase ${color}`}>{titulo}</h2>
+    <Tarjeta className="p-5">
+      <h2 className="font-serif text-headline-md font-semibold text-vidrio-ink">{titulo}</h2>
 
       {hallazgos.length === 0 ? (
         <p className="mt-3 text-sm text-vidrio-muted">{vacio}</p>
       ) : (
         <ul className="mt-3 space-y-4">
-          {hallazgos.map((hallazgo) => {
-            const severidad = POR_SEVERIDAD[hallazgo.severidad]
-            return (
-              <li key={hallazgo.codigo} className="flex items-start gap-3">
-                <span className={`mt-0.5 shrink-0 ${color}`}>
-                  <Icono
-                    nombre={favorable ? 'fortaleza' : 'mejora'}
-                    className="h-4 w-4"
-                    aria-hidden
-                  />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-semibold text-vidrio-ink">{hallazgo.titulo}</h3>
-                    {severidad.etiqueta && (
-                      <span
-                        className={`rounded-chip px-2 py-0.5 font-mono-vidrio text-label-mono uppercase ${severidad.clases}`}
-                      >
-                        {severidad.etiqueta}
-                      </span>
-                    )}
-                  </div>
-                  {/* El detalle explica qué hacer, no solo qué está mal: es la
-                      diferencia entre un diagnóstico y algo accionable. */}
-                  <p className="mt-1 text-sm leading-relaxed text-vidrio-texto">
-                    {hallazgo.detalle}
-                  </p>
+          {hallazgos.map((hallazgo) => (
+            // `tabIndex={-1}` y `scroll-mt`: el Resumen trae el foco a esta
+            // corrección sin que quede bajo la cabecera y las pestañas fijas.
+            <li
+              key={hallazgo.codigo}
+              id={idDeHallazgo(hallazgo.codigo)}
+              tabIndex={-1}
+              className="flex scroll-mt-32 items-start gap-3 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-vidrio-acento"
+            >
+              <span className={`mt-0.5 shrink-0 ${SEVERIDADES[hallazgo.severidad].icono}`}>
+                <Icono nombre="mejora" className="h-4 w-4" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-vidrio-ink">{hallazgo.titulo}</h3>
+                  <ChipDeSeveridad hallazgo={hallazgo} />
                 </div>
-              </li>
-            )
-          })}
+                {/* El detalle explica qué hacer, no solo qué está mal: es la
+                    diferencia entre un diagnóstico y algo accionable. */}
+                <p className="mt-1 text-sm leading-relaxed text-vidrio-texto">{hallazgo.detalle}</p>
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </Tarjeta>
   )
 }
 
-/** Resumen en una línea, para la cabecera del resultado. */
-export function ResumenDeSeveridad({ debilidades }: { debilidades: Hallazgo[] }) {
-  const criticas = debilidades.filter((h) => h.severidad === 'critica').length
-  const importantes = debilidades.filter((h) => h.severidad === 'alta').length
-
-  if (debilidades.length === 0) {
-    return <EtiquetaMono tono="marca">Sin problemas de parseo</EtiquetaMono>
-  }
-
-  const partes: string[] = []
-  if (criticas) partes.push(`${criticas} crítico${criticas === 1 ? '' : 's'}`)
-  if (importantes) partes.push(`${importantes} importante${importantes === 1 ? '' : 's'}`)
-  if (partes.length === 0) partes.push(`${debilidades.length} menor${debilidades.length === 1 ? '' : 'es'}`)
-
-  return <EtiquetaMono>{partes.join(' · ')}</EtiquetaMono>
+/**
+ * El efecto de un hallazgo sobre el ATS, como chip. Va aparte del título y con
+ * un prefijo para el lector de pantalla: leído pegado al título ("Tu CV está en
+ * dos columnas Impide la lectura") no se entendería.
+ */
+export function ChipDeSeveridad({ hallazgo }: { hallazgo: Hallazgo }) {
+  const severidad = SEVERIDADES[hallazgo.severidad]
+  if (!severidad.etiqueta) return null
+  return (
+    <span className={`rounded-chip px-2 py-0.5 font-mono-vidrio text-label-mono uppercase ${severidad.clases}`}>
+      <span className="sr-only">Efecto: </span>
+      {severidad.etiqueta}
+    </span>
+  )
 }

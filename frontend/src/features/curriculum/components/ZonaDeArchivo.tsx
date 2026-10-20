@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 
 import { EXTENSIONES_ACEPTADAS, MAXIMO_BYTES } from '@/api/curriculums'
+import Boton from '@/components/ui/Boton'
+import BotonIcono from '@/components/ui/BotonIcono'
 import Icono from '@/components/ui/Icono'
 
 interface Props {
@@ -55,6 +57,8 @@ export default function ZonaDeArchivo({
   const entrada = useRef<HTMLInputElement>(null)
   const [arrastrando, setArrastrando] = useState(false)
   const [problema, setProblema] = useState('')
+  const idAyuda = useId()
+  const idError = useId()
 
   // El backend valida lo mismo —es la única validación que cuenta— pero
   // comprobarlo aquí ahorra subir hasta dos megas para decirle al usuario algo
@@ -134,61 +138,72 @@ export default function ZonaDeArchivo({
         onChange={(evento) => validar(evento.target.files?.[0])}
       />
 
-      <button
-        type="button"
-        disabled={deshabilitado}
-        onClick={() => entrada.current?.click()}
-        onDragOver={sobrevolar}
-        onDragEnter={sobrevolar}
-        onDragLeave={salir}
-        onDrop={soltar}
-        className={`flex w-full flex-col items-center gap-2 rounded-vidrio border-2 border-dashed px-4 py-7 text-center transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento ${
-          deshabilitado
-            ? 'cursor-not-allowed border-vidrio-linea opacity-60'
-            : 'cursor-pointer border-vidrio-linea hover:border-vidrio-acento/50 hover:bg-vidrio-field'
-        } ${arrastrando ? 'border-vidrio-acento bg-vidrio-acento-suave' : ''}`}
-      >
-        <span
-          className={`flex h-11 w-11 items-center justify-center rounded-control ${
-            arrastrando ? 'bg-vidrio-acento text-white' : 'bg-vidrio-field text-vidrio-muted'
-          }`}
-        >
-          <Icono nombre={arrastrando ? 'resultados' : 'mas'} className="h-5 w-5" aria-hidden />
-        </span>
-
-        <span className="text-sm text-vidrio-texto">
-          {arrastrando ? (
-            <strong className="font-semibold text-vidrio-acento">Suelta {que} aquí</strong>
-          ) : (
-            <>
-              Arrastra {que} aquí o{' '}
-              <span className="font-semibold text-vidrio-acento underline">elige un archivo</span>
-            </>
-          )}
-        </span>
-      </button>
-
-      {/* Fuera del recuadro a propósito: anidar botones no es HTML válido, y el
-          clic en la X lo capturaría el botón de soltado abriendo el diálogo. */}
-      {archivo && (
-        <div className="mt-3 flex items-center gap-2 rounded-control bg-vidrio-field px-3 py-2">
-          <Icono nombre="resultados" className="h-4 w-4 shrink-0 text-vidrio-tenue" aria-hidden />
-          <span className="min-w-0 flex-1 truncate font-mono-vidrio text-sm text-vidrio-texto">
+      {/* Con un archivo elegido, el recuadro se reduce a la fila del archivo:
+          seguir invitando a arrastrar haría dudar de si ya se eligió. */}
+      {archivo ? (
+        <div className="flex items-center gap-2 rounded-control bg-vidrio-field px-3 py-2">
+          <Icono nombre="documento" className="h-4 w-4 shrink-0 text-vidrio-tenue" aria-hidden />
+          <span title={archivo.name} className="min-w-0 flex-1 truncate font-mono-vidrio text-sm text-vidrio-texto">
             {archivo.name}
           </span>
-          <span className="shrink-0 text-label-mono text-vidrio-muted uppercase">
-            {pesoLegible(archivo.size)}
-          </span>
-          <button
-            type="button"
+          <span className="shrink-0 text-label-mono text-vidrio-muted uppercase">{pesoLegible(archivo.size)}</span>
+          <Boton
+            variante="texto"
+            tamano="sm"
+            onClick={() => entrada.current?.click()}
+            disabled={deshabilitado}
+            aria-describedby={problema || errorDelServidor ? idError : undefined}
+          >
+            Cambiar
+          </Boton>
+          <BotonIcono
+            icono="cerrar"
+            aria-label={`Quitar ${archivo.name}`}
+            tamano="sm"
             onClick={quitar}
             disabled={deshabilitado}
-            aria-label={`Quitar ${archivo.name}`}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control text-vidrio-muted transition-colors duration-150 hover:bg-error-fondo hover:text-error-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Icono nombre="cerrar" className="h-4 w-4" aria-hidden />
-          </button>
+          />
         </div>
+      ) : (
+        <button
+          type="button"
+          disabled={deshabilitado}
+          onClick={() => entrada.current?.click()}
+          onDragOver={sobrevolar}
+          onDragEnter={sobrevolar}
+          onDragLeave={salir}
+          onDrop={soltar}
+          aria-describedby={`${idAyuda}${problema || errorDelServidor ? ` ${idError}` : ''}`}
+          className={`flex w-full flex-col items-center gap-2 rounded-vidrio border-2 border-dashed px-4 py-7 text-center foco-anillo transition-colors duration-150 ${
+            deshabilitado
+              ? 'cursor-not-allowed border-vidrio-linea opacity-60'
+              : 'cursor-pointer border-vidrio-linea hover:border-vidrio-acento/50 hover:bg-vidrio-field'
+          } ${arrastrando ? 'border-vidrio-acento bg-vidrio-acento-suave' : ''}`}
+        >
+          <span
+            className={`flex h-11 w-11 items-center justify-center rounded-control ${
+              arrastrando ? 'bg-vidrio-acento text-white' : 'bg-vidrio-field text-vidrio-muted'
+            }`}
+          >
+            <Icono nombre={arrastrando ? 'resultados' : 'mas'} className="h-5 w-5" aria-hidden />
+          </span>
+
+          <span className="text-sm text-vidrio-texto">
+            {arrastrando ? (
+              <strong className="font-semibold text-vidrio-acento">Suelta {que} aquí</strong>
+            ) : (
+              <>
+                {/* Arrastrar solo existe con puntero: en un celular se dice "toca". */}
+                <span className="hidden [@media(hover:hover)]:inline">Arrastra {que} aquí o </span>
+                <span className="[@media(hover:hover)]:hidden">Toca para </span>
+                <span className="font-semibold text-vidrio-acento underline">elegir un archivo</span>
+              </>
+            )}
+          </span>
+          <span id={idAyuda} className="text-meta text-vidrio-muted">
+            PDF o DOCX, hasta {pesoLegible(MAXIMO_BYTES)}
+          </span>
+        </button>
       )}
 
       {/* El local primero: si el formato ya está mal, no tiene sentido
@@ -196,12 +211,12 @@ export default function ZonaDeArchivo({
           descartó. `errorDelServidor` solo aplica mientras no haya uno
           nuevo que lo contradiga. */}
       {problema ? (
-        <p className="mt-3 text-sm text-error-texto" role="alert">
+        <p id={idError} className="mt-3 text-sm text-error-texto" role="alert">
           {problema}
         </p>
       ) : (
         errorDelServidor && (
-          <p className="mt-3 text-sm text-error-texto" role="alert">
+          <p id={idError} className="mt-3 text-sm text-error-texto" role="alert">
             {errorDelServidor}
           </p>
         )

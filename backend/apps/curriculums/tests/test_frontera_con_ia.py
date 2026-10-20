@@ -177,13 +177,18 @@ class LoQueSaleTest(TestCase):
         self.espia = RevisorEspia()
 
     def _analizar(self, fixture: str, **extra):
-        return services.analizar(
+        """El flujo completo, como lo recorre el cliente: el alta (sin IA) y luego
+        la revisión, que reconstruye el documento desde lo guardado. La frontera
+        tiene que valer en ese segundo camino, que es donde ahora sale el CV."""
+        curriculum = services.analizar(
             usuario=self.usuario,
             contenido=(FIXTURES / fixture).read_bytes(),
             nombre_archivo=fixture,
-            revisor=self.espia,
             **extra,
         )
+        services.revisar(self.usuario, curriculum.pk, revisor=self.espia)
+        curriculum.analisis.refresh_from_db()
+        return curriculum
 
     def test_el_encabezado_no_sale(self):
         self._analizar("una_columna.pdf", convocatoria="Requisitos:\n- Docker\n- Python\n")
@@ -302,6 +307,8 @@ class ProveedorNoAptoTest(TestCase):
             nombre_archivo="una_columna.pdf",
             convocatoria="Requisitos:\n- Docker\n",
         )
+        services.revisar(self.usuario, curriculum.pk)
+        curriculum.analisis.refresh_from_db()
 
         self.assertEqual(ProveedorEspiaNoApto.revisiones, 0)
         self.assertEqual(curriculum.analisis.revision_ia["estado"], revision.NO_DISPONIBLE)
@@ -312,7 +319,7 @@ class ProveedorNoAptoTest(TestCase):
     def test_el_mismo_proveedor_si_sirve_para_entrevistar(self):
         from apps.entrevistas import services as entrevistas
 
-        entrevista = entrevistas.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"))
+        entrevista = entrevistas.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"))
         entrevistas.responder(entrevista, "Una respuesta")
 
         self.assertEqual(ProveedorEspiaNoApto.evaluaciones, 1)

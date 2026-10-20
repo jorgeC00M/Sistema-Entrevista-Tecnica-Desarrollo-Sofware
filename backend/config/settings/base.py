@@ -54,6 +54,10 @@ APPS_DJANGO = [
 APPS_TERCEROS = [
     "corsheaders",
     "rest_framework",
+    # Registra cada refresh token emitido y permite invalidarlos: es lo que
+    # cierra las demás sesiones al cambiar la contraseña. Viene con
+    # djangorestframework-simplejwt, sin dependencia nueva.
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 APPS_PROPIAS = [
@@ -163,8 +167,17 @@ REST_FRAMEWORK = {
         # costoso del sistema sin llamar a la IA. Holgado para corregir el CV
         # y reanalizarlo varias veces, estrecho frente a un bucle.
         "analizar-cv": "20/hour",
+        # Las sugerencias de IA de un CV ya analizado: la primera vez llama al
+        # proveedor, las siguientes salen de lo guardado. Holgado para reintentar
+        # tras un fallo, estrecho frente a un bucle.
+        "revisar-cv": "30/hour",
+        # Una llamada a la IA por aviso nuevo; el mismo aviso sale de la caché.
+        "analizar-convocatoria": "20/hour",
         "login": "10/min",
         "registro": "5/hour",
+        # Compara la contraseña actual: sin límite, una sesión robada serviría
+        # para adivinarla a fuerza bruta.
+        "contrasena": "5/min",
     },
 }
 

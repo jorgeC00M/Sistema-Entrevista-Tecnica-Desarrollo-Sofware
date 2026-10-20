@@ -23,7 +23,6 @@ from integrations.ia.prompts.schemas import (
     ContextoDeEntrevista,
     Nivel,
     Puesto,
-    Tecnologia,
 )
 
 from ..rubricas import banda_de, puntuacion_de
@@ -82,7 +81,7 @@ def cargar_casos(ruta: Path = RUTA_CASOS) -> list[Caso]:
             contexto=ContextoDeEntrevista(
                 puesto=Puesto(c["puesto"]),
                 nivel=Nivel(c["nivel"]),
-                tecnologia=Tecnologia(c["tecnologia"]) if c["tecnologia"] else None,
+                tecnologia=c["tecnologia"],
             ),
             area=AreaTecnica(c["area"]),
             pregunta=c["pregunta"],

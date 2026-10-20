@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { ErrorAPI } from '@/api/client'
 import {
@@ -9,22 +10,13 @@ import {
 } from '@/api/curriculums'
 import { repartirErrores } from '@/api/errores'
 import Alerta from '@/components/ui/Alerta'
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
-import AvisoDeRevision from '@/features/curriculum/components/AvisoDeRevision'
-import BrechaDeRequisitos from '@/features/curriculum/components/BrechaDeRequisitos'
-import CampoConvocatoria from '@/features/curriculum/components/CampoConvocatoria'
-import EspejoDelATS from '@/features/curriculum/components/EspejoDelATS'
+import Spinner from '@/components/ui/Spinner'
+import EntradaDelAnalisis from '@/features/curriculum/components/EntradaDelAnalisis'
 import HistorialDeAnalisis from '@/features/curriculum/components/HistorialDeAnalisis'
-import InventarioDeTerminos from '@/features/curriculum/components/InventarioDeTerminos'
-import ListaDeHallazgos, {
-  ResumenDeSeveridad,
-} from '@/features/curriculum/components/ListaDeHallazgos'
-import PreguntasProbables from '@/features/curriculum/components/PreguntasProbables'
-import RevisionDeRedaccion from '@/features/curriculum/components/RevisionDeRedaccion'
-import SubirArchivo from '@/features/curriculum/components/SubirArchivo'
-import VinetasDeLogro from '@/features/curriculum/components/VinetasDeLogro'
+import ResultadoDelAnalisis from '@/features/curriculum/components/ResultadoDelAnalisis'
+import { useRevisionDelCv } from '@/features/curriculum/hooks/useRevisionDelCv'
 import { usePeticion } from '@/hooks/usePeticion'
-import type { Curriculum, CurriculumEnLista } from '@/types/curriculum'
+import type { Curriculum, CurriculumEnLista, RevisionIA } from '@/types/curriculum'
 
 /**
  * Diagnóstico de un currículum contra los filtros de un ATS.
@@ -32,66 +24,104 @@ import type { Curriculum, CurriculumEnLista } from '@/types/curriculum'
  * Dos rutas, y la convocatoria es lo único que las separa. Sin ella se responde
  * "¿puede el ATS leer mi CV?" —parseabilidad, inventario de tecnologías legibles y
  * redacción de las viñetas—. Con ella se responde además "¿mi CV sirve para esta
- * convocatoria?", y solo una de las cuatro secciones del resultado cambia: el
+ * convocatoria?", y solo una de las secciones del resultado cambia: el
  * inventario pasa a ser el mapa de evidencia.
  *
  * No se pide un puesto. Lo hubo y no afectaba al análisis: `ats.analizar()` no lo
  * recibía, así que elegir backend, frontend o full-stack daba el mismo resultado.
- * Era un paso obligatorio sin consecuencia.
+ *
+ * Qué se ve lo decide la URL: `/mi-cv` es la entrada con el historial y
+ * `/mi-cv/:id` un análisis, así que recargar o compartir el enlace lo conserva.
+ * El resultado se guarda en el estado de la página y, si la URL pide otro que
+ * no está en memoria, se carga. Las dos rutas usan este mismo componente, de
+ * modo que ir y volver no pierde el archivo ni la convocatoria elegidos.
  */
 export default function CurriculumPage() {
+  const navigate = useNavigate()
+  const parametro = useParams().id
+  const idEnLaUrl = parametro ? Number(parametro) : null
+
   const [archivo, setArchivo] = useState<File | null>(null)
   const [convocatoria, setConvocatoria] = useState('')
   const [archivoConvocatoria, setArchivoConvocatoria] = useState<File | null>(null)
   const [resultado, setResultado] = useState<Curriculum | null>(null)
   const [analizando, setAnalizando] = useState(false)
-  const [error, setError] = useState('')
+  // El error de analizar va junto al botón que lo causó, no arriba de la página.
+  const [errorAlAnalizar, setErrorAlAnalizar] = useState('')
+  // El id de un análisis que no se pudo cargar (ajeno, inexistente, sin red).
+  const [noEncontrado, setNoEncontrado] = useState<number | null>(null)
   // Por campo del formulario (archivo, convocatoria, archivoConvocatoria),
-  // igual que en el registro: el servidor valida tres cosas independientes y
-  // cada mensaje debe ir junto al control que lo causó, no los tres
-  // amontonados arriba.
+  // igual que en el registro: cada mensaje va junto al control que lo causó.
   const [erroresPorCampo, setErroresPorCampo] = useState<Record<string, string>>({})
-  // Con el hook propio del proyecto y no con un `useEffect` a mano: trae el
-  // abortado al desmontar y una cache corta, y `recargar()` la invalida, que es
-  // justo lo que hace falta tras analizar.
-  //
-  // Su `error` se ignora a proposito. El historial es una ayuda, no un requisito:
-  // si el listado falla, `datos` queda nulo, la seccion no se renderiza y el
-  // usuario puede analizar igual. Mostrar una alerta por algo que no le impide
-  // nada solo lo distraeria de lo que vino a hacer.
+  const zonaDelCv = useRef<HTMLDivElement>(null)
+
+  // Lo que se muestra: solo si la URL lo pide y ya está cargado.
+  const visible = idEnLaUrl !== null && resultado?.id === idEnLaUrl ? resultado : null
+  const cargandoAnalisis = idEnLaUrl !== null && visible === null && noEncontrado !== idEnLaUrl
+
+  // La URL pide un análisis que no está en memoria (recarga, enlace, historial):
+  // se carga. El estado cambia en la respuesta, no dentro del efecto.
+  useEffect(() => {
+    if (idEnLaUrl === null || resultado?.id === idEnLaUrl || noEncontrado === idEnLaUrl) return
+    const control = new AbortController()
+    obtenerCurriculum(idEnLaUrl, control.signal)
+      .then(setResultado)
+      .catch(() => {
+        if (!control.signal.aborted) setNoEncontrado(idEnLaUrl)
+      })
+    return () => control.abort()
+  }, [idEnLaUrl, resultado?.id, noEncontrado])
+
+  // Las sugerencias llegan después del diagnóstico: se fusionan en el resultado
+  // solo si sigue siendo el mismo análisis (el usuario pudo abrir otro).
+  const alLlegarLaRevision = useCallback((id: number, revision: RevisionIA) => {
+    setResultado((previo) =>
+      previo?.id === id && previo.analisis
+        ? { ...previo, analisis: { ...previo.analisis, revision_ia: revision } }
+        : previo,
+    )
+  }, [])
+  const revision = useRevisionDelCv(visible, alLlegarLaRevision)
+
+  // Su `error` se ignora a propósito: el historial es una ayuda, no un
+  // requisito. Si falla, la sección no se pinta y se puede analizar igual.
   const {
     datos: historial,
     cargando: cargandoHistorial,
     recargar: refrescarHistorial,
-  } = usePeticion<CurriculumEnLista[]>('curriculums', (signal) =>
-    obtenerHistorialDeCurriculums(signal),
-  )
+  } = usePeticion<CurriculumEnLista[]>('curriculums', (signal) => obtenerHistorialDeCurriculums(signal))
 
   const analizar = async () => {
     if (!archivo) return
-    setError('')
+    setErrorAlAnalizar('')
     setErroresPorCampo({})
     setAnalizando(true)
     try {
-      setResultado(await analizarCurriculum({ archivo, convocatoria, archivoConvocatoria }))
-      // Para que el analisis nuevo este en la lista al volver a entrar.
+      const nuevo = await analizarCurriculum({ archivo, convocatoria, archivoConvocatoria })
+      setResultado(nuevo)
+      setNoEncontrado(null)
       refrescarHistorial()
+      navigate(`/mi-cv/${nuevo.id}`)
     } catch (err) {
-      const { general, porCampo } = repartirErrores(
-        err,
-        'No se pudo analizar el currículum.',
-        campoDeCurriculum,
-      )
-      setError(general)
-      setErroresPorCampo(porCampo)
+      if (!(err instanceof ErrorAPI)) {
+        // Sin respuesta del servidor (tiempo agotado o red): el análisis pudo
+        // haberse guardado igual. Se refresca la lista para que aparezca.
+        setErrorAlAnalizar(
+          'No recibimos la respuesta a tiempo. Puede que el análisis ya esté en tus análisis anteriores.',
+        )
+        refrescarHistorial()
+      } else {
+        const { general, porCampo } = repartirErrores(err, 'No se pudo analizar el currículum.', campoDeCurriculum)
+        setErrorAlAnalizar(general)
+        setErroresPorCampo(porCampo)
+      }
     } finally {
       setAnalizando(false)
     }
   }
 
-  // Si el usuario cambia cualquiera de los tres campos tras un error, ese
-  // error deja de describir lo que hay ahora escrito: mostrarlo seguiría
-  // sería afirmar algo que ya no es cierto.
+  // Si el usuario cambia un campo tras un error, ese error deja de describir lo
+  // que hay escrito: mostrarlo sería afirmar algo que ya no es cierto.
   const limpiarErrorDeCampo = (campo: string) => {
     setErroresPorCampo((previos) => {
       if (!(campo in previos)) return previos
@@ -100,138 +130,89 @@ export default function CurriculumPage() {
     })
   }
 
-  const abrir = async (id: number) => {
-    setError('')
-    try {
-      // Va al mismo estado que un analisis nuevo: asi la zona de resultados no
-      // necesita saber de donde vino lo que muestra, y no hay dos caminos de
-      // renderizado que puedan divergir.
-      setResultado(await obtenerCurriculum(id))
-    } catch (err) {
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo abrir el analisis.')
-    }
+  const enfocarLaEntrada = () => {
+    window.requestAnimationFrame(() => {
+      const zona = zonaDelCv.current
+      zona?.querySelector<HTMLElement>('button, input:not([type="file"])')?.focus()
+      zona?.scrollIntoView({ block: 'nearest' })
+    })
   }
 
-  const analisis = resultado?.analisis ?? null
-  // Las sugerencias de IA se indexan por lo que el usuario ya ve —la viñeta, el
-  // término— para colgarlas bajo su fila. Lo medido no depende de ellas.
-  const revision = analisis?.revision_ia ?? null
-  const sugerenciasDeVinetas = Object.fromEntries(
-    (revision?.vinetas ?? []).map(({ original, sugerida }) => [original, sugerida]),
-  )
-  const sugerenciasDeRequisitos = Object.fromEntries(
-    (revision?.requisitos ?? []).map(({ termino, sugerencia }) => [termino, sugerencia]),
-  )
+  // "Analizar otro" conserva el archivo y la convocatoria: lo habitual es
+  // corregir el CV y volver a subirlo contra la misma oferta.
+  const analizarOtro = () => {
+    navigate('/mi-cv')
+    enfocarLaEntrada()
+  }
+
+  // Un CV ilegible no se arregla reanalizando el mismo archivo: se suelta.
+  const subirOtro = () => {
+    setArchivo(null)
+    navigate('/mi-cv')
+    enfocarLaEntrada()
+  }
+
+  const analisis = visible?.analisis ?? null
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <EtiquetaMono tono="marca">Antes de la entrevista</EtiquetaMono>
-      <h1 className="mt-1 mb-1 font-serif text-headline-xl font-semibold text-vidrio-ink">
+    <div>
+      <h1 className="mb-1 font-serif text-headline-xl font-semibold text-vidrio-ink">
         Revisa tu CV contra los filtros ATS
       </h1>
-      <p className="text-base text-vidrio-texto">
-        Un ATS no te rechaza con una nota: parsea tu CV a campos que el reclutador busca y filtra.
-        Si algo no parsea, no apareces en su búsqueda. Aquí ves exactamente qué lee de tu
-        currículum.
+      <p className="max-w-prose text-base text-vidrio-texto">
+        Un ATS (el sistema con el que las empresas filtran postulaciones) no te rechaza con una
+        nota: convierte tu CV en campos que el reclutador busca y filtra. Si algo no se lee, no
+        apareces en su búsqueda. Aquí ves exactamente qué lee de tu currículum.
       </p>
 
-      <Alerta>{error}</Alerta>
-
-      <div className="mt-6 space-y-6">
-        <CampoConvocatoria
-          texto={convocatoria}
-          archivo={archivoConvocatoria}
-          deshabilitado={analizando}
-          onTexto={(valor) => {
-            setConvocatoria(valor)
-            limpiarErrorDeCampo('convocatoria')
-          }}
-          onArchivo={(valor) => {
-            setArchivoConvocatoria(valor)
-            limpiarErrorDeCampo('archivoConvocatoria')
-          }}
-          error={erroresPorCampo.convocatoria ?? erroresPorCampo.archivoConvocatoria}
-        />
-
-        <SubirArchivo
-          archivo={archivo}
-          analizando={analizando}
-          onElegir={(valor) => {
-            setArchivo(valor)
-            limpiarErrorDeCampo('archivo')
-          }}
-          onAnalizar={() => void analizar()}
-          error={erroresPorCampo.archivo}
-        />
-
-        {/* Solo mientras no haya resultado en pantalla. La pagina ya es larga;
-            una seccion al final quedaria fuera de vista justo cuando el usuario
-            acaba de analizar. */}
-        {!analisis && (
+      {cargandoAnalisis ? (
+        <Spinner texto="Abriendo el análisis…" />
+      ) : visible && analisis ? (
+        <div className="mt-6">
+          <ResultadoDelAnalisis
+            key={`${visible.id}-${analisis.fecha}`}
+            curriculum={visible}
+            analisis={analisis}
+            onAnalizarOtro={analizarOtro}
+            onSubirOtro={subirOtro}
+            estadoDeRevision={revision.estado}
+            onReintentarRevision={revision.reintentar}
+          />
+        </div>
+      ) : (
+        <div className="mt-6 flex max-w-3xl flex-col gap-6">
+          {idEnLaUrl !== null && noEncontrado === idEnLaUrl && (
+            <Alerta>No encontramos ese análisis. Puedes abrir otro de tu historial o analizar tu CV.</Alerta>
+          )}
+          <EntradaDelAnalisis
+            archivo={archivo}
+            convocatoria={convocatoria}
+            archivoConvocatoria={archivoConvocatoria}
+            analizando={analizando}
+            errores={erroresPorCampo}
+            errorGeneral={errorAlAnalizar}
+            onArchivo={(valor) => {
+              setArchivo(valor)
+              limpiarErrorDeCampo('archivo')
+            }}
+            onConvocatoria={(valor) => {
+              setConvocatoria(valor)
+              limpiarErrorDeCampo('convocatoria')
+            }}
+            onArchivoConvocatoria={(valor) => {
+              setArchivoConvocatoria(valor)
+              limpiarErrorDeCampo('archivoConvocatoria')
+            }}
+            onAnalizar={() => void analizar()}
+            refZonaDelCv={zonaDelCv}
+          />
           <HistorialDeAnalisis
             analisis={historial ?? []}
             cargando={cargandoHistorial}
-            onAbrir={(id) => void abrir(id)}
+            onAbrir={(id) => navigate(`/mi-cv/${id}`)}
           />
-        )}
-
-        {analisis && (
-          <>
-            <section className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-vidrio-linea pt-6">
-                <h2 className="font-serif text-headline-lg font-semibold text-vidrio-ink">
-                  Qué ve el ATS
-                </h2>
-                <ResumenDeSeveridad debilidades={analisis.debilidades} />
-              </div>
-
-              <AvisoDeRevision revision={revision} />
-
-              <EspejoDelATS analisis={analisis} />
-
-              {/* Una sola de las secciones depende de la ruta. Si se aportó
-                  convocatoria pero no tenía términos reconocibles, `brecha` viene
-                  nula: se dice, en vez de caer al inventario como si no se hubiera
-                  aportado nada. */}
-              {resultado?.con_convocatoria ? (
-                analisis.brecha ? (
-                  <BrechaDeRequisitos brecha={analisis.brecha} sugerencias={sugerenciasDeRequisitos} />
-                ) : (
-                  <Alerta>
-                    No se reconoció ningún requisito técnico en la convocatoria que enviaste, así
-                    que no hay nada que comparar. Revisa que incluya la lista de tecnologías.
-                  </Alerta>
-                )
-              ) : (
-                <InventarioDeTerminos terminos={analisis.inventario} />
-              )}
-
-              <ListaDeHallazgos
-                titulo="Qué corregir"
-                hallazgos={analisis.debilidades}
-                vacio="No se encontró ningún problema de parseo en tu CV."
-              />
-
-              <ListaDeHallazgos
-                titulo="Qué conservar"
-                hallazgos={analisis.fortalezas}
-                favorable
-                vacio="Corrige lo anterior y vuelve a analizarlo para ver qué ya funciona."
-              />
-            </section>
-
-            {/* Rotulado aparte dentro del propio componente: a un ATS le da igual
-                si las viñetas traen métricas. */}
-            {analisis.vinetas && (
-              <VinetasDeLogro vinetas={analisis.vinetas} sugerencias={sugerenciasDeVinetas} />
-            )}
-
-            <RevisionDeRedaccion revision={revision} />
-
-            <PreguntasProbables revision={revision} />
-          </>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

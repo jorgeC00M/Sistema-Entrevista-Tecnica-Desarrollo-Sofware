@@ -39,6 +39,10 @@ Python, Django, PostgreSQL
 """
 
 
+def _hallazgo(analisis, codigo: str):
+    return next(h for h in analisis.hallazgos if h.codigo == codigo)
+
+
 def _documento(texto: str, **extras) -> DocumentoExtraido:
     opciones = {"formato": "pdf", "paginas": 1}
     opciones.update(extras)
@@ -63,6 +67,25 @@ class CapaDeTextoTest(unittest.TestCase):
         # única que importa.
         self.assertEqual(len(analisis.hallazgos), 1)
         self.assertEqual(analisis.parseabilidad, "0/8")
+
+    def test_un_pdf_sin_texto_habla_de_escaneo(self):
+        analisis = analizar(_documento("1", paginas=1))
+
+        self.assertIn("escaneó", _hallazgo(analisis, "sin_capa_de_texto").detalle)
+
+    def test_un_docx_con_cuadros_de_texto_nombra_los_cuadros_y_no_un_escaneo(self):
+        analisis = analizar(_documento("", formato="docx", texto_en_cuadros="Juan Pérez, Backend"))
+
+        detalle = _hallazgo(analisis, "sin_capa_de_texto").detalle
+        self.assertIn("cuadros de texto", detalle)
+        self.assertNotIn("escane", detalle)
+
+    def test_un_docx_sin_texto_ni_cuadros_no_habla_de_escaneo(self):
+        analisis = analizar(_documento("", formato="docx"))
+
+        detalle = _hallazgo(analisis, "sin_capa_de_texto").detalle
+        self.assertIn("imagen", detalle)
+        self.assertNotIn("escane", detalle)
 
     def test_un_cv_con_texto_suficiente_si_se_analiza(self):
         analisis = analizar(_documento(CV_CORRECTO))

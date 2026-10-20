@@ -23,8 +23,9 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import TypeVar
 
-from .base import ProveedorIA, RevisorDeCV
+from .base import AnalizadorDeConvocatoria, ProveedorIA, RevisorDeCV
 from .exceptions import ErrorProveedorIA
+from .prompts.analista_convocatoria import EntradaDeConvocatoria, PerfilDetectado
 from .prompts.revisor_cv import EntradaDeRevision, RevisionDeCV
 from .prompts.schemas import (
     AreaTecnica,
@@ -105,3 +106,9 @@ class ProveedorEnCadena(ProveedorIA):
             e for e in self._eslabones if isinstance(e, RevisorDeCV) and e.apto_para_datos_personales
         ]
         return self._intentar(lambda p: p.revisar_cv(entrada), aptos)
+
+    def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:
+        """Con los eslabones que saben analizar convocatorias; todos sirven,
+        porque el aviso no es un dato personal y llega enmascarado."""
+        capaces = [e for e in self._eslabones if isinstance(e, AnalizadorDeConvocatoria)]
+        return self._intentar(lambda p: p.analizar_convocatoria(entrada), capaces)

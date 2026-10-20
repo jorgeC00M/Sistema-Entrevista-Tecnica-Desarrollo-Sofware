@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 
 import { resolverTitulo } from '@/components/layout/titulosDeRuta'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
-import Icono from '@/components/ui/Icono'
+import BotonIcono from '@/components/ui/BotonIcono'
 
 interface Props {
   onAbrirMenu: () => void
@@ -37,16 +37,14 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
     // de la columna de contenido, a la derecha del sidebar, no debajo.
     <header className="sticky top-0 z-40 h-16 border-b border-vidrio-linea bg-vidrio-bg/80 backdrop-blur-md">
       <div className="flex h-full items-center gap-3 px-4">
-        <button
+        <BotonIcono
           ref={disparadorRef}
-          type="button"
+          icono="menu"
           onClick={onAbrirMenu}
           aria-expanded={menuAbierto}
           aria-label="Abrir menú de navegación"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-vidrio-muted transition-colors duration-150 hover:bg-vidrio-field hover:text-vidrio-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento lg:hidden"
-        >
-          <Icono nombre="menu" />
-        </button>
+          className="md:hidden"
+        />
 
         {/*
           No es un <h1>: cada página ya tiene el suyo en su contenido

@@ -5,6 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from .base import ProveedorIA
+from .prompts.analista_convocatoria import (
+    NO_IDENTIFICADO,
+    EntradaDeConvocatoria,
+    PerfilDetectado,
+    comparable,
+)
 from .exceptions import ErrorTransitorio
 from .prompts.revisor_cv import (
     EntradaDeRevision,
@@ -54,8 +60,10 @@ class FakeProveedorIA(ProveedorIA):
         # El área va en el texto para que los tests puedan comprobar que una
         # entrevista recorrió los temas que el puesto manda, sin pedirle nada a
         # un proveedor real.
+        # La tecnología también, para comprobar que llega a cada pregunta.
+        tecnologia = f"[{contexto.tecnologia}]" if contexto.tecnologia else ""
         return (
-            f"[{contexto.puesto.etiqueta}/{contexto.nivel.etiqueta}]"
+            f"[{contexto.puesto.etiqueta}/{contexto.nivel.etiqueta}]{tecnologia}"
             f"[{area.etiqueta}] Pregunta simulada #{numero}"
         )
 
@@ -148,3 +156,59 @@ class FakeProveedorIA(ProveedorIA):
             puesto_sugerido=Puesto.BACKEND,
             correcciones=(),
         )
+
+    def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:
+        """Reglas fijas sobre el aviso, ancladas igual que las de un proveedor real.
+
+        El primer puesto cuyas palabras aparezcan gana (de lo más específico a lo
+        más general: "full stack" antes que "backend"); de tecnologías, la
+        primera de cada capa que el aviso nombre; "senior" o "semi senior" dan el
+        nivel. Sin puesto reconocible, no identificado — igual que la IA.
+        """
+        self._contar_llamada()
+        aviso = comparable(entrada.texto)
+        puestos = {p.codigo: p for p in entrada.puestos}
+
+        puesto = next(
+            (
+                puestos[codigo]
+                for codigo, palabras in _PALABRAS_DE_PUESTO
+                if codigo in puestos and any(palabra in aviso for palabra in palabras)
+            ),
+            None,
+        )
+        if puesto is None:
+            return NO_IDENTIFICADO
+
+        por_capa: dict[str, str] = {}
+        for t in puesto.tecnologias:
+            # "Kotlin (Android)" se busca como "kotlin".
+            if t.capa not in por_capa and comparable(t.nombre).split("(")[0].strip() in aviso:
+                por_capa[t.capa] = t.codigo
+        codigos = [n.codigo for n in entrada.niveles]
+        if "semi senior" in aviso.replace("-", " ") and "semi_senior" in codigos:
+            nivel = "semi_senior"
+        elif "senior" in aviso and "senior" in codigos:
+            nivel = "senior"
+        else:
+            nivel = codigos[0] if codigos else None
+
+        return PerfilDetectado(
+            identificado=True,
+            puesto=puesto.codigo,
+            tecnologias=tuple(por_capa.values()),
+            nivel=nivel,
+            requisitos=entrada.terminos[:8],
+        )
+
+
+# De lo más específico a lo más general: un aviso de "full stack" también dice
+# "backend", y uno de QA puede nombrar Selenium para web.
+_PALABRAS_DE_PUESTO: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("full_stack", ("full stack", "fullstack", "full-stack")),
+    ("qa", ("qa ", "tester", "testing", "automatizacion de pruebas", "quality assurance")),
+    ("movil", ("movil", "mobile", "android", "ios", "flutter", "react native")),
+    ("escritorio", ("escritorio", "desktop")),
+    ("frontend", ("frontend", "front end", "front-end")),
+    ("backend", ("backend", "back end", "back-end")),
+)

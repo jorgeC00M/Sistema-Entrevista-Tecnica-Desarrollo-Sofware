@@ -23,10 +23,17 @@ from apps.evaluaciones.rubricas import (
 )
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
-from .selectors import areas_activas, niveles_activos, puestos_activos, tecnologias_activas
+from .selectors import (
+    areas_activas,
+    niveles_activos,
+    puestos_activos,
+    puestos_con_tecnologias,
+    tecnologias_activas,
+)
 from .serializers import (
     AreaSerializer,
     NivelSerializer,
+    PuestoConTecnologiasSerializer,
     PuestoSerializer,
     TecnologiaSerializer,
 )
@@ -81,3 +88,31 @@ class CatalogosPublicosView(CatalogosView):
     """
 
     permission_classes = [AllowAny]
+
+
+class PuestosView(APIView):
+    """Todo lo que necesita la pantalla de nueva entrevista, en una respuesta:
+    puestos con sus tecnologías (cada una con su `capa`), niveles, áreas y
+    duración.
+
+    Se cachea cinco minutos en el cliente porque el catálogo cambia muy poco;
+    `private` porque requiere sesión.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        puestos = puestos_con_tecnologias()
+        respuesta = Response(
+            {
+                "puestos": PuestoConTecnologiasSerializer(puestos, many=True).data,
+                # Lo demás que la pantalla necesita, para no pedir además el
+                # catálogo general: los niveles (con su texto), los nombres de
+                # las áreas que cubre cada puesto y la duración.
+                "niveles": NivelSerializer(niveles_activos(), many=True).data,
+                "areas": AreaSerializer(areas_activas(), many=True).data,
+                "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
+            }
+        )
+        respuesta["Cache-Control"] = "private, max-age=300"
+        return respuesta

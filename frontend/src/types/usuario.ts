@@ -7,6 +7,8 @@ export interface Usuario {
   /** Cadena vacía cuando no se indicó: el campo es opcional pero no nulo. */
   carnet: string
   date_joined: FechaISO
+  /** `false` en las cuentas creadas con Google: no hay contraseña que cambiar. */
+  tiene_contrasena: boolean
 }
 
 export interface ParDeTokens {

@@ -1,0 +1,144 @@
+/* Tokens del sistema: la única fuente de colores, radios, sombras, tipografía
+   y velos. Tailwind v4 los convierte en clases (bg-vidrio-acento,
+   rounded-control, shadow-tarjeta, text-meta...). Cambiar un valor aquí lo
+   cambia en toda la app; un valor que se repite y no está aquí es deriva. */
+@theme {
+  /* Figtree para texto, Fraunces para títulos, JetBrains Mono para datos
+     exactos (puntajes, contadores "03 / 05"). Se cargan en index.html. */
+  --font-sans:
+    'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-mono-vidrio: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  /* Cifras tabulares en toda la mono: los contadores "03 / 05" y los puntajes
+     no bailan de ancho al cambiar de valor. */
+  --font-mono-vidrio--font-feature-settings: 'tnum';
+
+  /* Semánticos: expresan estado o puntaje, nunca una acción. Cada uno es un
+     par texto/fondo pensado para usarse junto, no por separado. */
+  --color-exito-texto: #15803d;
+  --color-exito-fondo: #dcfce7;
+  --color-progreso-texto: #b45309;
+  --color-progreso-fondo: #fef3c7;
+  --color-error-texto: #b91c1c;
+  --color-error-fondo: #fee2e2;
+
+  /* Sistema "vidrio": la paleta del producto entero (landing, auth y
+     aplicación). */
+  --color-vidrio-acento: #2b55a3;
+  --color-vidrio-acento-hover: #234889;
+  --color-vidrio-acento-suave: rgba(43, 85, 163, 0.1);
+  --color-vidrio-ink: #1c2f5e;
+  --color-vidrio-texto: #4a5572;
+  /* Texto secundario: cumple 4,5:1 (WCAG AA) sobre el fondo y sobre blanco. */
+  --color-vidrio-muted: #5f6984;
+  /* Solo para lo que no es texto: iconos decorativos, marcas, bordes. */
+  --color-vidrio-tenue: #8a93a8;
+  --color-vidrio-bg: #eef2f8;
+  --color-vidrio-card: rgba(255, 255, 255, 0.78);
+  --color-vidrio-field: rgba(255, 255, 255, 0.72);
+  --color-vidrio-linea: rgba(28, 47, 94, 0.12);
+  /* Borde de tarjetas y campos: un hilo de la misma tinta, un punto más
+     suave que las divisorias (vidrio-linea). */
+  --color-vidrio-borde: rgba(28, 47, 94, 0.1);
+  /* Solo para texto atenuado sobre el sidebar oscuro. */
+  --color-vidrio-sidebar-muted: #9fb0cf;
+  /* Cabecera translúcida de la landing y su borde de reflejo. */
+  --color-vidrio-cabecera: rgba(232, 237, 245, 0.55);
+  --color-vidrio-reflejo: rgba(255, 255, 255, 0.6);
+
+  /* Velo de los overlays (modal y cajón móvil): uno solo para los dos. */
+  --color-velo: rgba(28, 47, 94, 0.5);
+  /* Selección de texto: el acento al 18 %. */
+  --color-seleccion: rgba(43, 85, 163, 0.18);
+
+  /* Regla de forma: las ACCIONES (botones con texto) son píldora
+     (rounded-full); los CONTROLES (botones de icono, campos) usan control.
+     chip: etiquetas de metadato. vidrio: tarjetas y paneles. tarjeta: la de
+     auth. burbuja: mensajes del chat y la vista previa de la landing. */
+  --radius-control: 8px;
+  --radius-chip: 4px;
+  --radius-vidrio: 12px;
+  --radius-burbuja: 16px;
+  --radius-tarjeta: 22px;
+
+  /* Sombras: antes eran shadow-[...] escritas a mano en cada componente.
+     Tintadas con la tinta del producto, salvo las que caen sobre el fondo
+     oscuro del hero. */
+  --shadow-tarjeta: 0 20px 50px -20px rgba(28, 47, 94, 0.25);
+  --shadow-flotante: 0 26px 50px -24px rgba(28, 47, 94, 0.45);
+  --shadow-cabecera: 0 8px 24px -18px rgba(28, 47, 94, 0.25);
+  --shadow-modal: 0 24px 60px -24px rgba(28, 47, 94, 0.45);
+  --shadow-sobre-oscuro: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+  --shadow-sobre-oscuro-sutil: 0 10px 30px -18px rgba(0, 0, 0, 0.4);
+
+  /* Escala nominal de la aplicación: se nombra por el papel del texto, no
+     por su tamaño. */
+  --text-headline-xl: 32px;
+  --text-headline-xl--line-height: 40px;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl--font-weight: 600;
+
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 600;
+
+  --text-headline-sm: 16px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 16px;
+
+  --text-label-mono: 11px;
+  --text-label-mono--line-height: 14px;
+  --text-label-mono--letter-spacing: 0.04em;
+  --text-label-mono--font-weight: 500;
+
+  --text-metric-counter: 18px;
+  --text-metric-counter--line-height: 24px;
+  --text-metric-counter--letter-spacing: -0.02em;
+  --text-metric-counter--font-weight: 600;
+
+  --text-code-inline: 13px;
+  --text-code-inline--line-height: 18px;
+
+  /* Titular de la tarjeta de auth (antes text-[2rem] sm:text-[2.6rem]). */
+  --text-titulo-auth: clamp(2rem, 4vw, 2.6rem);
+  --text-titulo-auth--line-height: 1.1;
+  --text-titulo-auth--letter-spacing: -0.01em;
+  --text-titulo-auth--font-weight: 600;
+
+  /* Escala de la landing, con proporción cercana a 1,25. */
+  --text-display: clamp(2.5rem, 5vw, 4.25rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 600;
+
+  --text-seccion: clamp(1.75rem, 3vw, 2.5rem);
+  --text-seccion--line-height: 1.15;
+  --text-seccion--letter-spacing: -0.015em;
+  --text-seccion--font-weight: 600;
+
+  --text-tarjeta: 1.125rem;
+  --text-tarjeta--line-height: 1.4;
+  --text-tarjeta--letter-spacing: -0.005em;
+  --text-tarjeta--font-weight: 600;
+
+  /* Entrada: el párrafo que acompaña a un titular. */
+  --text-entrada: 1.125rem;
+  --text-entrada--line-height: 1.6;
+
+  --text-cuerpo: 1rem;
+  --text-cuerpo--line-height: 1.6;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.45;
+}
+
+/* Degradado del hero de la landing (fuera de @theme: no es un color de una
+   sola tinta). Se usa con `bg-(image:--gradiente-hero)`. */
+:root {
+  --gradiente-hero: linear-gradient(180deg, #132042 0%, var(--color-vidrio-ink) 100%);
+}

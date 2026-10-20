@@ -83,8 +83,8 @@ class EstadisticasConDatosTest(APITestCase):
         self.client.force_authenticate(self.usuario)
 
     def test_promedio_general_es_el_promedio_real_de_las_evaluaciones(self):
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 58)
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 83)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 58)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 83)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -98,7 +98,7 @@ class EstadisticasConDatosTest(APITestCase):
         las cinco respuestas heredaban esa etiqueta; ahora el desglose dice de
         verdad en qué temas le fue bien o mal al candidato.
         """
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 92)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 92)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -114,13 +114,13 @@ class EstadisticasConDatosTest(APITestCase):
     def test_dos_puestos_distintos_tocan_conjuntos_de_areas_distintos(self):
         """Elegir Backend o Frontend cambia los temas que se evalúan: es lo que
         hace que el puesto signifique algo y no sea solo una etiqueta."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
 
         del_backend = {
             fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
         }
 
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 67)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 67)
         con_ambos = {
             fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
         }
@@ -133,8 +133,8 @@ class EstadisticasConDatosTest(APITestCase):
         entrevistas del mismo puesto, se puede observar la variación de
         desempeño entre ambas.
         """
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 42)
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("basico"), 92)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 42)
+        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 92)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -148,7 +148,7 @@ class EstadisticasConDatosTest(APITestCase):
         """La evolución es por entrevista, no por tema, así que lo que la
         identifica es el puesto: un punto del gráfico es "mi entrevista de
         Backend", no "mi entrevista de Bases de Datos"."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
+        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
 
         punto = self.client.get("/api/estadisticas/").data["evolucion"][0]
 
@@ -156,8 +156,8 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(punto["puesto_display"], "Desarrollador Backend")
 
     def test_evolucion_esta_ordenada_cronologicamente(self):
-        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 67)
-        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("basico"), 83)
+        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
+        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 83)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -165,7 +165,7 @@ class EstadisticasConDatosTest(APITestCase):
         self.assertEqual(ids, [primera.id, segunda.id])
 
     def test_entrevistas_en_progreso_no_cuentan(self):
-        servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=FakeProveedorIA())
+        servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=FakeProveedorIA())
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -176,7 +176,7 @@ class EstadisticasConDatosTest(APITestCase):
         otro = Usuario.objects.create_user(
             email="otro@example.com", password="clave-segura-123", nombre_completo="Otro"
         )
-        _completar_entrevista(otro, puesto_de("backend"), nivel_de("basico"), 100)
+        _completar_entrevista(otro, puesto_de("backend"), nivel_de("junior"), 100)
 
         respuesta = self.client.get("/api/estadisticas/")
 
@@ -201,7 +201,7 @@ class TrazabilidadDeLaNotaTest(APITestCase):
         usuario = Usuario.objects.create_user(
             email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
         )
-        entrevista = _completar_entrevista(usuario, puesto_de("backend"), nivel_de("basico"), 67)
+        entrevista = _completar_entrevista(usuario, puesto_de("backend"), nivel_de("junior"), 67)
 
         evaluaciones = Evaluacion.objects.filter(intercambio__entrevista=entrevista)
         self.assertEqual(evaluaciones.count(), PREGUNTAS_POR_ENTREVISTA)

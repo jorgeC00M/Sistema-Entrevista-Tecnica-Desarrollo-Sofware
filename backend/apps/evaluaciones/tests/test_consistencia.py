@@ -20,7 +20,7 @@ class CasosDeEjemploTest(TestCase):
         self.assertEqual(len(casos), 8)
         self.assertEqual({c.banda_esperada for c in casos}, {b.codigo for b in BANDAS})
         self.assertGreaterEqual(len({c.area for c in casos}), 4)
-        self.assertEqual({c.contexto.nivel.value for c in casos}, {"basico", "intermedio"})
+        self.assertEqual({c.contexto.nivel.value for c in casos}, {"junior", "semi_senior"})
         for caso in casos:
             with self.subTest(caso=caso.id):
                 self.assertTrue(caso.pregunta.strip())

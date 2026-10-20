@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import Boton from '@/components/ui/Boton'
+import { clasesDeBoton } from '@/components/ui/estilosDeBoton'
 import Icono from '@/components/ui/Icono'
 
 interface Props {
@@ -11,8 +11,8 @@ interface Props {
 }
 
 const ENLACE_POR_FONDO = {
-  oscuro: 'text-white/85 hover:text-white focus-visible:outline-white',
-  claro: 'text-vidrio-ink hover:text-vidrio-acento focus-visible:outline-vidrio-acento',
+  oscuro: 'foco-claro text-white/85 hover:text-white',
+  claro: 'foco-anillo text-vidrio-ink hover:text-vidrio-acento',
 } as const
 
 /**
@@ -25,18 +25,17 @@ const ENLACE_POR_FONDO = {
 export default function AccionesDeRegistro({ textoRegistro, fondo }: Props) {
   return (
     <>
-      <Link to="/registro" className="w-full sm:w-auto">
-        <Boton variante="vidrio" forma="pildora" className="group h-12 w-full px-6 sm:w-auto">
-          {textoRegistro}
-          <Icono
-            nombre="flecha-diagonal"
-            className="ml-1 h-[17px] w-[17px] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-          />
-        </Boton>
+      {/* Un enlace con apariencia de botón, no un <button> dentro de un <a>. */}
+      <Link to="/registro" className={clasesDeBoton({ tamano: 'lg', className: 'group w-full sm:w-auto' })}>
+        {textoRegistro}
+        <Icono
+          nombre="flecha-diagonal"
+          className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
       </Link>
       <Link
         to="/login"
-        className={`rounded-control px-1 py-2 text-cuerpo font-medium underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 ${ENLACE_POR_FONDO[fondo]}`}
+        className={`rounded-control px-1 py-2 text-cuerpo font-medium underline-offset-4 transition-colors duration-150 hover:underline ${ENLACE_POR_FONDO[fondo]}`}
       >
         Ya tengo cuenta
       </Link>

@@ -52,7 +52,9 @@ def _contexto(entrevista) -> ContextoDeEntrevista:
     return ContextoDeEntrevista(
         puesto=entrevista.puesto_enum,
         nivel=entrevista.nivel_enum,
-        tecnologia=entrevista.tecnologia_enum,
+        tecnologia=entrevista.tecnologia_nombre,
+        # Solo el entrevistador los usa; el evaluador no los recibe.
+        requisitos=entrevista.convocatoria.requisitos if entrevista.convocatoria_id else (),
     )
 
 
@@ -78,11 +80,20 @@ def _crear_intercambios(entrevista, preguntas, areas_enum) -> list[Intercambio]:
     ]
 
 
-def iniciar(usuario, puesto, nivel, tecnologia=None, proveedor: ProveedorIA | None = None):
+def iniciar(
+    usuario,
+    puesto,
+    nivel,
+    tecnologia=None,
+    proveedor: ProveedorIA | None = None,
+    convocatoria=None,
+    segunda_tecnologia=None,
+):
     """Crea la entrevista y sus preguntas de calentamiento.
 
-    `puesto`, `nivel` y `tecnologia` son instancias de los modelos de catálogo
-    (la última, opcional); los enums que necesita el proveedor se derivan de su
+    `puesto`, `nivel`, `tecnologia` y `segunda_tecnologia` son instancias de los
+    modelos de catálogo (las tecnologías, opcionales; la segunda solo en un
+    puesto con capas, como Full Stack); los enums que necesita el proveedor se derivan de su
     `codigo`. El área de cada pregunta no se recibe: la decide el puesto.
 
     Las primeras `PREGUNTAS_DE_CALENTAMIENTO` se piden en una sola llamada porque
@@ -94,7 +105,12 @@ def iniciar(usuario, puesto, nivel, tecnologia=None, proveedor: ProveedorIA | No
 
     with transaction.atomic():
         entrevista = Entrevista.objects.create(
-            usuario=usuario, puesto=puesto, nivel=nivel, tecnologia=tecnologia
+            usuario=usuario,
+            puesto=puesto,
+            nivel=nivel,
+            tecnologia=tecnologia,
+            segunda_tecnologia=segunda_tecnologia,
+            convocatoria=convocatoria,
         )
         contexto = _contexto(entrevista)
         areas = [
@@ -169,6 +185,31 @@ def _finalizar(entrevista) -> None:
     entrevista.fecha_fin = timezone.now()
     entrevista.estado = Entrevista.Estado.FINALIZADA
     entrevista.save(update_fields=["puntuacion_promedio", "fecha_fin", "estado"])
+
+
+class EntrevistaNoEnCurso(ValueError):
+    """Se pidió abandonar una entrevista que ya terminó (finalizada o abandonada)."""
+
+
+def abandonar(entrevista) -> None:
+    """El usuario deja la entrevista a medias, a sabiendas (lo confirmó en la
+    interfaz). Es el camino manual a `ABANDONADA`; el otro es el pasivo de
+    `marcar_abandonadas`, tras `MINUTOS_PARA_ABANDONO` sin actividad.
+
+    Solo cambia el estado y la fecha de fin: intercambios y evaluaciones
+    quedan como están, y la nota no se guarda —el reporte calcula la parcial
+    sobre lo respondido—, igual que con el abandono pasivo.
+
+    Es una sola actualización condicionada al estado, no leer-y-escribir: si
+    justo termina la última respuesta en otra petición, gana quien llegue
+    primero y el otro lo nota, en vez de pisar un `FINALIZADA` con `ABANDONADA`.
+    """
+    actualizadas = Entrevista.objects.filter(
+        pk=entrevista.pk, estado=Entrevista.Estado.EN_PROGRESO
+    ).update(estado=Entrevista.Estado.ABANDONADA, fecha_fin=timezone.now())
+    if not actualizadas:
+        raise EntrevistaNoEnCurso("Esta entrevista ya no está en progreso.")
+    entrevista.refresh_from_db()
 
 
 def marcar_abandonadas(usuario) -> int:

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 
 import Icono from '@/components/ui/Icono'
+import Boton from '@/components/ui/Boton'
 import CampoAuth from '@/features/auth/components/CampoAuth'
 import type { DatosDeRegistro } from '@/types/usuario'
 
@@ -100,7 +101,7 @@ export default function FormularioRegistro({
           tiene sentido apilar "mínimo 8 caracteres" encima del mensaje real
           ("esta contraseña es demasiado común"). */}
       {!erroresPorCampo.password && (
-        <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-vidrio-muted">
+        <p className="-mt-2.5 mb-3.5 text-left text-meta text-vidrio-muted">
           Mínimo 8 caracteres.
         </p>
       )}
@@ -120,18 +121,18 @@ export default function FormularioRegistro({
         // El mockup no define un color de error (es estático, sin estados de
         // validación); se reutiliza el semántico de error del proyecto en
         // vez de inventar un rojo nuevo fuera de las variables pedidas.
-        <p className="-mt-2.5 mb-3.5 text-left text-[0.8rem] text-error-texto">
+        <p className="-mt-2.5 mb-3.5 text-left text-meta text-error-texto">
           Las contraseñas no coinciden.
         </p>
       )}
 
-      <div className="mt-1 mb-6 text-[0.85rem] leading-[1.4]">
+      <div className="mt-1 mb-6 text-sm">
         <label className="flex cursor-pointer items-start gap-2 text-left text-vidrio-texto">
           <input
             type="checkbox"
             checked={aceptaTerminos}
             onChange={(e) => setAceptaTerminos(e.target.checked)}
-            className="mt-0.5 h-[17px] w-[17px] shrink-0 accent-vidrio-acento"
+            className="foco-anillo mt-0.5 size-4 shrink-0 accent-vidrio-acento"
           />
           <span>
             {/* Sin destino real todavía: no hay páginas de términos ni de
@@ -139,28 +140,27 @@ export default function FormularioRegistro({
                 contraseña?" en FormularioLogin. */}
             Acepto los{' '}
             {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-            <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
+            <a href="#" className="foco-anillo rounded-chip font-medium text-vidrio-acento no-underline hover:underline">
               Términos
             </a>{' '}
             y la{' '}
             {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-            <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
+            <a href="#" className="foco-anillo rounded-chip font-medium text-vidrio-acento no-underline hover:underline">
               Política de privacidad
             </a>
           </span>
         </label>
       </div>
 
-      <button
+      <Boton
         type="submit"
-        disabled={cargando || form.password !== confirmarPassword}
-        className="flex h-[50px] w-full items-center justify-center rounded-full bg-vidrio-acento text-[1.05rem] font-semibold text-white transition-colors hover:bg-vidrio-acento-hover disabled:cursor-not-allowed disabled:opacity-60"
+        tamano="lg"
+        cargando={cargando}
+        disabled={form.password !== confirmarPassword}
+        className="w-full"
       >
-        {cargando && (
-          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        )}
         Crear cuenta
-      </button>
+      </Boton>
     </form>
   )
 }

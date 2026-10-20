@@ -25,7 +25,7 @@ class FormulaEnLaApiTest(APITestCase):
         self.proveedor = FakeProveedorIA()
 
     def _iniciar(self):
-        return servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=self.proveedor)
+        return servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=self.proveedor)
 
     def _resultados(self, entrevista):
         respuesta = self.client.get(f"/api/entrevistas/{entrevista.pk}/resultados/")

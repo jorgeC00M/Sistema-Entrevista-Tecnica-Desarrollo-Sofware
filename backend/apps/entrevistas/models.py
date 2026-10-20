@@ -18,7 +18,43 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 
-from integrations.ia.prompts.schemas import AreaTecnica, Nivel, Puesto, Tecnologia
+from integrations.ia.prompts.schemas import AreaTecnica, Nivel, Puesto
+
+
+class Convocatoria(models.Model):
+    """Un aviso de trabajo que el usuario pegó o subió, ya analizado.
+
+    `texto` está **enmascarado** (sin correos, teléfonos ni enlaces del
+    reclutador): es lo que se guarda y lo que viaja a la IA. El archivo original
+    nunca se guarda. `perfil` es la salida anclada del análisis
+    (`PerfilDetectado.como_dict()`), incluso si no se identificó un puesto: el
+    mismo aviso daría el mismo resultado.
+
+    La unicidad por usuario y hash es la caché: analizar dos veces el mismo
+    aviso no vuelve a llamar a la IA.
+    """
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="convocatorias"
+    )
+    texto = models.TextField()
+    hash = models.CharField(max_length=64)
+    perfil = models.JSONField()
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["usuario", "hash"], name="convocatoria_unica_por_usuario")
+        ]
+        verbose_name = "convocatoria"
+        verbose_name_plural = "convocatorias"
+
+    def __str__(self) -> str:
+        return f"Convocatoria {self.pk} de {self.usuario}"
+
+    @property
+    def requisitos(self) -> tuple[str, ...]:
+        return tuple(self.perfil.get("requisitos", ()))
 
 
 class Entrevista(models.Model):
@@ -39,10 +75,27 @@ class Entrevista(models.Model):
     nivel = models.ForeignKey(
         "catalogos.Nivel", on_delete=models.PROTECT, related_name="entrevistas"
     )
-    # NULL = "sin preferencia de stack", que es una respuesta legítima y no lo
-    # mismo que una tecnología llamada "indiferente".
+    # Nula solo en entrevistas anteriores al catálogo por puesto: iniciar una
+    # ahora la exige. En un puesto con capas (Full Stack) es la de frontend y
+    # `segunda_tecnologia` la de backend; en los demás, la segunda queda nula.
     tecnologia = models.ForeignKey(
         "catalogos.Tecnologia",
+        on_delete=models.PROTECT,
+        related_name="entrevistas",
+        null=True,
+        blank=True,
+    )
+    segunda_tecnologia = models.ForeignKey(
+        "catalogos.Tecnologia",
+        on_delete=models.PROTECT,
+        related_name="entrevistas_como_segunda",
+        null=True,
+        blank=True,
+    )
+    # La convocatoria con que se inició, si hubo una: sus requisitos orientan
+    # las preguntas. PROTECT: es parte del contexto de esas preguntas.
+    convocatoria = models.ForeignKey(
+        Convocatoria,
         on_delete=models.PROTECT,
         related_name="entrevistas",
         null=True,
@@ -78,8 +131,16 @@ class Entrevista(models.Model):
         return Nivel(self.nivel.codigo)
 
     @property
-    def tecnologia_enum(self) -> Tecnologia | None:
-        return Tecnologia(self.tecnologia.codigo) if self.tecnologia_id else None
+    def tecnologia_nombre(self) -> str | None:
+        """El nombre que lee la IA y que ve el usuario: "React", o "React +
+        Node.js" con dos capas. Es el mismo texto que tenían las combinaciones
+        fijas de Full Stack, así que el prompt no distingue unas de otras.
+
+        Por nombre y no por enum: las tecnologías se dan de alta en el
+        catálogo, y la IA solo necesita leerla. `None` en las entrevistas
+        anteriores al catálogo por puesto."""
+        nombres = [t.nombre for t in (self.tecnologia, self.segunda_tecnologia) if t is not None]
+        return " + ".join(nombres) or None
 
 
 class Intercambio(models.Model):

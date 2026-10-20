@@ -8,7 +8,8 @@ from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 from .exceptions import RespuestaIAInvalida
-from .prompts import entrevistador, evaluador, revisor_cv
+from .prompts import analista_convocatoria, entrevistador, evaluador, revisor_cv
+from .prompts.analista_convocatoria import EntradaDeConvocatoria, PerfilDetectado
 from .prompts.revisor_cv import EntradaDeRevision, RevisionDeCV
 
 from .prompts.schemas import (
@@ -99,6 +100,24 @@ class RevisorDeCV(Protocol):
         ...
 
 
+@runtime_checkable
+class AnalizadorDeConvocatoria(Protocol):
+    """Un proveedor capaz de ubicar una convocatoria en el catálogo.
+
+    Contrato aparte por el mismo motivo que `RevisorDeCV`: los dobles de
+    entrevista no tienen por qué implementarlo. No se filtra por
+    `apto_para_datos_personales`: el aviso no es un dato personal del candidato y
+    llega enmascarado.
+    """
+
+    nombre: str
+    modelo: str
+
+    def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:
+        """Elige puesto, tecnología y nivel del catálogo y resume los requisitos."""
+        ...
+
+
 class ProveedorIAporJSON(ProveedorIA):
     """Base de los proveedores que piden JSON estructurado a un modelo.
 
@@ -131,7 +150,7 @@ class ProveedorIAporJSON(ProveedorIA):
         previas: list[TemaEvaluado],
     ) -> Pregunta:
         datos = self._pedir_json(
-            sistema=entrevistador.sistema(contexto, area, PREGUNTAS_POR_ENTREVISTA),
+            sistema=entrevistador.sistema(contexto, area, numero, PREGUNTAS_POR_ENTREVISTA),
             entrada=entrevistador.usuario(numero, previas),
             esquema=entrevistador.ESQUEMA_PREGUNTA,
         )
@@ -160,6 +179,16 @@ class ProveedorIAporJSON(ProveedorIA):
             esquema=revisor_cv.ESQUEMA_REVISION,
         )
         return revisor_cv.parsear_revision(datos, entrada)
+
+    def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:
+        """Implementa `AnalizadorDeConvocatoria` con la misma secuencia que las
+        demás operaciones: así todos los adaptadores lo obtienen sin código propio."""
+        datos = self._pedir_json(
+            sistema=analista_convocatoria.sistema(entrada),
+            entrada=analista_convocatoria.usuario(entrada),
+            esquema=analista_convocatoria.esquema(entrada),
+        )
+        return analista_convocatoria.parsear_perfil(datos, entrada)
 
     @abstractmethod
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:

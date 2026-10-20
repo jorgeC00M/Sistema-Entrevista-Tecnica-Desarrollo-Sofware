@@ -35,6 +35,11 @@ const TITULOS: TituloDeRuta[] = [
     subtitulo: 'Elige el puesto al que quieres postular y el nivel de exigencia',
   },
   {
+    patron: '/mi-cv/:id',
+    titulo: 'Revisar mi CV',
+    subtitulo: 'Qué lee un ATS de tu currículum, y cómo encaja en una convocatoria',
+  },
+  {
     patron: '/mi-cv',
     titulo: 'Revisar mi CV',
     subtitulo: 'Qué lee un ATS de tu currículum, y cómo encaja en una convocatoria',

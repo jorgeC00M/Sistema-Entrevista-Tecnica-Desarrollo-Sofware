@@ -48,7 +48,7 @@ class ResumenFinalTest(APITestCase):
         self.usuario = crear_usuario()
         self.client.force_authenticate(self.usuario)
 
-    def _entrevista(self, notas, nivel="basico", puesto="backend"):
+    def _entrevista(self, notas, nivel="junior", puesto="backend"):
         proveedor = ProveedorConNotas(notas)
         entrevista = servicio.iniciar(self.usuario, puesto_de(puesto), nivel_de(nivel), proveedor=proveedor)
         for _ in notas:
@@ -104,8 +104,8 @@ class ResumenFinalTest(APITestCase):
         self.assertEqual(comparacion, {"entrevista_id": anterior.pk, "diferencia": 8.0})
 
     def test_otro_nivel_no_cuenta_como_anterior(self):
-        self._entrevista([75] * PREGUNTAS_POR_ENTREVISTA, nivel="intermedio")
-        actual = self._entrevista([75] * PREGUNTAS_POR_ENTREVISTA, nivel="basico")
+        self._entrevista([75] * PREGUNTAS_POR_ENTREVISTA, nivel="semi_senior")
+        actual = self._entrevista([75] * PREGUNTAS_POR_ENTREVISTA, nivel="junior")
 
         self.assertIsNone(self._resumen(actual)["comparacion"])
 
@@ -118,7 +118,7 @@ class ResumenFinalTest(APITestCase):
     def test_una_abandonada_tiene_resumen_parcial_sin_comparacion(self):
         self._entrevista([50] * PREGUNTAS_POR_ENTREVISTA)
         proveedor = ProveedorConNotas([92, 67])
-        abandonada = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        abandonada = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
         servicio.responder(abandonada, "Una", proveedor=proveedor)
         servicio.responder(abandonada, "Dos", proveedor=proveedor)
         Entrevista.objects.filter(pk=abandonada.pk).update(
@@ -143,7 +143,7 @@ class ResumenFinalTest(APITestCase):
 
     def test_en_progreso_el_resumen_es_nulo(self):
         proveedor = ProveedorConNotas([75])
-        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
         servicio.responder(entrevista, "Una", proveedor=proveedor)
 
         respuesta = self.client.get(f"/api/entrevistas/{entrevista.pk}/resultados/")

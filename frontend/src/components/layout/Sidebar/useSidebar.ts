@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { matchPath, useLocation } from 'react-router-dom'
 
 import { useCajonNavegacion } from '@/components/layout/useCajonNavegacion'
-import { useDestinosDisponibles } from '@/components/layout/useDestinosDisponibles'
+import { useEntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
 
 /**
  * Todo lo que `RutaProtegida` necesita del sidebar, en un solo hook: antes
@@ -12,7 +12,7 @@ export function useSidebar() {
   const [plegado, setPlegado] = useState(false)
   const { pathname } = useLocation()
   const cajon = useCajonNavegacion()
-  const { enCurso: entrevistaEnCurso, ultimaFinalizada } = useDestinosDisponibles()
+  const entrevistaEnCurso = useEntrevistaEnCurso()
 
   // Modo enfoque: colapsa al entrar a la conversación de una entrevista.
   //
@@ -31,7 +31,6 @@ export function useSidebar() {
     plegado,
     alternarPlegado: () => setPlegado((v) => !v),
     entrevistaEnCurso,
-    ultimaFinalizada,
     cajon,
   }
 }

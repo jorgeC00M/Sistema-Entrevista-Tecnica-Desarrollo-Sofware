@@ -34,7 +34,7 @@ from integrations.documentos.terminos import escritos_de_una_sola_forma
 #: con reglas anteriores se recalcule al volver a subir el mismo CV, en vez de
 #: mostrarle al usuario un diagnóstico que ya no es el vigente. **Hay que subirla
 #: cada vez que cambie lo que el análisis o la brecha producen.**
-VERSION_DE_REGLAS = 2
+VERSION_DE_REGLAS = 3
 
 #: Los campos de la ficha que arma el ATS, en el orden en que se muestran. Es la
 #: única lista: el caso sin capa de texto la recorre y un test comprueba que las
@@ -171,6 +171,34 @@ IDIOMA_DISTINTO = Hallazgo(
 )
 
 
+def _detalle_sin_capa_de_texto(documento: DocumentoExtraido) -> str:
+    """Por qué el ATS no lee nada, según el formato: la causa y el arreglo
+    cambian, y decir "se escaneó" de un DOCX sería afirmar algo falso.
+
+    Un DOCX no se escanea: llega sin texto legible porque el contenido vive en
+    cuadros de texto (que `texto` excluye a propósito) o porque es una imagen
+    pegada en el documento.
+    """
+    final = "Un ATS extrae cero caracteres, así que no apareces en ninguna búsqueda del reclutador."
+    if documento.formato == "docx":
+        if documento.texto_en_cuadros.strip():
+            return (
+                "Tu texto está dentro de cuadros de texto, y un ATS no lee lo que hay en ellos. "
+                f"{final} Copia el contenido al cuerpo del documento, fuera de los cuadros, y "
+                "elimina los cuadros."
+            )
+        return (
+            "El documento no contiene texto que el ATS pueda leer: suele ser porque el "
+            f"contenido está pegado como imagen. {final} Escribe el CV como texto en Word "
+            "o Google Docs."
+        )
+    return (
+        "El archivo no contiene texto seleccionable: es una imagen. Suele pasar cuando el CV "
+        f"se imprimió y se escaneó, o se exportó como imagen. {final} Exporta el CV "
+        "directamente desde Word o Google Docs, sin pasar por el escáner."
+    )
+
+
 def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
     """Aplica las verificaciones de parseabilidad sobre un documento extraído.
 
@@ -188,13 +216,7 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
                 codigo="sin_capa_de_texto",
                 severidad="critica",
                 titulo="El ATS no puede leer nada de tu CV",
-                detalle=(
-                    "El archivo no contiene texto seleccionable: es una imagen. "
-                    "Suele pasar cuando el CV se imprimió y se escaneó, o se exportó "
-                    "como imagen. Un ATS extrae cero caracteres, así que no apareces "
-                    "en ninguna búsqueda del reclutador. Exporta el CV directamente "
-                    "desde Word o Google Docs, sin pasar por el escáner."
-                ),
+                detalle=_detalle_sin_capa_de_texto(documento),
             )
         )
         analisis.campos = [

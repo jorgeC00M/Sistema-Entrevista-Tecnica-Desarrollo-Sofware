@@ -32,6 +32,10 @@ export default function Rutas() {
           <Route path="/entrevista/:id" element={<EntrevistaPage />} />
           <Route path="/entrevista/:id/resultados" element={<ResultadosPage />} />
           <Route path="/mi-cv" element={<CurriculumPage />} />
+          {/* Un análisis con su dirección: recargar o compartir el enlace lo
+              conserva. Es el mismo componente, así que pasar de una ruta a la
+              otra no desmonta la página ni pierde lo elegido. */}
+          <Route path="/mi-cv/:id" element={<CurriculumPage />} />
           <Route path="/historial" element={<HistorialPage />} />
           <Route path="/retroalimentacion" element={<RetroalimentacionPage />} />
           <Route path="/perfil" element={<PerfilPage />} />

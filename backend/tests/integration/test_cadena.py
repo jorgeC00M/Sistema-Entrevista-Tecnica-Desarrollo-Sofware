@@ -7,7 +7,7 @@ from integrations.ia.exceptions import ErrorPermanente, ErrorTransitorio, Respue
 from integrations.ia.fake import FakeProveedorIA
 from integrations.ia.prompts.schemas import AreaTecnica, ContextoDeEntrevista, Nivel, Puesto
 
-CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.BASICO)
+CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.JUNIOR)
 
 
 class Falla(FakeProveedorIA):

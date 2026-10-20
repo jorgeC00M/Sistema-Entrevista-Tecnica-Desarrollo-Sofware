@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import Boton from '@/components/ui/Boton'
 import IconoGoogle from '@/components/ui/IconoGoogle'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -58,9 +59,6 @@ interface Props {
   /** Solo para el botón de respaldo cuando Google no está disponible. */
   etiquetaRespaldo: string
 }
-
-const CLASE_BOTON_RESPALDO =
-  "flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-vidrio-field font-sans text-[0.88rem] text-vidrio-ink opacity-60"
 
 /**
  * Botón "Continuar con Google" usando Google Identity Services.
@@ -123,10 +121,10 @@ export default function BotonGoogle({ onCredential, modo, etiquetaRespaldo }: Pr
 
   if (!CLIENT_ID || error) {
     return (
-      <button type="button" disabled aria-disabled="true" className={CLASE_BOTON_RESPALDO}>
-        <IconoGoogle className="h-[18px] w-[18px]" />
+      <Boton variante="secundario" disabled className="h-11 w-full">
+        <IconoGoogle className="size-4.5" />
         {etiquetaRespaldo}
-      </button>
+      </Boton>
     )
   }
 

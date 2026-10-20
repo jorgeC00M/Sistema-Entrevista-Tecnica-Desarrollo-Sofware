@@ -32,7 +32,7 @@ class PuestoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Puesto
-        fields = ["codigo", "nombre", "descripcion", "orden", "areas"]
+        fields = ["codigo", "nombre", "descripcion", "icono", "orden", "areas"]
         read_only_fields = fields
 
     def get_areas(self, puesto: Puesto) -> list[str]:
@@ -53,3 +53,28 @@ class PuestoSerializer(serializers.ModelSerializer):
             return [area.value for area in areas_que_cubre(PuestoIA(puesto.codigo))]
         except ValueError:
             return []
+
+
+class TecnologiaDePuestoSerializer(serializers.ModelSerializer):
+    """`capa` dice si se elige junto a otra: en Full Stack, una de "frontend" y
+    una de "backend". Vacía en los puestos que piden una sola. `grupo` es el
+    rótulo con que se agrupa en pantalla ("Python" para Django)."""
+
+    class Meta:
+        model = Tecnologia
+        fields = ["codigo", "nombre", "capa", "grupo"]
+        read_only_fields = fields
+
+
+class PuestoConTecnologiasSerializer(PuestoSerializer):
+    """El puesto con sus tecnologías, para la pantalla de selección.
+
+    `tecnologias` sale del `Prefetch` de `selectors.puestos_con_tecnologias()`
+    (atributo `tecnologias_activas`): una sola consulta para todos los puestos.
+    """
+
+    tecnologias = TecnologiaDePuestoSerializer(source="tecnologias_activas", many=True, read_only=True)
+
+    class Meta(PuestoSerializer.Meta):
+        fields = [*PuestoSerializer.Meta.fields, "tecnologias"]
+        read_only_fields = fields

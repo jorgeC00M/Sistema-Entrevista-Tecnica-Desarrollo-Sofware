@@ -14,7 +14,7 @@ export default function SidebarMarca({ plegado, onAlternarPlegado }: Props) {
     <div className={`flex items-center gap-2 ${plegado ? 'flex-col' : 'justify-between'}`}>
       <NavLink
         to="/nueva-entrevista"
-        className={`flex min-w-0 items-center gap-3 rounded-control px-1 py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+        className={`flex min-w-0 items-center gap-3 rounded-control px-1 py-1 foco-claro ${
           plegado ? 'justify-center' : ''
         }`}
       >
@@ -36,6 +36,7 @@ export default function SidebarMarca({ plegado, onAlternarPlegado }: Props) {
       {onAlternarPlegado && (
         <BotonIcono
           icono={plegado ? 'desplegar' : 'plegar'}
+          tono="oscuro"
           aria-label={plegado ? 'Expandir menú' : 'Colapsar menú'}
           aria-expanded={!plegado}
           onClick={onAlternarPlegado}

@@ -28,7 +28,7 @@ export default function Textarea({
       <textarea
         id={id}
         value={value}
-        className="w-full resize-none rounded-vidrio border border-vidrio-linea bg-vidrio-field px-3 py-2 text-sm text-vidrio-ink focus:border-vidrio-acento focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento disabled:opacity-60"
+        className="campo w-full resize-none px-3 py-2 text-sm text-vidrio-ink"
         {...props}
       />
       {maximoCaracteres !== undefined && (

@@ -1,0 +1,60 @@
+/* Utilidades propias: lo que se repetía copiado en muchos componentes. Se
+   usan como cualquier clase de Tailwind (`foco-anillo`, `campo`) y admiten
+   variantes (`sm:campo`). */
+
+/* Anillo de foco de teclado sobre fondo claro. Antes: el mismo trío
+   focus-visible:outline-* copiado 17 veces, con variantes y huecos. */
+@utility foco-anillo {
+  &:focus-visible {
+    outline: 2px solid var(--color-vidrio-acento);
+    outline-offset: 2px;
+  }
+}
+
+/* El mismo anillo para fondos oscuros (sidebar, hero). */
+@utility foco-claro {
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+/* Base de todo campo de formulario (input, textarea, select y el contenedor
+   de CampoAuth): misma caja, mismo foco, mismos estados. El alto y el color
+   del texto los pone cada campo (un textarea no mide 44 px; un select vacío
+   se ve atenuado): así no compiten dos utilidades por la misma propiedad. */
+@utility campo {
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-vidrio-borde);
+  background-color: #fff;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-vidrio-tenue);
+  }
+
+  &:focus-visible,
+  &:focus-within {
+    border-color: var(--color-vidrio-acento);
+    outline: 2px solid var(--color-vidrio-acento);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: var(--color-vidrio-field);
+    opacity: 0.5;
+  }
+
+  /* El propio campo, o un contenedor (CampoAuth) que tiene uno inválido dentro. */
+  &[aria-invalid='true'],
+  &:has([aria-invalid='true']) {
+    border-color: var(--color-error-texto);
+  }
+
+  &::placeholder {
+    color: var(--color-vidrio-tenue);
+  }
+}

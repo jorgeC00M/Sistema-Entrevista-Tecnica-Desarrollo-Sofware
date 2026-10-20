@@ -52,8 +52,7 @@ export default function CampoRespuesta({ onEnviar, deshabilitado }: Props) {
         />
         <Boton
           type="submit"
-          variante="vidrio"
-          forma="pildora"
+          variante="primario"
           cargando={deshabilitado}
           disabled={!texto.trim()}
         >

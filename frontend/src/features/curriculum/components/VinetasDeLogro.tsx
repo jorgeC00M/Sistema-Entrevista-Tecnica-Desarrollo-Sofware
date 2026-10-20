@@ -26,7 +26,7 @@ export default function VinetasDeLogro({ vinetas, sugerencias = {} }: Props) {
   return (
     <section>
       <div className="mb-3 flex flex-wrap items-center gap-2 border-t border-vidrio-linea pt-6">
-        <h2 className="font-serif text-headline-lg font-semibold text-vidrio-ink">
+        <h2 className="font-serif text-headline-md font-semibold text-vidrio-ink">
           Y cuando un humano lo lea
         </h2>
         <EtiquetaMono>No es un filtro ATS</EtiquetaMono>
@@ -52,6 +52,8 @@ export default function VinetasDeLogro({ vinetas, sugerencias = {} }: Props) {
             <p className="mt-2 text-sm text-vidrio-texto">
               Estas describen la responsabilidad en lugar del resultado. Reescríbelas con una cifra:
               «Encargado del módulo de pagos» dice mucho menos que «Reduje la latencia de pagos 40%».
+              Si aún no tienes experiencia laboral, vale igual para un proyecto o tu tesis: «Implementé
+              el módulo de reportes de mi tesis; redujo de 2 horas a 10 minutos el cierre mensual».
             </p>
             <ul className="mt-3 space-y-2">
               {vinetas.sin_resultado.map((texto) => (

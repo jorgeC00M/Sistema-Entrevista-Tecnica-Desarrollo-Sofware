@@ -33,7 +33,7 @@ export default function Hero({ totalPreguntas }: Props) {
     <section
       id="inicio"
       ref={ref}
-      className="bg-[linear-gradient(180deg,#132042_0%,var(--color-vidrio-ink)_100%)] pt-[clamp(112px,16vh,160px)] pb-[clamp(56px,9vh,104px)] text-white"
+      className="bg-(image:--gradiente-hero) pt-[clamp(112px,16vh,160px)] pb-[clamp(56px,9vh,104px)] text-white"
     >
       <Wrap className="grid items-center gap-x-12 gap-y-14 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <div>

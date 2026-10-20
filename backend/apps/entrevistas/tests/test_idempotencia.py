@@ -29,7 +29,7 @@ class IdempotenciaTest(TestCase):
         # responder().
         proveedor_que_falla = FakeProveedorIA(fallar_en=2)
         entrevista = servicio.iniciar(
-            self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor_que_falla
+            self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor_que_falla
         )
 
         with self.assertRaises(ErrorTransitorio):
@@ -56,7 +56,7 @@ class IdempotenciaTest(TestCase):
     def test_reintento_exitoso_deja_exactamente_una_evaluacion(self):
         proveedor_que_falla = FakeProveedorIA(fallar_en=2)
         entrevista = servicio.iniciar(
-            self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor_que_falla
+            self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor_que_falla
         )
         with self.assertRaises(ErrorTransitorio):
             servicio.responder(entrevista, "Mi respuesta", proveedor=proveedor_que_falla)
@@ -88,7 +88,7 @@ class IdempotenciaTest(TestCase):
         entrevista = servicio.iniciar(
             self.usuario,
             puesto_de("backend"),
-            nivel_de("basico"),
+            nivel_de("junior"),
             proveedor=proveedor_que_falla,
         )
 

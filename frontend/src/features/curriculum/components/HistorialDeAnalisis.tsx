@@ -40,12 +40,10 @@ export default function HistorialDeAnalisis({ analisis, cargando, onAbrir }: Pro
   return (
     <Tarjeta className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-serif text-headline-md font-semibold text-vidrio-ink">
-          Tus análisis anteriores
-        </h2>
-        <EtiquetaMono>
-          {analisis.length} {analisis.length === 1 ? 'análisis' : 'análisis'}
-        </EtiquetaMono>
+        {/* Secundario frente a "Tu currículum": un nivel de título por debajo. */}
+        <h2 className="text-headline-sm font-semibold text-vidrio-ink">Tus análisis anteriores</h2>
+        {/* "Análisis" es igual en singular y en plural. */}
+        <EtiquetaMono>{analisis.length} análisis</EtiquetaMono>
       </div>
 
       <p className="mt-1.5 text-sm text-vidrio-texto">
@@ -58,7 +56,7 @@ export default function HistorialDeAnalisis({ analisis, cargando, onAbrir }: Pro
             <button
               type="button"
               onClick={() => onAbrir(fila.id)}
-              className="flex w-full items-center gap-3 py-2.5 text-left transition-colors duration-150 hover:bg-vidrio-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
+              className="flex w-full items-center gap-3 py-2.5 text-left transition-colors duration-150 hover:bg-vidrio-field foco-anillo"
             >
               <Icono
                 nombre="resultados"
@@ -67,7 +65,7 @@ export default function HistorialDeAnalisis({ analisis, cargando, onAbrir }: Pro
               />
 
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-mono-vidrio text-sm text-vidrio-ink">
+                <span title={fila.nombre_archivo} className="block truncate font-mono-vidrio text-sm text-vidrio-ink">
                   {fila.nombre_archivo}
                 </span>
                 <span className="block text-label-mono text-vidrio-muted uppercase">
@@ -83,7 +81,7 @@ export default function HistorialDeAnalisis({ analisis, cargando, onAbrir }: Pro
 
               {fila.parseabilidad && (
                 <span className="shrink-0 font-mono-vidrio text-sm text-vidrio-texto">
-                  {fila.parseabilidad}
+                  {fila.parseabilidad} campos
                 </span>
               )}
             </button>

@@ -79,7 +79,7 @@ def sistema(contexto: ContextoDeEntrevista, area: AreaTecnica) -> str:
     # Se omite la línea entera cuando no hay tecnología: decir "ninguna"
     # invitaría al modelo a comentar la ausencia en vez de ignorarla.
     linea_tecnologia = (
-        f"\nTecnología principal del puesto: {contexto.tecnologia.etiqueta}"
+        f"\nTecnología elegida por el candidato: {contexto.tecnologia}"
         if contexto.tecnologia is not None
         else ""
     )
@@ -89,7 +89,7 @@ Eres un evaluador técnico que califica respuestas de una entrevista simulada en
 español para un egresado de Ingeniería de Sistemas que postula a un puesto.
 
 Puesto al que postula: {contexto.puesto.etiqueta}
-Nivel de dificultad: {contexto.nivel.etiqueta}{linea_tecnologia}
+Experiencia del candidato: {contexto.nivel.con_experiencia}{linea_tecnologia}
 Tema de la pregunta: {area.etiqueta}
 
 {RUBRICA}

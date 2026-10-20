@@ -14,7 +14,7 @@ export default function ComparativaAreas({ areas }: Props) {
       <div className="space-y-3">
         {areas.map((area) => (
           <div key={area.area}>
-            <div className="mb-1 flex items-center justify-between text-xs text-vidrio-muted">
+            <div className="mb-1 flex items-center justify-between gap-3 text-xs text-vidrio-muted">
               <span>
                 {area.area_display}{' '}
                 <span className="text-vidrio-muted">

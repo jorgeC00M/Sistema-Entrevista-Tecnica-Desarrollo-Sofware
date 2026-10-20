@@ -1,9 +1,14 @@
-import Tarjeta from '@/components/ui/Tarjeta'
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
+import { ErrorAPI } from '@/api/client'
+import { abandonarEntrevista } from '@/api/entrevistas'
+import Boton from '@/components/ui/Boton'
 import Cronometro from '@/components/ui/Cronometro'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import ModalDeConfirmacion from '@/components/ui/ModalDeConfirmacion'
 import Spinner from '@/components/ui/Spinner'
+import Tarjeta from '@/components/ui/Tarjeta'
 import BarraProgreso from '@/features/entrevista/components/BarraProgreso'
 import CampoRespuesta from '@/features/entrevista/components/CampoRespuesta'
 import ChatEntrevista from '@/features/entrevista/components/ChatEntrevista'
@@ -17,24 +22,55 @@ export default function EntrevistaPage() {
     totalPreguntas,
     puestoDisplay,
     nivelDisplay,
+    desdeConvocatoria,
     cargandoInicial,
     enviando,
     error,
     enviarRespuesta,
     reintentar,
   } = useEntrevista(id ?? '')
+  const navigate = useNavigate()
+  const [confirmandoAbandono, setConfirmandoAbandono] = useState(false)
+  const [abandonando, setAbandonando] = useState(false)
+  const [errorAbandono, setErrorAbandono] = useState('')
 
   if (cargandoInicial) return <Spinner texto="Cargando entrevista…" />
 
+  // La pregunta en pantalla todavía no se respondió.
+  const respondidas = Math.max(numeroActual - 1, 0)
+
+  const abandonar = async () => {
+    setErrorAbandono('')
+    setAbandonando(true)
+    try {
+      await abandonarEntrevista(id ?? '')
+      // `replace`: "atrás" no debe volver a una entrevista que ya no sigue.
+      navigate(`/entrevista/${id}/resultados`, { replace: true })
+    } catch (err) {
+      setErrorAbandono(err instanceof ErrorAPI ? err.message : 'No se pudo abandonar la entrevista.')
+      setAbandonando(false)
+    }
+  }
+
+  const cancelarAbandono = () => {
+    setConfirmandoAbandono(false)
+    setErrorAbandono('')
+  }
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
+    // `dvh` y no `vh`: en el móvil `100vh` incluye la barra del navegador y
+    // dejaba el campo de respuesta debajo del borde visible.
+    <div className="flex h-[calc(100dvh-8rem)] max-w-3xl flex-col">
       <Tarjeta className="mb-4 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-serif text-headline-sm font-semibold text-vidrio-ink">
               Entrevista · {puestoDisplay}
             </h1>
-            <EtiquetaMono tono="suelto">Nivel {nivelDisplay}</EtiquetaMono>
+            <EtiquetaMono tono="suelto">
+              Nivel {nivelDisplay}
+              {desdeConvocatoria && ' · Basada en tu convocatoria'}
+            </EtiquetaMono>
           </div>
 
           <div className="flex items-center gap-4">
@@ -45,6 +81,16 @@ export default function EntrevistaPage() {
               </p>
             </div>
             <Cronometro />
+            {/* Deshabilitado mientras se evalúa una respuesta: abandonar a
+                mitad de esa llamada dejaría su resultado en el aire. */}
+            <Boton
+              variante="peligro"
+              tamano="sm"
+              disabled={enviando}
+              onClick={() => setConfirmandoAbandono(true)}
+            >
+              Abandonar
+            </Boton>
           </div>
         </div>
 
@@ -63,19 +109,43 @@ export default function EntrevistaPage() {
       <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
 
       {error && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
           <span>{error}</span>
-          <button
-            type="button"
-            onClick={reintentar}
-            className="font-medium underline hover:no-underline"
-          >
+          <Boton variante="texto" tamano="sm" onClick={reintentar}>
             Reintentar
-          </button>
+          </Boton>
         </div>
       )}
 
       <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={enviando} />
+
+      {confirmandoAbandono && (
+        <ModalDeConfirmacion
+          titulo="Abandonar entrevista"
+          textoConfirmar="Abandonar"
+          cargando={abandonando}
+          onCancelar={cancelarAbandono}
+          onConfirmar={abandonar}
+        >
+          {respondidas > 0 ? (
+            <p>
+              Se cerrará con {respondidas === 1 ? 'la pregunta' : `las ${respondidas} preguntas`} que
+              respondiste y la nota quedará como parcial. No podrás retomarla ni responder las que
+              faltan.
+            </p>
+          ) : (
+            <p>
+              No respondiste ninguna pregunta, así que no habrá nota. No podrás retomar esta
+              entrevista.
+            </p>
+          )}
+          {errorAbandono && (
+            <p role="alert" className="mt-3 text-error-texto">
+              {errorAbandono}
+            </p>
+          )}
+        </ModalDeConfirmacion>
+      )}
     </div>
   )
 }

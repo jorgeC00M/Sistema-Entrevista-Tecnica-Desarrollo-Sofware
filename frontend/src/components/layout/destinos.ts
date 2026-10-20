@@ -6,28 +6,32 @@ export interface Destino {
   icono: NombreDeIcono
 }
 
+export interface GrupoDeDestinos {
+  /** En tipo oración: se muestra en mayúsculas con CSS, para que el lector de pantalla no lo deletree. */
+  titulo: string
+  destinos: Destino[]
+}
+
 /**
- * Lista única de destinos del estudiante.
+ * Los destinos del estudiante, agrupados por la etapa en que los usa:
+ * prepararse antes de practicar y revisar su progreso después. Practicar es el
+ * botón principal del sidebar, no un destino de esta lista.
  *
- * La consumen la barra fija de escritorio y el cajón de móvil. Definirla una
- * sola vez evita que añadir una sección obligue a acordarse de dos sitios.
+ * La consumen la barra fija y el cajón de móvil: definirla una sola vez evita
+ * que añadir una sección obligue a acordarse de dos sitios. No hay destinos
+ * condicionales: a una entrevista a medias se llega con "Continuar", a los
+ * reportes desde el historial y al perfil desde el bloque de usuario.
  */
-export const DESTINOS: Destino[] = [
-  { ruta: '/mi-cv', etiqueta: 'Revisar mi CV', icono: 'resultados' },
-  { ruta: '/historial', etiqueta: 'Historial y progreso', icono: 'historial' },
-  { ruta: '/retroalimentacion', etiqueta: 'Retroalimentación', icono: 'brujula' },
-  { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'usuario' },
+export const GRUPOS_DE_DESTINOS: GrupoDeDestinos[] = [
+  {
+    titulo: 'Prepararte',
+    destinos: [{ ruta: '/mi-cv', etiqueta: 'Revisar mi CV', icono: 'resultados' }],
+  },
+  {
+    titulo: 'Tu progreso',
+    destinos: [
+      { ruta: '/historial', etiqueta: 'Historial y progreso', icono: 'historial' },
+      { ruta: '/retroalimentacion', etiqueta: 'Retroalimentación', icono: 'brujula' },
+    ],
+  },
 ]
-
-/**
- * Destinos condicionales: solo existen cuando el estudiante tiene una
- * entrevista a la que aplican, así que se construyen con su id en vez de
- * vivir como entradas fijas en `DESTINOS`. Ver `specs/navegacion-app`.
- */
-export function destinoEntrevistaEnCurso(id: number): Destino {
-  return { ruta: `/entrevista/${id}`, etiqueta: 'Entrevista en curso', icono: 'terminal' }
-}
-
-export function destinoResultados(id: number): Destino {
-  return { ruta: `/entrevista/${id}/resultados`, etiqueta: 'Resultados', icono: 'resultados' }
-}

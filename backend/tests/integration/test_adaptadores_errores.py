@@ -40,7 +40,7 @@ from integrations.ia.prompts.schemas import (
 # Para estos tests el encuadre es irrelevante —lo que se prueba es cómo se
 # traduce el fallo del SDK— así que se fija uno cualquiera y no se repite en
 # cada llamada.
-CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.BASICO)
+CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.JUNIOR)
 
 
 def _error_de_anthropic(codigo: int) -> anthropic.APIStatusError:

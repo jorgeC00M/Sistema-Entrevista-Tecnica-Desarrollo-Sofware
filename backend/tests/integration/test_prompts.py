@@ -8,17 +8,17 @@ from integrations.ia.prompts.schemas import (
     ContextoDeEntrevista,
     Nivel,
     Puesto,
-    Tecnologia,
     TemaEvaluado,
+    area_de_la_pregunta,
 )
 
 # Estimación conservadora para español (~3.7 caracteres por token). Sirve solo
 # como cota superior fácil de calcular sin depender de un tokenizador real.
 CARACTERES_POR_TOKEN = 3.7
 
-CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.BASICO)
+CONTEXTO = ContextoDeEntrevista(puesto=Puesto.BACKEND, nivel=Nivel.JUNIOR)
 CONTEXTO_CON_STACK = ContextoDeEntrevista(
-    puesto=Puesto.BACKEND, nivel=Nivel.BASICO, tecnologia=Tecnologia.PYTHON_DJANGO
+    puesto=Puesto.BACKEND, nivel=Nivel.JUNIOR, tecnologia="Python"
 )
 
 
@@ -90,7 +90,7 @@ class SistemaMencionaRolCorrectoTest(unittest.TestCase):
     """El entrevistador y el evaluador tienen roles distintos y no deben mezclarse."""
 
     def test_sistema_del_entrevistador_no_contiene_la_rubrica(self):
-        prompt = entrevistador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION, total_preguntas=5)
+        prompt = entrevistador.sistema(CONTEXTO, AreaTecnica.PROGRAMACION, 1, total_preguntas=5)
         self.assertNotIn(evaluador.RUBRICA, prompt)
         self.assertNotIn("Corrección técnica", prompt)
 
@@ -141,19 +141,19 @@ class SistemaDeclaraElEncuadreTest(unittest.TestCase):
 
     def test_ambos_prompts_nombran_puesto_nivel_y_tema(self):
         for nombre, prompt in (
-            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 5)),
+            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 2, 5)),
             ("evaluador", evaluador.sistema(CONTEXTO, AreaTecnica.APIS)),
         ):
             with self.subTest(prompt=nombre):
                 self.assertIn(Puesto.BACKEND.etiqueta, prompt)
-                self.assertIn(Nivel.BASICO.etiqueta, prompt)
+                self.assertIn(Nivel.JUNIOR.etiqueta, prompt)
                 self.assertIn(AreaTecnica.APIS.etiqueta, prompt)
 
     def test_la_tecnologia_se_omite_cuando_no_hay(self):
         """Sin stack elegido no se escribe "ninguna": mencionar la ausencia
         invita al modelo a comentarla en vez de ignorarla."""
         for nombre, prompt in (
-            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 5)),
+            ("entrevistador", entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 2, 5)),
             ("evaluador", evaluador.sistema(CONTEXTO, AreaTecnica.APIS)),
         ):
             with self.subTest(prompt=nombre):
@@ -161,11 +161,68 @@ class SistemaDeclaraElEncuadreTest(unittest.TestCase):
 
     def test_la_tecnologia_aparece_cuando_se_eligio(self):
         for nombre, prompt in (
-            ("entrevistador", entrevistador.sistema(CONTEXTO_CON_STACK, AreaTecnica.APIS, 5)),
+            ("entrevistador", entrevistador.sistema(CONTEXTO_CON_STACK, AreaTecnica.APIS, 2, 5)),
             ("evaluador", evaluador.sistema(CONTEXTO_CON_STACK, AreaTecnica.APIS)),
         ):
             with self.subTest(prompt=nombre):
-                self.assertIn(Tecnologia.PYTHON_DJANGO.etiqueta, prompt)
+                self.assertIn("Python", prompt)
+
+
+
+class EncargoPorEnfoqueTest(unittest.TestCase):
+    """Cada pregunta lleva el enfoque de su paso en el plan, con la tecnología
+    nombrada donde corresponde."""
+
+    ANGULAR = ContextoDeEntrevista(puesto=Puesto.FRONTEND, nivel=Nivel.SEMI_SENIOR, tecnologia="Angular")
+
+    def test_la_pregunta_de_tecnologia_nombra_la_elegida(self):
+        prompt = entrevistador.sistema(self.ANGULAR, area_de_la_pregunta(Puesto.FRONTEND, 2), 2, 5)
+        self.assertIn("Angular", prompt.split("Encargo de esta pregunta:")[1].splitlines()[0])
+
+    def test_el_caso_practico_pide_un_escenario(self):
+        prompt = entrevistador.sistema(self.ANGULAR, area_de_la_pregunta(Puesto.FRONTEND, 5), 5, 5)
+        self.assertIn("escenario realista", prompt)
+
+    def test_los_fundamentos_no_fuerzan_la_tecnologia(self):
+        prompt = entrevistador.sistema(self.ANGULAR, area_de_la_pregunta(Puesto.FRONTEND, 1), 1, 5)
+        encargo = prompt.split("Encargo de esta pregunta:")[1].splitlines()[0]
+        self.assertNotIn("Angular", encargo)
+
+    def test_el_calentamiento_lista_los_dos_primeros_encargos(self):
+        areas = [area_de_la_pregunta(Puesto.FRONTEND, n) for n in (1, 2)]
+        prompt = entrevistador.sistema_de_calentamiento(self.ANGULAR, areas, 5)
+        self.assertIn("fundamentos de programación", prompt)
+        self.assertIn("con Angular", prompt)
+
+
+
+class RequisitosDeConvocatoriaTest(unittest.TestCase):
+    """Los requisitos orientan al entrevistador; el evaluador no los ve, para que
+    la nota se califique igual con o sin convocatoria."""
+
+    CON_AVISO = ContextoDeEntrevista(
+        puesto=Puesto.BACKEND, nivel=Nivel.JUNIOR, tecnologia="Python", requisitos=("PostgreSQL", "APIs REST")
+    )
+
+    def test_el_entrevistador_los_recibe(self):
+        for prompt in (
+            entrevistador.sistema(self.CON_AVISO, AreaTecnica.APIS, 2, 5),
+            entrevistador.sistema_de_calentamiento(
+                self.CON_AVISO, [area_de_la_pregunta(Puesto.BACKEND, n) for n in (1, 2)], 5
+            ),
+        ):
+            with self.subTest(prompt=prompt[:30]):
+                self.assertIn("Requisitos de la convocatoria: PostgreSQL, APIs REST", prompt)
+                self.assertIn("convocatoria real", prompt)
+
+    def test_el_evaluador_no_los_recibe(self):
+        prompt = evaluador.sistema(self.CON_AVISO, AreaTecnica.APIS)
+        self.assertNotIn("PostgreSQL", prompt)
+        self.assertNotIn("convocatoria", prompt)
+
+    def test_sin_convocatoria_no_hay_linea(self):
+        prompt = entrevistador.sistema(CONTEXTO, AreaTecnica.APIS, 2, 5)
+        self.assertNotIn("convocatoria", prompt)
 
 
 if __name__ == "__main__":

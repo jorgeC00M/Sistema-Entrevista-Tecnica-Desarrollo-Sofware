@@ -1,0 +1,72 @@
+/* Overlays: lo que las clases utilitarias expresan mal (::backdrop,
+   @starting-style, transiciones de display) vive aquí. */
+
+/* Modal: un <dialog> nativo abierto con showModal(). Entra con una transición
+   breve de opacidad y escala desde @starting-style. No hay animación de
+   salida: `Modal` se desmonta al cerrarse. Sin soporte de @starting-style,
+   simplemente aparece. */
+.modal {
+  margin: auto;
+  width: calc(100% - 2rem);
+  max-width: 28rem;
+  /* En una pantalla baja (móvil apaisado) el modal se desplaza por dentro en
+     vez de cortar sus botones. */
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border-radius: var(--radius-vidrio);
+  border: 1px solid var(--color-vidrio-borde);
+  background-color: #fff;
+  padding: 0;
+  text-align: left;
+  box-shadow: var(--shadow-modal);
+  opacity: 1;
+  scale: 1;
+  transition:
+    opacity 160ms ease-out,
+    scale 160ms ease-out;
+}
+
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+
+.modal::backdrop {
+  background-color: var(--color-velo);
+  backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity 160ms ease-out;
+}
+
+@starting-style {
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Velo del cajón móvil: el mismo color que el del modal. */
+.velo {
+  background-color: var(--color-velo);
+}
+
+/* Cajón móvil: entra desde la izquierda al montarse. */
+.cajon {
+  translate: 0 0;
+  transition: translate 200ms ease-out;
+}
+
+@starting-style {
+  .cajon {
+    translate: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal::backdrop,
+  .cajon {
+    transition: none;
+  }
+}

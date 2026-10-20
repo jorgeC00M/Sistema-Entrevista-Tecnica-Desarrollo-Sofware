@@ -1,14 +1,18 @@
 import { useState } from 'react'
 
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
+import ControlSegmentado from '@/components/ui/ControlSegmentado'
 import Icono from '@/components/ui/Icono'
-import Tarjeta from '@/components/ui/Tarjeta'
 import ZonaDeArchivo from '@/features/curriculum/components/ZonaDeArchivo'
 
 /** Cota del lado cliente, igual que `MAXIMO_CARACTERES_CONVOCATORIA` en el backend. */
 export const MAXIMO_CARACTERES = 20_000
 
 type Via = 'pegar' | 'archivo'
+
+const VIAS = [
+  { valor: 'pegar', etiqueta: 'Pegar texto' },
+  { valor: 'archivo', etiqueta: 'Subir archivo' },
+]
 
 interface Props {
   texto: string
@@ -44,7 +48,8 @@ export default function CampoConvocatoria({
   onArchivo,
   error,
 }: Props) {
-  const [via, setVia] = useState<Via>('pegar')
+  // Al volver con "Analizar otro" puede traer ya un archivo: se abre en esa vía.
+  const [via, setVia] = useState<Via>(archivo ? 'archivo' : 'pegar')
 
   const cambiarVia = (nueva: Via) => {
     if (nueva === via) return
@@ -53,40 +58,26 @@ export default function CampoConvocatoria({
     else onTexto('')
   }
 
-  const pestana = (valor: Via, etiqueta: string) => (
-    <button
-      type="button"
-      onClick={() => cambiarVia(valor)}
-      disabled={deshabilitado}
-      aria-pressed={via === valor}
-      className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento disabled:cursor-not-allowed disabled:opacity-50 ${
-        via === valor
-          ? 'bg-vidrio-acento text-white shadow-sm'
-          : 'text-vidrio-texto hover:text-vidrio-ink'
-      }`}
-    >
-      {etiqueta}
-    </button>
-  )
-
   return (
-    <Tarjeta className="p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-headline-sm font-semibold text-vidrio-ink">La convocatoria</span>
-        <EtiquetaMono>Opcional</EtiquetaMono>
-      </div>
-
+    // Sin tarjeta ni título propios: vive dentro de la entrada del análisis, bajo
+    // el botón "Comparar con una convocatoria (opcional)", que ya dice qué es.
+    <div>
       {/* Se dice antes de elegir, no después: así el usuario ve qué gana en vez
           de descubrir lo que se perdió al final. */}
-      <p className="mt-1.5 text-sm text-vidrio-texto">
+      <p className="text-sm text-vidrio-texto">
         Si la pegas, además te decimos qué requisitos concretos de esa oferta evidencia tu CV y
         cuáles no. Sin ella revisamos que el ATS pueda leerlo y qué tecnologías extrae.
       </p>
 
-      <div className="mt-4 flex gap-1 rounded-full bg-vidrio-field p-1">
-        {pestana('pegar', 'Pegar texto')}
-        {pestana('archivo', 'Subir archivo')}
-      </div>
+      <ControlSegmentado
+        etiqueta="Cómo compartes la convocatoria"
+        ocultarEtiqueta
+        opciones={VIAS}
+        seleccionado={via}
+        onSeleccionar={(valor) => cambiarVia(valor as Via)}
+        deshabilitado={deshabilitado}
+        className="mt-4"
+      />
 
       {via === 'pegar' ? (
         <div className="mt-3">
@@ -100,14 +91,16 @@ export default function CampoConvocatoria({
             disabled={deshabilitado}
             rows={6}
             maxLength={MAXIMO_CARACTERES}
-            placeholder={
-              'Pega aquí la descripción del puesto, con sus requisitos.\n\n' +
-              'Si la oferta separa requisitos de deseables, conserva esos títulos: los usamos para no darle la misma gravedad a un deseable que a un obligatorio.'
-            }
-            className={`w-full resize-y rounded-vidrio border bg-white px-3 py-2.5 text-sm text-vidrio-ink placeholder:text-vidrio-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento disabled:cursor-not-allowed disabled:opacity-60 ${
-              error ? 'border-error-texto' : 'border-vidrio-linea'
-            }`}
+            placeholder="Pega aquí la descripción del puesto, con sus requisitos."
+            aria-invalid={Boolean(error)}
+            aria-describedby="convocatoria-instruccion"
+            className="campo w-full resize-y px-3 py-2.5 text-sm text-vidrio-ink"
           />
+          {/* Visible y no solo en el placeholder, que desaparece al pegar. */}
+          <p id="convocatoria-instruccion" className="mt-1.5 text-meta text-vidrio-muted">
+            Si la oferta separa requisitos de deseables, conserva esos títulos: así no se le da la
+            misma gravedad a un deseable que a un obligatorio.
+          </p>
           {error && (
             <p className="mt-1.5 text-sm text-error-texto" role="alert">
               {error}
@@ -131,6 +124,6 @@ export default function CampoConvocatoria({
           />
         </div>
       )}
-    </Tarjeta>
+    </div>
   )
 }

@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import Alerta from '@/components/ui/Alerta'
 import Badge from '@/components/ui/Badge'
-import Boton from '@/components/ui/Boton'
+import { clasesDeBoton } from '@/components/ui/estilosDeBoton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
 import PanelCualitativo from '@/features/resultados/components/PanelCualitativo'
@@ -25,7 +25,7 @@ export default function ResultadosPage() {
   const duracion = formatearDuracion(entrevista.fecha_inicio, entrevista.fecha_fin)
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <EtiquetaMono tono="suelto">
@@ -60,21 +60,18 @@ export default function ResultadosPage() {
         ))}
       </div>
 
-      <div className="mt-6 flex justify-center gap-3">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
         {/* Mismo puesto y nivel ya elegidos: lo natural tras leer qué mejorar
             es volver a intentarlo en las mismas condiciones. Se pueden cambiar
             antes de empezar; la entrevista no arranca sola. */}
         <Link
           to={`/nueva-entrevista?${new URLSearchParams({ puesto: entrevista.puesto, nivel: entrevista.nivel })}`}
+          className={clasesDeBoton({ variante: 'secundario', className: 'w-full sm:w-auto' })}
         >
-          <Boton variante="vidrio-secundario" forma="pildora">
-            Practicar de nuevo este puesto
-          </Boton>
+          Practicar de nuevo este puesto
         </Link>
-        <Link to="/historial">
-          <Boton variante="vidrio" forma="pildora">
-            Ver historial
-          </Boton>
+        <Link to="/historial" className={clasesDeBoton({ className: 'w-full sm:w-auto' })}>
+          Ver historial
         </Link>
       </div>
     </div>

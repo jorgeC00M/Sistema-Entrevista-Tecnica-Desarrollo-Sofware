@@ -48,7 +48,7 @@ class RetroalimentacionTest(APITestCase):
         self.usuario = crear_usuario()
         self.client.force_authenticate(self.usuario)
         self.puesto = puesto_de("backend")
-        self.nivel = nivel_de("basico")
+        self.nivel = nivel_de("junior")
 
     def _responder(self, entrevista, veces, puntuacion):
         proveedor = ProveedorPuntuacionFija(puntuacion)

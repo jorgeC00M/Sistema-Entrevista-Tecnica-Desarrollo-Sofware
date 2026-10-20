@@ -1,10 +1,10 @@
 import Icono from '@/components/ui/Icono'
+import { iconoDelCatalogo } from '@/components/ui/trazosDeIconos'
 import CarruselDeTarjetas from '@/features/landing/components/CarruselDeTarjetas'
 import EncabezadoSeccion from '@/features/landing/components/EncabezadoSeccion'
 import Wrap from '@/features/landing/components/Wrap'
 import { clasesRevelado, useRevelarAlEntrar } from '@/features/landing/hooks/useRevelarAlEntrar'
 import { nombresDeAreas } from '@/lib/catalogos'
-import { ICONO_POR_DEFECTO, ICONO_POR_PUESTO } from '@/lib/iconosPorPuesto'
 import type { Area, Nivel, Puesto } from '@/types/catalogos'
 
 interface Props {
@@ -61,7 +61,7 @@ export default function PuestosDisponibles({ puestos, areas, niveles }: Props) {
             <>
               <h3 className="relative z-10 flex items-center gap-2.5 text-tarjeta text-vidrio-ink">
                 <Icono
-                  nombre={ICONO_POR_PUESTO[puesto.codigo] ?? ICONO_POR_DEFECTO}
+                  nombre={iconoDelCatalogo(puesto.icono)}
                   className={`h-5 w-5 shrink-0 transition-colors duration-500 ${
                     actual ? 'text-vidrio-acento' : 'text-vidrio-tenue'
                   }`}

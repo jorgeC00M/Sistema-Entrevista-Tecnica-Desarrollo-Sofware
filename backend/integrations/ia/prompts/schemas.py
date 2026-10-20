@@ -35,6 +35,8 @@ class AreaTecnica(str, Enum):
     APIS = "apis"
     CONTROL_VERSIONES = "control_versiones"
     PRUEBAS = "pruebas"
+    DESARROLLO_MOVIL = "desarrollo_movil"
+    DESARROLLO_ESCRITORIO = "desarrollo_escritorio"
 
     @property
     def etiqueta(self) -> str:
@@ -47,6 +49,8 @@ class AreaTecnica(str, Enum):
             AreaTecnica.APIS: "APIs y Servicios Web",
             AreaTecnica.CONTROL_VERSIONES: "Control de Versiones",
             AreaTecnica.PRUEBAS: "Pruebas de Software",
+            AreaTecnica.DESARROLLO_MOVIL: "Desarrollo Móvil",
+            AreaTecnica.DESARROLLO_ESCRITORIO: "Desarrollo de Escritorio",
         }[self]
 
 
@@ -56,97 +60,144 @@ class Puesto(str, Enum):
     BACKEND = "backend"
     FRONTEND = "frontend"
     FULL_STACK = "full_stack"
+    MOVIL = "movil"
+    ESCRITORIO = "escritorio"
+    QA = "qa"
 
     @property
     def etiqueta(self) -> str:
         return {
             Puesto.BACKEND: "Desarrollador Backend",
             Puesto.FRONTEND: "Desarrollador Frontend",
-            Puesto.FULL_STACK: "Desarrollador Full-stack",
-        }[self]
-
-
-class Tecnologia(str, Enum):
-    """Stack sobre el que gira la entrevista. Opcional: la ausencia se
-    representa con `None`, no con un miembro "indiferente"."""
-
-    PYTHON_DJANGO = "python_django"
-    JAVASCRIPT_REACT = "javascript_react"
-    JAVA_SPRING = "java_spring"
-
-    @property
-    def etiqueta(self) -> str:
-        return {
-            Tecnologia.PYTHON_DJANGO: "Python / Django",
-            Tecnologia.JAVASCRIPT_REACT: "JavaScript / React",
-            Tecnologia.JAVA_SPRING: "Java / Spring",
+            Puesto.FULL_STACK: "Desarrollador Full Stack",
+            Puesto.MOVIL: "Desarrollador Móvil",
+            Puesto.ESCRITORIO: "Desarrollador de Escritorio",
+            Puesto.QA: "QA Tester / Automatizador",
         }[self]
 
 
 class Nivel(str, Enum):
-    BASICO = "basico"
-    INTERMEDIO = "intermedio"
+    """Nivel del puesto, con los nombres que usan las convocatorias.
+
+    Equivalen a inicial, intermedio y avanzado. El perfil de grado aprobado
+    hablaba de "básico e intermedio" y excluía el avanzado; incluir Senior es
+    una ampliación del alcance que el documento debe recoger.
+    """
+
+    JUNIOR = "junior"
+    SEMI_SENIOR = "semi_senior"
+    SENIOR = "senior"
 
     @property
     def etiqueta(self) -> str:
-        return "Básico" if self is Nivel.BASICO else "Intermedio"
+        """El mismo nombre que ve el candidato en la pantalla."""
+        return {Nivel.JUNIOR: "Junior", Nivel.SEMI_SENIOR: "Semi-Senior", Nivel.SENIOR: "Senior"}[self]
+
+    @property
+    def con_experiencia(self) -> str:
+        """Lo que lee el modelo: la etiqueta más el grado de exigencia, que es
+        lo que de verdad calibra las preguntas y la evaluación."""
+        return {
+            Nivel.JUNIOR: "Junior (nivel inicial)",
+            Nivel.SEMI_SENIOR: "Semi-Senior (nivel intermedio)",
+            Nivel.SENIOR: "Senior (nivel avanzado)",
+        }[self]
 
 
 @dataclass(frozen=True)
 class ContextoDeEntrevista:
     """Lo que no cambia a lo largo de una entrevista: a qué puesto se postula,
-    con qué exigencia y sobre qué stack.
+    con qué experiencia y sobre qué tecnología.
 
-    Existe para que las dos operaciones del contrato no acaben con seis
-    parámetros sueltos —entre ellos dos enums de forma parecida, fáciles de
-    intercambiar por error— y para que agregar un dato de encuadre más adelante
-    no obligue a tocar cada firma. El área queda fuera a propósito: es lo único
-    que varía de una pregunta a otra.
+    La tecnología llega por su **nombre** ("React", "Kotlin (Android)") y no
+    como enum: hay una veintena, se dan de alta con `cargar_catalogos`, y la IA
+    solo necesita leerla. `None` solo en entrevistas anteriores al catálogo por
+    puesto, que no la tenían. El área queda fuera a propósito: es lo único que
+    varía de una pregunta a otra.
     """
 
     puesto: Puesto
     nivel: Nivel
-    tecnologia: Tecnologia | None = None
+    tecnologia: str | None = None
+    #: Requisitos de la convocatoria con que se inició, si hubo una. Solo los
+    #: lee el entrevistador: el evaluador califica con la misma rúbrica haya o
+    #: no convocatoria, para que las notas sigan siendo comparables.
+    requisitos: tuple[str, ...] = ()
 
 
-# Composición de cada puesto: qué área toca cada una de las preguntas, en
-# orden. El área de la pregunta `n` es `PLAN_POR_PUESTO[puesto][n - 1]`.
+class Enfoque(str, Enum):
+    """Qué se busca con una pregunta, independiente del tema."""
+
+    FUNDAMENTOS = "fundamentos"
+    TECNOLOGIA = "tecnologia"
+    DATOS = "datos"
+    PROFUNDIDAD = "profundidad"
+    CASO_PRACTICO = "caso_practico"
+
+    def instruccion(self, tecnologia: str | None) -> str:
+        """Lo que el entrevistador debe pedir en una pregunta de este enfoque."""
+        con = f" con {tecnologia}" if tecnologia else ""
+        return {
+            Enfoque.FUNDAMENTOS: "fundamentos de programación que todo candidato al puesto debe dominar, "
+            "independientes de la tecnología",
+            Enfoque.TECNOLOGIA: f"el uso práctico de la tecnología del puesto{con}",
+            Enfoque.DATOS: "cómo se guardan, consultan u organizan los datos en el trabajo de este puesto",
+            Enfoque.PROFUNDIDAD: f"un aspecto más profundo o una buena práctica de la tecnología del puesto{con}",
+            Enfoque.CASO_PRACTICO: f"un escenario realista del trabajo diario de este puesto{con}: "
+            "describe la situación y pide cómo la resolvería",
+        }[self]
+
+
+@dataclass(frozen=True)
+class PasoDelPlan:
+    enfoque: Enfoque
+    area: AreaTecnica
+
+
+def _plan(tecnologia: AreaTecnica, datos: AreaTecnica, profundidad: AreaTecnica, caso: AreaTecnica):
+    return (
+        PasoDelPlan(Enfoque.FUNDAMENTOS, AreaTecnica.PROGRAMACION),
+        PasoDelPlan(Enfoque.TECNOLOGIA, tecnologia),
+        PasoDelPlan(Enfoque.DATOS, datos),
+        PasoDelPlan(Enfoque.PROFUNDIDAD, profundidad),
+        PasoDelPlan(Enfoque.CASO_PRACTICO, caso),
+    )
+
+
+# Composición de cada puesto: qué enfoque y qué área toca cada una de las
+# preguntas, en orden. Toda entrevista recorre los mismos cinco enfoques
+# —fundamentos, la tecnología elegida, datos, profundidad en la tecnología y un
+# caso práctico—; lo que cambia por puesto es el área con que se registra cada
+# pregunta, que es el eje de las estadísticas y del reporte.
 #
-# Es lo que hace que la simulación se parezca a una entrevista real: nadie
-# recibe cinco preguntas del mismo tema. Todas abren por fundamentos, como un
-# calentamiento, y cargan el peso en lo propio del puesto.
+# "Datos" son bases de datos donde el puesto vive de ellas (backend, full stack
+# y QA, que valida datos con SQL) y estructuras de datos donde el estado vive en
+# memoria (frontend, móvil, escritorio).
 #
 # Determinista a propósito, no aleatorio: así la entrevista es reproducible,
 # explicable ante un tribunal y verificable por un test. Vive aquí y no en la
-# base de datos porque es diseño de la simulación, no un dato de referencia que
-# el usuario dé de alta — y porque `AreaTecnica` ya vive aquí.
-PLAN_POR_PUESTO: dict[Puesto, tuple[AreaTecnica, ...]] = {
-    Puesto.BACKEND: (
-        AreaTecnica.PROGRAMACION,
-        AreaTecnica.BASES_DE_DATOS,
-        AreaTecnica.APIS,
-        AreaTecnica.ESTRUCTURAS_DE_DATOS,
-        AreaTecnica.BASES_DE_DATOS,
+# base de datos porque es diseño de la simulación, no un dato de referencia.
+_A = AreaTecnica
+PLAN_POR_PUESTO: dict[Puesto, tuple[PasoDelPlan, ...]] = {
+    Puesto.FRONTEND: _plan(_A.DESARROLLO_WEB, _A.ESTRUCTURAS_DE_DATOS, _A.DESARROLLO_WEB, _A.DESARROLLO_WEB),
+    Puesto.BACKEND: _plan(_A.APIS, _A.BASES_DE_DATOS, _A.APIS, _A.APIS),
+    Puesto.FULL_STACK: _plan(_A.DESARROLLO_WEB, _A.BASES_DE_DATOS, _A.APIS, _A.APIS),
+    Puesto.MOVIL: _plan(
+        _A.DESARROLLO_MOVIL, _A.ESTRUCTURAS_DE_DATOS, _A.DESARROLLO_MOVIL, _A.DESARROLLO_MOVIL
     ),
-    Puesto.FRONTEND: (
-        AreaTecnica.PROGRAMACION,
-        AreaTecnica.DESARROLLO_WEB,
-        AreaTecnica.POO,
-        AreaTecnica.DESARROLLO_WEB,
-        AreaTecnica.CONTROL_VERSIONES,
+    Puesto.ESCRITORIO: _plan(
+        _A.DESARROLLO_ESCRITORIO,
+        _A.ESTRUCTURAS_DE_DATOS,
+        _A.DESARROLLO_ESCRITORIO,
+        _A.DESARROLLO_ESCRITORIO,
     ),
-    Puesto.FULL_STACK: (
-        AreaTecnica.PROGRAMACION,
-        AreaTecnica.BASES_DE_DATOS,
-        AreaTecnica.DESARROLLO_WEB,
-        AreaTecnica.APIS,
-        AreaTecnica.PRUEBAS,
-    ),
+    Puesto.QA: _plan(_A.PRUEBAS, _A.BASES_DE_DATOS, _A.PRUEBAS, _A.PRUEBAS),
 }
+del _A
 
 
-def area_de_la_pregunta(puesto: Puesto, numero: int) -> AreaTecnica:
-    """Área que toca la pregunta `numero` (1-indexada) para ese puesto."""
+def paso_de_la_pregunta(puesto: Puesto, numero: int) -> PasoDelPlan:
+    """Enfoque y área de la pregunta `numero` (1-indexada) para ese puesto."""
     plan = PLAN_POR_PUESTO[puesto]
     if not 1 <= numero <= len(plan):
         raise ValueError(
@@ -156,14 +207,19 @@ def area_de_la_pregunta(puesto: Puesto, numero: int) -> AreaTecnica:
     return plan[numero - 1]
 
 
+def area_de_la_pregunta(puesto: Puesto, numero: int) -> AreaTecnica:
+    """Área que toca la pregunta `numero` (1-indexada) para ese puesto."""
+    return paso_de_la_pregunta(puesto, numero).area
+
+
 def areas_que_cubre(puesto: Puesto) -> tuple[AreaTecnica, ...]:
     """Las áreas del puesto, sin repetir y en el orden en que aparecen.
 
-    La pantalla de selección las muestra en la tarjeta del puesto: es lo que
+    La pantalla de selección las muestra para el puesto elegido: es lo que
     mantiene a la vista qué temas entran, en vez de pedir que el usuario lo
     adivine.
     """
-    return tuple(dict.fromkeys(PLAN_POR_PUESTO[puesto]))
+    return tuple(dict.fromkeys(paso.area for paso in PLAN_POR_PUESTO[puesto]))
 
 
 @dataclass(frozen=True)

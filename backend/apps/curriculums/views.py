@@ -71,3 +71,19 @@ class CurriculumDetailView(APIView):
         return Response(
             CurriculumSerializer(selectors.curriculum_del_usuario(request.user, pk)).data
         )
+
+
+class CurriculumRevisionView(APIView):
+    """Las sugerencias de IA de un análisis ya guardado.
+
+    Es la segunda petición del flujo: el alta devuelve el diagnóstico medido al
+    instante y el cliente pide esto después. Responde 200 aunque el proveedor
+    falle: eso queda como `revision_ia.estado = "no_disponible"`, igual que
+    antes, y el diagnóstico no depende de ello.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "revisar-cv"
+
+    def post(self, request, pk: int):
+        return Response({"revision_ia": services.revisar(request.user, pk)})

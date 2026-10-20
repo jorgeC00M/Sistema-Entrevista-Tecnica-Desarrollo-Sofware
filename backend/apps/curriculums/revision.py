@@ -106,8 +106,8 @@ def revisar(
         logger.exception("La revisión del CV con IA falló")
         return _sin_revision(
             NO_DISPONIBLE,
-            "El servicio de sugerencias no respondió. Vuelve a subir el mismo CV para reintentarlo; "
-            "el diagnóstico de arriba no depende de él.",
+            "El servicio de sugerencias no respondió. Puedes reintentarlo sin volver a subir el CV; "
+            "el diagnóstico no depende de él.",
         )
 
     # Lo enviado iba enmascarado; lo que se muestra debe ser la viñeta del usuario.

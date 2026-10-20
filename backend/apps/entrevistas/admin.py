@@ -33,7 +33,7 @@ class EntrevistaAdmin(admin.ModelAdmin):
     ]
     list_filter = ["puesto", "nivel", "tecnologia", "estado"]
     search_fields = ["usuario__email"]
-    list_select_related = ["usuario", "puesto", "nivel", "tecnologia"]
+    list_select_related = ["usuario", "puesto", "nivel", "tecnologia", "segunda_tecnologia"]
     inlines = [IntercambioInline]
 
 

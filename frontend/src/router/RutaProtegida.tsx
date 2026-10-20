@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header'
 import BotonIcono from '@/components/ui/BotonIcono'
 import Spinner from '@/components/ui/Spinner'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { DESDE_ESCRITORIO, useMediaQuery } from '@/hooks/useMediaQuery'
 
 /**
  * Guard y layout a la vez.
@@ -17,11 +18,15 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
  */
 export default function RutaProtegida() {
   const { usuario, cargando } = useAuth()
-  const { plegado, alternarPlegado, entrevistaEnCurso, ultimaFinalizada, cajon } = useSidebar()
+  const { plegado, alternarPlegado, entrevistaEnCurso, cajon } = useSidebar()
   // Desestructurado aparte: oxlint no reconoce una ref accedida como
   // propiedad de un objeto anidado (`cajon.cajonRef`) y la marca como lectura
   // de `.current` en render, aunque pasar la ref misma a `ref={}` es correcto.
   const { abierto, alternar, cerrar, cajonRef, disparadorRef } = cajon
+  // Tablet (md): barra fija de iconos, siempre plegada; a 768 px un sidebar
+  // de 256 px dejaría 512 de contenido. Plegar a mano es cosa de escritorio.
+  const esEscritorio = useMediaQuery(DESDE_ESCRITORIO)
+  const plegadoEfectivo = plegado || !esEscritorio
 
   if (cargando) return <Spinner texto="Verificando sesión…" />
   if (!usuario) return <Navigate to="/login" replace />
@@ -32,20 +37,19 @@ export default function RutaProtegida() {
     // igual que TarjetaAuth.tsx en login/registro. tinta/iris no aparecen
     // en ningún hijo de este nodo.
     <div className="min-h-screen bg-vidrio-bg text-vidrio-texto">
-      {/* Barra fija en escritorio: panel de borde completo, toca los 3 bordes
+      {/* Barra fija desde tablet: panel de borde completo, toca los 3 bordes
           de la ventana (arriba, izquierda, abajo) sin margen ni radio — el
-          header arranca justo en su esquina superior derecha. El ancho
-          cambia al plegar, con transición. */}
+          header arranca justo en su esquina superior derecha. En tablet es
+          solo de iconos; en escritorio el ancho cambia al plegar. */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-vidrio-ink transition-[width] duration-200 ease-out lg:block ${
-          plegado ? 'w-[72px]' : 'w-64'
+        className={`fixed top-0 bottom-0 left-0 z-10 hidden bg-vidrio-ink transition-[width] duration-200 ease-out md:block ${
+          plegadoEfectivo ? 'w-[72px]' : 'w-64'
         }`}
       >
         <Sidebar
-          plegado={plegado}
-          onAlternarPlegado={alternarPlegado}
+          plegado={plegadoEfectivo}
+          onAlternarPlegado={esEscritorio ? alternarPlegado : undefined}
           entrevistaEnCurso={entrevistaEnCurso}
-          ultimaFinalizada={ultimaFinalizada}
         />
       </aside>
 
@@ -53,7 +57,7 @@ export default function RutaProtegida() {
       {abierto && (
         <>
           <div
-            className="fixed inset-0 z-20 bg-vidrio-ink/40 lg:hidden"
+            className="velo fixed inset-0 z-20 md:hidden"
             onClick={cerrar}
             aria-hidden="true"
           />
@@ -69,11 +73,13 @@ export default function RutaProtegida() {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="fixed top-0 bottom-0 left-0 z-30 w-72 bg-vidrio-ink lg:hidden"
+            // `.cajon` (styles/overlays.css): entra desde la izquierda.
+            className="cajon fixed top-0 bottom-0 left-0 z-30 w-72 bg-vidrio-ink md:hidden"
           >
             <div className="flex justify-end p-2">
               <BotonIcono
                 icono="cerrar"
+                tono="oscuro"
                 aria-label="Cerrar menú"
                 onClick={cerrar}
               />
@@ -82,7 +88,6 @@ export default function RutaProtegida() {
               <Sidebar
                 plegado={false}
                 entrevistaEnCurso={entrevistaEnCurso}
-                ultimaFinalizada={ultimaFinalizada}
                 onNavegar={cerrar}
               />
             </div>
@@ -95,22 +100,25 @@ export default function RutaProtegida() {
           es flotante. En móvil no hay margen — el sidebar no está en flujo,
           es el cajón. */}
       <div
-        className={`transition-[padding] duration-200 ease-out ${
-          plegado ? 'lg:pl-[72px]' : 'lg:pl-64'
+        className={`transition-[padding] duration-200 ease-out md:pl-[72px] ${
+          plegadoEfectivo ? '' : 'lg:pl-64'
         }`}
       >
         <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />
-        {/* Sin max-w aquí: cada página elige su propio ancho según lo que
-            muestra (angosto para conversar/leer, más ancho para tablas y
-            tarjetas de datos) — un tope único dejaba mucho espacio vacío en
-            pantallas grandes. */}
+        {/* Un solo contenedor para todas las pantallas: hasta 1280 px y sin
+            `mx-auto`, pegado al sidebar. Antes cada página se centraba en su
+            propio ancho (672 a 1024 px) y dejaba franjas vacías a ambos lados.
+            Lo que no debe estirarse (un formulario, el chat, un párrafo) se
+            limita a sí mismo, alineado a la izquierda con el título. */}
         {/* Dentro del layout, no envolviéndolo: si una pantalla revienta, la
             barra lateral y la cabecera siguen en pie y el usuario puede irse a
             otra sección en vez de quedarse sin navegación. */}
         <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <LimiteDeErrorDeRuta>
-            <Outlet />
-          </LimiteDeErrorDeRuta>
+          <div className="max-w-7xl">
+            <LimiteDeErrorDeRuta>
+              <Outlet />
+            </LimiteDeErrorDeRuta>
+          </div>
         </main>
       </div>
     </div>

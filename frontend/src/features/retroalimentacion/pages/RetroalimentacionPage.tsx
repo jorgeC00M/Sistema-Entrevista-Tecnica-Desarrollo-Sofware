@@ -25,20 +25,24 @@ export default function RetroalimentacionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
           Tu retroalimentación
         </h1>
-        <p className="mt-1 text-base text-vidrio-texto">
+        <p className="mt-1 max-w-prose text-base text-vidrio-texto">
           Reúne lo que las evaluaciones dijeron de ti en {datos.total_respuestas_evaluadas}{' '}
           respuesta{datos.total_respuestas_evaluadas === 1 ? '' : 's'}, para que veas qué se te
           repite.
         </p>
       </div>
 
-      <RepartoPorBandas areas={datos.por_area} />
-      <ListaObservaciones observaciones={datos.observaciones} />
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <RepartoPorBandas areas={datos.por_area} />
+        <div className="min-w-0 lg:col-span-2">
+          <ListaObservaciones observaciones={datos.observaciones} />
+        </div>
+      </div>
 
       {/* Mismo aviso que la landing: una vista que agrega texto generado por IA
           transmite más autoridad que una evaluación suelta, y el alcance del

@@ -26,7 +26,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
 
     def test_entrevista_completa_de_principio_a_fin(self):
         inicio = self.client.post(
-            "/api/entrevistas/", {"puesto": "backend", "nivel": "basico"}
+            "/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"}
         )
         self.assertEqual(inicio.status_code, status.HTTP_201_CREATED)
         entrevista_id = inicio.data["entrevista"]["id"]
@@ -72,7 +72,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         """
         from apps.evaluaciones.models import Evaluacion
 
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
         self.client.post(
             f"/api/entrevistas/{entrevista_id}/responder/", {"respuesta": "Mi respuesta"}
@@ -107,7 +107,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         """Coherente con la retroalimentación acumulada, que a propósito incluye
         las entrevistas dejadas a medias: una debilidad detectada en la pregunta
         2 sigue siendo real aunque no se haya terminado."""
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
         self.client.post(
             f"/api/entrevistas/{entrevista_id}/responder/", {"respuesta": "Mi respuesta"}
@@ -126,7 +126,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         """El calentamiento se pide en una sola llamada: ninguna de las dos
         puede ser adaptativa todavía, y la segunda se adaptaría a un único dato,
         que es ruido. Responder la primera no debe crear una tercera."""
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
         entrevista = Entrevista.objects.get(pk=entrevista_id)
 
@@ -147,7 +147,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         self.assertEqual(entrevista.intercambios.count(), PREGUNTAS_DE_CALENTAMIENTO + 1)
 
     def test_detalle_muestra_la_pregunta_pendiente(self):
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "frontend", "nivel": "intermedio"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "frontend", "nivel": "semi_senior", "tecnologia": "frontend_react"})
         entrevista_id = inicio.data["entrevista"]["id"]
 
         detalle = self.client.get(f"/api/entrevistas/{entrevista_id}/")
@@ -156,7 +156,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         self.assertEqual(detalle.data["pregunta_pendiente"]["numero"], 1)
 
     def test_responder_una_entrevista_finalizada_devuelve_conflicto(self):
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
 
         for numero in range(1, PREGUNTAS_POR_ENTREVISTA + 1):
@@ -171,12 +171,12 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
 
     def test_area_invalida_es_rechazada(self):
         respuesta = self.client.post(
-            "/api/entrevistas/", {"puesto": "cocinero", "nivel": "basico"}
+            "/api/entrevistas/", {"puesto": "cocinero", "nivel": "junior", "tecnologia": "backend_django"}
         )
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_respuesta_vacia_es_rechazada(self):
-        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
 
         respuesta = self.client.post(

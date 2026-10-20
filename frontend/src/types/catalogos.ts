@@ -29,6 +29,55 @@ export type Tecnologia = ElementoDeCatalogo
  */
 export interface Puesto extends ElementoDeCatalogo {
   areas: string[]
+  /** Nombre de un icono de `components/ui/Icono.tsx`; viene del catálogo. */
+  icono: string
+}
+
+/**
+ * Capa de una tecnología. Un puesto con capas (Full Stack) se practica con una
+ * de frontend y una de backend; en los demás todas tienen la capa vacía y se
+ * elige una sola. Lo decide el catálogo, no la interfaz.
+ */
+export type Capa = '' | 'frontend' | 'backend'
+
+/** Una tecnología siempre pertenece a un puesto: "C# .NET" de Backend y de Escritorio son dos. */
+export interface TecnologiaDePuesto {
+  codigo: string
+  nombre: string
+  capa: Capa
+  /** Rótulo con que se agrupa en pantalla ("Python" para Django); vacío si no agrupa. */
+  grupo: string
+}
+
+/** El puesto con sus tecnologías, para la pantalla de selección. */
+export interface PuestoConTecnologias extends Puesto {
+  tecnologias: TecnologiaDePuesto[]
+}
+
+/** Respuesta de `GET /api/catalogos/puestos/`. */
+export interface CatalogoDePuestos {
+  puestos: PuestoConTecnologias[]
+  /** `nombre` es el nivel ("Semi-Senior"); `descripcion`, su grado ("Intermedio"). */
+  niveles: Nivel[]
+  /** Para mostrar por nombre las áreas que cubre cada puesto. */
+  areas: Area[]
+  preguntas_por_entrevista: number
+}
+
+/**
+ * Respuesta de `GET /api/entrevistas/ultima-configuracion/`. Cada tecnología
+ * es `null` si la última entrevista no tenía o si ya no se ofrece; la segunda
+ * solo existe en un puesto con capas (la de backend en Full Stack).
+ */
+export interface UltimaConfiguracion {
+  puesto: string
+  puesto_nombre: string
+  nivel: string
+  nivel_nombre: string
+  tecnologia: string | null
+  tecnologia_nombre: string | null
+  segunda_tecnologia: string | null
+  segunda_tecnologia_nombre: string | null
 }
 
 export interface Catalogos {
@@ -65,3 +114,31 @@ export interface Rubrica {
  * deba publicarse, solo cambia `Catalogos`.
  */
 export type CatalogosPublicos = Catalogos
+
+/**
+ * Lo que la IA detectó en una convocatoria, ya anclado al catálogo: puesto y
+ * nivel son códigos activos o `null`; las tecnologías, códigos del puesto, a
+ * lo sumo una por capa (dos en Full Stack).
+ */
+export interface PerfilDetectado {
+  identificado: boolean
+  puesto: string | null
+  puesto_nombre: string | null
+  tecnologias: string[]
+  /** En el mismo orden que `tecnologias`. */
+  tecnologias_nombres: string[]
+  nivel: string | null
+  nivel_nombre: string | null
+  /** El aviso no dejaba claro el nivel y se supuso el inicial. */
+  nivel_supuesto: boolean
+  /** Lo que pide el aviso y orientará las preguntas. */
+  requisitos: string[]
+  /** Lo que pide el aviso y el simulador no evalúa. */
+  fuera_de_alcance: string[]
+}
+
+/** Respuesta de `POST /api/entrevistas/convocatoria/`. */
+export interface ConvocatoriaAnalizada {
+  id: number
+  perfil: PerfilDetectado
+}

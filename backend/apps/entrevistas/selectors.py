@@ -38,7 +38,7 @@ def _con_conteo(consulta):
     abandonada ("sobre 2 de 5"); anotarlo evita una consulta por fila en el
     historial.
     """
-    return consulta.select_related("puesto", "nivel", "tecnologia").annotate(
+    return consulta.select_related("puesto", "nivel", "tecnologia", "segunda_tecnologia").annotate(
         preguntas_calificadas=Count("intercambios__evaluacion")
     )
 
@@ -182,3 +182,13 @@ def _comparacion(entrevista, promedio: float) -> dict | None:
         "entrevista_id": anterior.pk,
         "diferencia": round(promedio - float(anterior.puntuacion_promedio), 1),
     }
+
+
+def ultima_configuracion(usuario) -> Entrevista | None:
+    """La entrevista más reciente del usuario, para "Repetir configuración"."""
+    return (
+        Entrevista.objects.filter(usuario=usuario)
+        .select_related("puesto", "nivel", "tecnologia", "segunda_tecnologia")
+        .order_by("-fecha_inicio", "-pk")
+        .first()
+    )

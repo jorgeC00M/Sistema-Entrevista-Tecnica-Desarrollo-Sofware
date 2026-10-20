@@ -60,14 +60,13 @@ export default class LimiteDeError extends Component<Props, Estado> {
         <div className="mt-5 flex justify-center">
           {volver ? (
             <Boton
-              variante="vidrio"
-              forma="pildora"
+              variante="primario"
               onClick={() => this.setState({ fallo: false })}
             >
               Reintentar
             </Boton>
           ) : (
-            <Boton variante="vidrio" forma="pildora" onClick={() => window.location.reload()}>
+            <Boton variante="primario" onClick={() => window.location.reload()}>
               Recargar la página
             </Boton>
           )}

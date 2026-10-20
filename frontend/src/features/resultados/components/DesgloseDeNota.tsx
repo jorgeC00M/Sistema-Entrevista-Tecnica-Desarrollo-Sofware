@@ -58,7 +58,7 @@ export default function DesgloseDeNota({ niveles, puntuacion, rubrica }: Props) 
 
       {rubrica && (
         <details className="group mt-2 text-sm">
-          <summary className="cursor-pointer text-vidrio-acento hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento">
+          <summary className="foco-anillo cursor-pointer rounded-chip text-vidrio-acento hover:underline">
             ¿Cómo se calcula?
           </summary>
           <div className="mt-2 rounded-control bg-vidrio-field p-3 text-vidrio-texto">

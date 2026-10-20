@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
+import Boton from '@/components/ui/Boton'
 import CampoAuth from '@/features/auth/components/CampoAuth'
 import Icono from '@/components/ui/Icono'
 
@@ -50,13 +51,13 @@ export default function FormularioLogin({ onEnviar }: Props) {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <div className="mt-1 mb-6 flex items-center justify-between text-[0.88rem]">
+      <div className="mt-1 mb-6 flex items-center justify-between text-sm">
         <label className="flex cursor-pointer items-center gap-2 text-left text-vidrio-texto">
           <input
             type="checkbox"
             checked={recordarme}
             onChange={(e) => setRecordarme(e.target.checked)}
-            className="h-[17px] w-[17px] shrink-0 accent-vidrio-acento"
+            className="foco-anillo size-4 shrink-0 accent-vidrio-acento"
           />
           Recordarme
         </label>
@@ -64,21 +65,14 @@ export default function FormularioLogin({ onEnviar }: Props) {
             contraseña en el backend. Queda visible como en el diseño, sin
             prometer una funcionalidad que no existe. */}
         {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-        <a href="#" className="font-medium text-vidrio-acento no-underline hover:underline">
+        <a href="#" className="foco-anillo rounded-chip font-medium text-vidrio-acento no-underline hover:underline">
           ¿Olvidaste tu contraseña?
         </a>
       </div>
 
-      <button
-        type="submit"
-        disabled={cargando}
-        className="flex h-[50px] w-full items-center justify-center rounded-full bg-vidrio-acento text-[1.05rem] font-semibold text-white transition-colors hover:bg-vidrio-acento-hover disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {cargando && (
-          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        )}
+      <Boton type="submit" tamano="lg" cargando={cargando} className="w-full">
         Iniciar sesión
-      </button>
+      </Boton>
     </form>
   )
 }

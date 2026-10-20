@@ -2,7 +2,7 @@
   {
     "id": "sql-indice-vacio",
     "puesto": "backend",
-    "nivel": "basico",
+    "nivel": "junior",
     "tecnologia": null,
     "area": "bases_de_datos",
     "pregunta": "¿Para qué sirve un índice en una tabla de base de datos y cuándo conviene crearlo?",
@@ -12,7 +12,7 @@
   {
     "id": "git-merge-erroneo",
     "puesto": "full_stack",
-    "nivel": "basico",
+    "nivel": "junior",
     "tecnologia": null,
     "area": "control_versiones",
     "pregunta": "¿Qué diferencia hay entre git merge y git rebase?",
@@ -22,8 +22,8 @@
   {
     "id": "poo-herencia-parcial",
     "puesto": "backend",
-    "nivel": "basico",
-    "tecnologia": "python_django",
+    "nivel": "junior",
+    "tecnologia": "Python",
     "area": "poo",
     "pregunta": "Explica qué es la herencia en programación orientada a objetos y da un ejemplo.",
     "respuesta": "La herencia es cuando una clase usa cosas de otra clase. Por ejemplo una clase Perro que hereda de Animal.",
@@ -32,8 +32,8 @@
   {
     "id": "http-get-post-parcial",
     "puesto": "frontend",
-    "nivel": "basico",
-    "tecnologia": "javascript_react",
+    "nivel": "junior",
+    "tecnologia": "React",
     "area": "desarrollo_web",
     "pregunta": "¿Cuál es la diferencia entre los métodos HTTP GET y POST?",
     "respuesta": "GET es para pedir datos y POST para mandarlos. POST es más seguro porque no se ve.",
@@ -42,7 +42,7 @@
   {
     "id": "pila-cola-correcta",
     "puesto": "backend",
-    "nivel": "intermedio",
+    "nivel": "semi_senior",
     "tecnologia": null,
     "area": "estructuras_de_datos",
     "pregunta": "¿En qué se diferencian una pila y una cola? Menciona un caso de uso de cada una.",
@@ -52,7 +52,7 @@
   {
     "id": "pruebas-unitarias-correcta",
     "puesto": "full_stack",
-    "nivel": "intermedio",
+    "nivel": "semi_senior",
     "tecnologia": null,
     "area": "pruebas",
     "pregunta": "¿Qué es una prueba unitaria y qué la diferencia de una prueba de integración?",
@@ -62,8 +62,8 @@
   {
     "id": "rest-idempotencia-solida",
     "puesto": "backend",
-    "nivel": "intermedio",
-    "tecnologia": "python_django",
+    "nivel": "semi_senior",
+    "tecnologia": "Python",
     "area": "apis",
     "pregunta": "¿Qué significa que un método HTTP sea idempotente? ¿Cuáles lo son en una API REST?",
     "respuesta": "Un método es idempotente si repetir la misma petición deja el servidor en el mismo estado que hacerla una sola vez. GET, PUT y DELETE lo son: PUT reemplaza el recurso con el mismo contenido y DELETE, tras la primera vez, no cambia nada más. POST no lo es, porque cada llamada puede crear un recurso nuevo; por eso se usan claves de idempotencia para reintentar pagos sin duplicarlos.",
@@ -72,7 +72,7 @@
   {
     "id": "complejidad-busqueda-solida",
     "puesto": "frontend",
-    "nivel": "basico",
+    "nivel": "junior",
     "tecnologia": null,
     "area": "programacion",
     "pregunta": "¿Cuál es la complejidad de buscar un elemento en una lista desordenada y en un arreglo ordenado?",

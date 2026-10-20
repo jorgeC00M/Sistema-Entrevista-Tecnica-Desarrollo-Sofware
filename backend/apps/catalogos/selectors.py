@@ -6,7 +6,7 @@ vive aquí y no dentro de la vista.
 
 from __future__ import annotations
 
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 
 from .models import Area, Nivel, Puesto, Tecnologia
 
@@ -40,3 +40,16 @@ def areas_por_codigo(codigos) -> dict[str, Area]:
     una consulta por pregunta.
     """
     return {area.codigo: area for area in Area.objects.filter(codigo__in=list(codigos))}
+
+
+def puestos_con_tecnologias() -> QuerySet[Puesto]:
+    """Puestos activos con sus tecnologías activas ya ordenadas, en dos consultas
+    en total (no una por puesto)."""
+    return puestos_activos().prefetch_related(
+        Prefetch(
+            "tecnologias",
+            queryset=Tecnologia.objects.filter(activo=True).order_by("orden", "nombre"),
+            to_attr="tecnologias_activas",
+        )
+    )
+

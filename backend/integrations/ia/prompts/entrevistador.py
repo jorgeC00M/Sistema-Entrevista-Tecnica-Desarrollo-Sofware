@@ -5,16 +5,17 @@ calificación (eso vive en `evaluador.py`) y no recibe el historial completo
 de la entrevista, solo un resumen comprimido de tema + puntuación por turno.
 
 El encuadre es el de una postulación real: el candidato aspira a un puesto
-concreto, con un nivel de exigencia y —si la indicó— una tecnología. El tema de
-cada pregunta lo decide el puesto (`PLAN_POR_PUESTO`), no el candidato, igual
-que en una entrevista de verdad.
+concreto, con su experiencia y una tecnología. Qué busca cada pregunta lo decide
+el plan del puesto (`PLAN_POR_PUESTO`): un enfoque —fundamentos, la tecnología,
+datos, profundidad o un caso práctico— y un área, igual que en una entrevista de
+verdad.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
-from .schemas import AreaTecnica, ContextoDeEntrevista, TemaEvaluado
+from .schemas import AreaTecnica, ContextoDeEntrevista, TemaEvaluado, paso_de_la_pregunta
 
 
 def _linea_tecnologia(contexto: ContextoDeEntrevista) -> str:
@@ -22,7 +23,24 @@ def _linea_tecnologia(contexto: ContextoDeEntrevista) -> str:
     modelo a comentar la ausencia en vez de ignorarla."""
     if contexto.tecnologia is None:
         return ""
-    return f"\nTecnología principal del puesto: {contexto.tecnologia.etiqueta}"
+    return f"\nTecnología elegida por el candidato: {contexto.tecnologia}"
+
+
+def _linea_requisitos(contexto: ContextoDeEntrevista) -> str:
+    """Los requisitos de la convocatoria, si la entrevista partió de una."""
+    if not contexto.requisitos:
+        return ""
+    return f"\nRequisitos de la convocatoria: {', '.join(contexto.requisitos)}"
+
+
+def _regla_requisitos(contexto: ContextoDeEntrevista) -> str:
+    if not contexto.requisitos:
+        return ""
+    return (
+        "\n- La entrevista parte de una convocatoria real: en los encargos de tecnología, "
+        "profundidad y caso práctico, apóyate en sus requisitos cuando encajen con el área. "
+        "No los fuerces en un área que no les corresponde."
+    )
 
 
 def sistema_de_calentamiento(
@@ -36,7 +54,8 @@ def sistema_de_calentamiento(
     la segunda repita el enfoque de la primera.
     """
     temas = "\n".join(
-        f"- Pregunta {indice}: {area.etiqueta}" for indice, area in enumerate(areas, start=1)
+        f"- Pregunta {indice}: {_encargo(contexto, indice, area)}"
+        for indice, area in enumerate(areas, start=1)
     )
 
     return f"""\
@@ -45,32 +64,45 @@ entrevista simulada en español para un egresado de Ingeniería de Sistemas que 
 un puesto.
 
 Puesto al que postula: {contexto.puesto.etiqueta}
-Nivel de dificultad: {contexto.nivel.etiqueta}{_linea_tecnologia(contexto)}
+Experiencia del candidato: {contexto.nivel.con_experiencia}{_linea_tecnologia(contexto)}{_linea_requisitos(contexto)}
 Total de preguntas de la entrevista: {total_preguntas}
 
 Vas a formular las primeras {len(areas)} preguntas, que abren la entrevista:
 {temas}
 
 Reglas:
-- Una única pregunta abierta por cada tema indicado, en ese mismo orden.
+- Una única pregunta abierta por cada encargo indicado, en ese mismo orden.
 - Son las preguntas de apertura: empieza por lo accesible, sin exigir todavía el \
 máximo del nivel indicado.
 - Las preguntas deben ser complementarias entre sí; que ninguna repita el enfoque \
 de otra.
-- Si hay una tecnología principal y el tema lo permite, aterriza la pregunta en ella; \
-si el tema es independiente de la tecnología, no la fuerces.
-- No respondas las preguntas ni des pistas de las respuestas esperadas.
+- Cuando el encargo nombra la tecnología, la pregunta debe ser sobre ella; si no la \
+nombra, no la fuerces.
+- No respondas las preguntas ni des pistas de las respuestas esperadas.{_regla_requisitos(contexto)}
 - No incluyas saludos, cierres ni texto fuera del formato solicitado."""
 
 
 def usuario_de_calentamiento(areas: Sequence[AreaTecnica]) -> str:
     return (
         f"Formula las primeras {len(areas)} preguntas de la entrevista, "
-        "una por cada tema indicado y en ese orden."
+        "una por cada encargo indicado y en ese orden."
     )
 
 
-def sistema(contexto: ContextoDeEntrevista, area: AreaTecnica, total_preguntas: int) -> str:
+def _encargo(contexto: ContextoDeEntrevista, numero: int, area: AreaTecnica) -> str:
+    """Qué debe pedir la pregunta `numero`: el enfoque del plan y su área.
+
+    El enfoque se deriva del puesto y del número, no se recibe: así la firma del
+    contrato con los proveedores no cambia y el plan sigue siendo la única
+    fuente de verdad.
+    """
+    enfoque = paso_de_la_pregunta(contexto.puesto, numero).enfoque
+    return f"{enfoque.instruccion(contexto.tecnologia)} (área: {area.etiqueta})"
+
+
+def sistema(
+    contexto: ContextoDeEntrevista, area: AreaTecnica, numero: int, total_preguntas: int
+) -> str:
     linea_tecnologia = _linea_tecnologia(contexto)
 
     return f"""\
@@ -79,21 +111,21 @@ entrevista simulada en español para un egresado de Ingeniería de Sistemas que 
 un puesto.
 
 Puesto al que postula: {contexto.puesto.etiqueta}
-Nivel de dificultad: {contexto.nivel.etiqueta}{linea_tecnologia}
-Tema de esta pregunta: {area.etiqueta}
+Experiencia del candidato: {contexto.nivel.con_experiencia}{linea_tecnologia}{_linea_requisitos(contexto)}
+Encargo de esta pregunta: {_encargo(contexto, numero, area)}
 Total de preguntas de la entrevista: {total_preguntas}
 
 Reglas:
 - Formula una única pregunta abierta, de las que se hacen de verdad en una entrevista \
 para ese puesto y nivel.
-- La pregunta debe ser del tema indicado arriba, no de otro.
+- La pregunta debe cumplir el encargo indicado arriba, no otro.
 - Calibra la exigencia según el desempeño previo del candidato: si viene flojo, \
-formula el tema en su versión más accesible; si viene sólido, exige más profundidad. \
-El tema no cambia, lo que cambia es cuánto pides.
-- Si hay una tecnología principal y el tema lo permite, aterriza la pregunta en ella; si \
-el tema es independiente de la tecnología, no la fuerces.
+formula el encargo en su versión más accesible; si viene sólido, exige más profundidad. \
+El encargo no cambia, lo que cambia es cuánto pides.
+- Cuando el encargo nombra la tecnología, la pregunta debe ser sobre ella; si no la \
+nombra, no la fuerces.
 - No repitas el enfoque de una pregunta ya hecha en esta entrevista.
-- No respondas la pregunta ni des pistas de la respuesta esperada.
+- No respondas la pregunta ni des pistas de la respuesta esperada.{_regla_requisitos(contexto)}
 - No incluyas saludos, cierres ni texto fuera del formato solicitado."""
 
 

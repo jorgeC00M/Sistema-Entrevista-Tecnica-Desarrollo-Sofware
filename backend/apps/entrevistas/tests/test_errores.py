@@ -48,7 +48,7 @@ class ErroresAlIniciarTest(APITestCase):
     def test_error_transitorio_responde_503(self, mock_get_proveedor):
         mock_get_proveedor.return_value = ProveedorQueFalla(ErrorTransitorio("simulado"))
 
-        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
 
@@ -56,7 +56,7 @@ class ErroresAlIniciarTest(APITestCase):
     def test_error_permanente_responde_502(self, mock_get_proveedor):
         mock_get_proveedor.return_value = ProveedorQueFalla(ErrorPermanente("simulado"))
 
-        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
 
@@ -64,7 +64,7 @@ class ErroresAlIniciarTest(APITestCase):
     def test_respuesta_invalida_responde_502(self, mock_get_proveedor):
         mock_get_proveedor.return_value = ProveedorQueFalla(RespuestaIAInvalida("simulado"))
 
-        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
 
@@ -73,7 +73,7 @@ class ErroresAlIniciarTest(APITestCase):
         from apps.entrevistas.models import Entrevista
 
         mock_get_proveedor.return_value = ProveedorQueFalla(ErrorTransitorio("simulado"))
-        self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+        self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(Entrevista.objects.count(), 0)
 
@@ -89,7 +89,7 @@ class ErroresAlResponderTest(APITestCase):
             "apps.entrevistas.services.get_proveedor", return_value=FakeProveedorIA()
         ):
             inicio = self.client.post(
-                "/api/entrevistas/", {"puesto": "backend", "nivel": "basico"}
+                "/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"}
             )
         self.entrevista_id = inicio.data["entrevista"]["id"]
 
@@ -114,7 +114,7 @@ class CadenaDeRespaldoTest(APITestCase):
         )
         self.client.force_authenticate(self.usuario)
         with mock.patch("apps.entrevistas.services.get_proveedor", return_value=FakeProveedorIA()):
-            inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "basico"})
+            inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         self.entrevista_id = inicio.data["entrevista"]["id"]
 
     def test_responde_el_respaldo_y_queda_registrado(self):

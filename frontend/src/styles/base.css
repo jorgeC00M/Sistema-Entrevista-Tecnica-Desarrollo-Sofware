@@ -1,0 +1,57 @@
+/* Elementos del documento y preferencias del usuario. */
+
+@layer base {
+  /* Desplazamiento suave para los enlaces de ancla del navbar de la landing
+     (#inicio, #como-funciona...): es una propiedad de documento. */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-vidrio-bg font-sans text-vidrio-texto antialiased;
+    caret-color: var(--color-vidrio-acento);
+  }
+
+  /* Lo que el navegador dibuja por su cuenta también lleva la paleta. */
+  ::selection {
+    background-color: var(--color-seleccion);
+    color: var(--color-vidrio-ink);
+  }
+}
+
+/* Relleno del indicador activo del carrusel de puestos: se remonta con un
+   `key` distinto cada vez que cambia el índice, así el navegador reinicia la
+   animación sola. */
+@keyframes llenar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Enlace de salto: invisible hasta que recibe foco con el teclado. */
+.salto-al-contenido {
+  @apply sr-only;
+}
+
+.salto-al-contenido:focus {
+  @apply not-sr-only fixed top-3 left-3 z-50 rounded-control bg-vidrio-acento px-4 py-2 text-sm font-medium text-white;
+}
+
+/* Movimiento reducido: animaciones y transiciones casi instantáneas en todo
+   el documento; el contenido se pinta ya en su estado final. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

@@ -26,7 +26,7 @@ class FlujoDeEntrevistaTest(TestCase):
         )
 
     def _completar_entrevista(self, proveedor):
-        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
         for _ in range(PREGUNTAS_POR_ENTREVISTA):
             pendiente = entrevista.intercambios.filter(evaluacion__isnull=True).order_by("numero").first()
             servicio.responder(entrevista, f"Respuesta a la pregunta {pendiente.numero}", proveedor=proveedor)
@@ -37,7 +37,7 @@ class FlujoDeEntrevistaTest(TestCase):
         """Las de calentamiento se crean juntas: ninguna puede ser adaptativa
         todavía, porque no hay ninguna respuesta de la que adaptarse."""
         proveedor = FakeProveedorIA()
-        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
 
         self.assertEqual(entrevista.usuario, self.usuario)
         self.assertEqual(entrevista.estado, Entrevista.Estado.EN_PROGRESO)
@@ -70,7 +70,7 @@ class FlujoDeEntrevistaTest(TestCase):
 
     def test_evaluacion_registra_el_proveedor_y_modelo_usados(self):
         proveedor = FakeProveedorIA()
-        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("basico"), proveedor=proveedor)
+        entrevista = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
         evaluacion = servicio.responder(entrevista, "Mi respuesta", proveedor=proveedor)
 
         self.assertEqual(evaluacion.proveedor_ia, "fake")

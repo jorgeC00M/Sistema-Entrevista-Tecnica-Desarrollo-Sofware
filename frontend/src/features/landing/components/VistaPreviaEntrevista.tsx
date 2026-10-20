@@ -72,7 +72,7 @@ export default function VistaPreviaEntrevista() {
   }, [])
 
   return (
-    <div className="grid overflow-hidden rounded-vidrio border border-white/25 bg-white/12 text-left shadow-[0_30px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:grid-cols-[1.35fr_1fr]">
+    <div className="grid overflow-hidden rounded-vidrio border border-white/25 bg-white/12 text-left shadow-sobre-oscuro backdrop-blur-xl sm:grid-cols-[1.35fr_1fr]">
       <div className="flex flex-col gap-2.5 border-white/18 p-5 sm:border-r">
         <div className="flex items-center gap-2.5 text-xs text-white/75">
           <b className="text-sm font-semibold text-white">Entrevista · Desarrollador Backend</b>
@@ -94,11 +94,11 @@ export default function VistaPreviaEntrevista() {
           <div className="mb-1 font-mono-vidrio text-label-mono text-white/70 uppercase">
             IA · Entrevistador
           </div>
-          <div className="max-w-[92%] rounded-2xl rounded-tl-sm bg-white px-3.5 py-2.5 text-sm leading-normal text-vidrio-ink">
+          <div className="max-w-[92%] rounded-burbuja rounded-tl-sm bg-white px-3.5 py-2.5 text-sm leading-normal text-vidrio-ink">
             {PREGUNTA}
           </div>
         </div>
-        <div className="min-h-10 max-w-[92%] self-end rounded-2xl rounded-tr-sm bg-vidrio-ink px-3.5 py-2.5 text-sm leading-normal text-white">
+        <div className="min-h-10 max-w-[92%] self-end rounded-burbuja rounded-tr-sm bg-vidrio-ink px-3.5 py-2.5 text-sm leading-normal text-white">
           {texto}
           <span
             aria-hidden="true"
@@ -131,7 +131,7 @@ export default function VistaPreviaEntrevista() {
         )}
 
         <div
-          className={`flex gap-2.5 rounded-xl bg-white/10 p-3 text-meta text-white transition-all duration-500 ${terminado ? 'opacity-100' : 'translate-y-1.5 opacity-0'}`}
+          className={`flex gap-2.5 rounded-vidrio bg-white/10 p-3 text-meta text-white transition-all duration-500 ${terminado ? 'opacity-100' : 'translate-y-1.5 opacity-0'}`}
         >
           <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-chip bg-exito-fondo text-exito-texto">
             <Icono nombre="fortaleza" className="h-[13px] w-[13px]" />
@@ -141,7 +141,7 @@ export default function VistaPreviaEntrevista() {
           </span>
         </div>
         <div
-          className={`flex gap-2.5 rounded-xl bg-white/10 p-3 text-meta text-white transition-all delay-[250ms] duration-500 ${terminado ? 'opacity-100' : 'translate-y-1.5 opacity-0'}`}
+          className={`flex gap-2.5 rounded-vidrio bg-white/10 p-3 text-meta text-white transition-all delay-[250ms] duration-500 ${terminado ? 'opacity-100' : 'translate-y-1.5 opacity-0'}`}
         >
           <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-chip bg-progreso-fondo text-progreso-texto">
             <Icono nombre="mejora" className="h-[13px] w-[13px]" />

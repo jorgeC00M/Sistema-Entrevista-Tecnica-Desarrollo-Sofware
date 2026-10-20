@@ -121,7 +121,7 @@ export default function ListaObservaciones({ observaciones }: Props) {
 
                     <Link
                       to={`/entrevista/${o.entrevista_id}/resultados`}
-                      className="mt-3 inline-block rounded text-xs font-medium text-vidrio-acento underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vidrio-acento"
+                      className="foco-anillo mt-3 inline-block rounded-chip text-xs font-medium text-vidrio-acento underline-offset-4 hover:underline"
                     >
                       Ver la entrevista completa
                     </Link>

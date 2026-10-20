@@ -60,6 +60,19 @@ export function obtenerPerfil(): Promise<Usuario> {
   return peticion<Usuario>('/api/auth/perfil')
 }
 
+/**
+ * Cambia la contraseña. El servidor cierra las demás sesiones y devuelve un
+ * par de tokens nuevo para esta: se guarda, y el usuario sigue conectado.
+ * Los errores llegan por campo (`actual`, `nueva`), igual que el registro.
+ */
+export async function cambiarContrasena({ actual, nueva }: { actual: string; nueva: string }): Promise<void> {
+  const datos = await peticion<ParDeTokens>('/api/auth/contrasena', {
+    method: 'POST',
+    body: { actual, nueva },
+  })
+  guardarTokens(datos)
+}
+
 export function cerrarSesion(): void {
   limpiarTokens()
 }

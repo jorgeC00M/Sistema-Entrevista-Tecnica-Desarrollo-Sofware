@@ -31,6 +31,16 @@ from apps.common.models import ModeloDeCatalogo
 class Puesto(ModeloDeCatalogo):
     """Rol al que postula el candidato: lo que de verdad se elige al empezar."""
 
+    # Nombre de un icono de `components/ui/Icono.tsx`. Vive aquí y no en el
+    # frontend para que un puesto nuevo no exija tocar la interfaz.
+    icono = models.CharField(max_length=30, blank=True, default="")
+
+    @property
+    def tiene_capas(self) -> bool:
+        """Si se practica con una tecnología por capa (Full Stack) en vez de una
+        sola. Lo decide el catálogo: basta que una tecnología activa tenga capa."""
+        return self.tecnologias.filter(activo=True).exclude(capa=Tecnologia.Capa.NINGUNA).exists()
+
     class Meta:
         ordering = ["orden", "nombre"]
         verbose_name = "puesto"
@@ -41,15 +51,53 @@ class Puesto(ModeloDeCatalogo):
 
 
 class Tecnologia(ModeloDeCatalogo):
-    """Stack sobre el que gira la entrevista. Opcional: en una entrevista real
-    las preguntas se adaptan al stack de la empresa, pero un egresado puede no
-    tener preferencia, y entonces `Entrevista.tecnologia` queda en NULL en vez
-    de forzar una fila "indiferente" que no es una tecnología."""
+    """Tecnología con la que trabaja el candidato, propia de un puesto.
+
+    Cada fila pertenece a un solo puesto: "C# .NET" de Backend y de Escritorio
+    son dos filas, porque el puesto cambia lo que se pregunta sobre ella.
+
+    `puesto` solo es nulo en las tres combinaciones transversales anteriores al
+    catálogo por puesto (Python/Django, JavaScript/React, Java/Spring), que se
+    conservan inactivas porque hay entrevistas que las usaron. Una restricción
+    impide una tecnología **activa** sin puesto.
+
+    `capa` divide las tecnologías de un puesto que se eligen de a dos: en Full
+    Stack, una de frontend y una de backend. Un puesto "tiene capas" si alguna de
+    sus tecnologías activas la tiene; el código no pregunta por el puesto.
+    """
+
+    class Capa(models.TextChoices):
+        NINGUNA = "", "Sin capa"
+        FRONTEND = "frontend", "Frontend"
+        BACKEND = "backend", "Backend"
+
+    #: Las capas de un puesto que las tiene, en el orden en que se eligen y se
+    #: nombran: "React + Node.js".
+    CAPAS_EN_ORDEN = (Capa.FRONTEND, Capa.BACKEND)
+
+    puesto = models.ForeignKey(
+        Puesto,
+        on_delete=models.PROTECT,
+        related_name="tecnologias",
+        null=True,
+        blank=True,
+    )
+    capa = models.CharField(max_length=10, choices=Capa.choices, blank=True, default=Capa.NINGUNA)
+    # Rótulo con que se agrupa en pantalla: el lenguaje de un framework
+    # ("Python" para Django) o el tipo de prueba en QA. Solo presentación: no se
+    # valida ni llega a la IA. Vacío si el puesto no agrupa.
+    grupo = models.CharField(max_length=40, blank=True, default="")
 
     class Meta:
         ordering = ["orden", "nombre"]
         verbose_name = "tecnología"
         verbose_name_plural = "tecnologías"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(activo=False) | models.Q(puesto__isnull=False),
+                name="tecnologia_activa_con_puesto",
+            )
+        ]
 
     def __str__(self) -> str:
         return self.nombre
