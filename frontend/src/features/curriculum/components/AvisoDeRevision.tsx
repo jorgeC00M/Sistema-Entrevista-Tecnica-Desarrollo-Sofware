@@ -22,7 +22,7 @@ export default function AvisoDeRevision({ revision, estado, onReintentar }: Prop
   if (estado === 'pidiendo') {
     return (
       <p className="flex items-start gap-1.5 text-sm text-vidrio-muted">
-        <Icono nombre="reloj" className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <Icono nombre="reloj" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>Pidiendo sugerencias a la IA… El diagnóstico ya está completo; esto puede tardar un poco.</span>
       </p>
     )
@@ -37,7 +37,7 @@ export default function AvisoDeRevision({ revision, estado, onReintentar }: Prop
       0
     return vacia ? (
       <p className="flex items-start gap-1.5 text-sm text-vidrio-muted">
-        <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>La IA no encontró nada que sugerir para este CV.</span>
       </p>
     ) : null
@@ -52,7 +52,7 @@ export default function AvisoDeRevision({ revision, estado, onReintentar }: Prop
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-vidrio-muted">
       <p className="flex items-start gap-1.5">
-        <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>{texto}</span>
       </p>
       {reintentable && (

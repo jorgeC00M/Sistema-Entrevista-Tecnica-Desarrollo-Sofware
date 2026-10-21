@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 
 import { cambiarContrasena } from '@/api/auth'
 import { repartirErrores } from '@/api/errores'
+import Alerta from '@/components/ui/Alerta'
 import Boton from '@/components/ui/Boton'
 import Icono from '@/components/ui/Icono'
 import Modal from '@/components/ui/Modal'
@@ -113,9 +114,9 @@ export default function ModalCambiarContrasena({ onCambiada, onCancelar, focoAlC
         {campo('repetida', 'new-password')}
         <p className="text-meta text-vidrio-muted">Al guardar cerraremos tu sesión en otros dispositivos.</p>
         {general && (
-          <p role="alert" className="mt-3 rounded-control bg-error-fondo px-3 py-2 text-error-texto">
+          <Alerta variante="enLinea" className="mt-3">
             {general}
-          </p>
+          </Alerta>
         )}
       </form>
     </Modal>

@@ -8,7 +8,7 @@ export interface OpcionDeCampo {
 }
 
 /** Opciones sueltas, o en grupos (`<optgroup>`); un grupo con rótulo vacío va suelto. */
-export type OpcionesDeCampo = OpcionDeCampo[] | [string, OpcionDeCampo[]][]
+type OpcionesDeCampo = OpcionDeCampo[] | [string, OpcionDeCampo[]][]
 
 interface Props {
   id: string
@@ -19,7 +19,13 @@ interface Props {
   /** Texto bajo el campo: qué significa lo elegido o por qué está deshabilitado. */
   ayuda?: string
   deshabilitado?: boolean
-  marcador?: string
+  /**
+   * La opción deshabilitada que se ve mientras no hay valor. `null` la omite:
+   * un filtro como «Estado: Todos» siempre tiene un valor real elegido.
+   */
+  marcador?: string | null
+  /** La etiqueta sigue para el lector de pantalla, pero no se ve: el campo va en una barra de filtros. */
+  ocultarEtiqueta?: boolean
 }
 
 function esAgrupada(opciones: OpcionesDeCampo): opciones is [string, OpcionDeCampo[]][] {
@@ -52,12 +58,13 @@ export default function CampoSelect({
   ayuda,
   deshabilitado = false,
   marcador = 'Selecciona…',
+  ocultarEtiqueta = false,
 }: Props) {
   const idAyuda = useId()
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium text-vidrio-ink">
+      <label htmlFor={id} className={ocultarEtiqueta ? 'sr-only' : 'text-sm font-medium text-vidrio-ink'}>
         {etiqueta}
       </label>
       <div className="relative">
@@ -71,9 +78,11 @@ export default function CampoSelect({
             valor ? 'text-vidrio-ink' : 'text-vidrio-muted'
           }`}
         >
-          <option value="" disabled>
-            {marcador}
-          </option>
+          {marcador !== null && (
+            <option value="" disabled>
+              {marcador}
+            </option>
+          )}
           {esAgrupada(opciones) ? (
             opciones.map(([grupo, delGrupo]) =>
               grupo ? (

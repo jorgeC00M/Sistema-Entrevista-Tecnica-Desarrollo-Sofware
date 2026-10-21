@@ -2,6 +2,28 @@ import { ErrorAPI } from '@/api/client'
 import type { ErrorDeValidacion } from '@/types/api'
 
 /**
+ * El mensaje que la API dio para este error, o `porDefecto` si el fallo no
+ * vino de la API (red caída, tiempo agotado, un error de programación).
+ */
+/**
+ * Los errores por campo sin el de `campo`: si el usuario lo cambia tras un
+ * error, ese mensaje deja de describir lo que hay escrito. Devuelve el mismo
+ * objeto si no había error en ese campo, para no forzar un render.
+ */
+export function sinErrorDeCampo<K extends string>(
+  errores: Partial<Record<K, string>>,
+  campo: K,
+): Partial<Record<K, string>> {
+  if (!(campo in errores)) return errores
+  const { [campo]: _descartado, ...resto } = errores
+  return resto as Partial<Record<K, string>>
+}
+
+export function mensajeDeError(err: unknown, porDefecto: string): string {
+  return err instanceof ErrorAPI ? err.message : porDefecto
+}
+
+/**
  * Un error de la API, repartido entre lo que va en la alerta general y lo que
  * va debajo de cada campo.
  *
@@ -10,7 +32,7 @@ import type { ErrorDeValidacion } from '@/types/api'
  * para un formulario con varios campos — si fallan tres, el usuario solo
  * veía uno, y descolgado del campo que lo causó.
  */
-export interface ErroresDeFormulario {
+interface ErroresDeFormulario {
   /** Lo que va arriba, en la Alerta del formulario. */
   general: string
   /** Por nombre de campo del formulario, no del backend — ver `nombreDelCampo`. */

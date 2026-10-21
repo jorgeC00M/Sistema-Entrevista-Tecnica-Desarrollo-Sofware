@@ -11,23 +11,23 @@ No se intenta enmascarar direcciones: no hay forma fiable de reconocer una sin u
 modelo, y fingir que se hace sería peor. Lo que las protege es que viven en el
 encabezado, que no se envía.
 
-Los detectores son los mismos de `ats.py`: si cada módulo tuviera su propia idea
-de qué es un teléfono, el espejo podría reconocer uno que el enmascarado deja
-pasar.
+Los detectores son los mismos que usa `ats.py` (viven en `contacto.py`): si cada
+módulo tuviera su propia idea de qué es un teléfono, el espejo podría reconocer
+uno que el enmascarado deja pasar.
 """
 
 from __future__ import annotations
 
 import re
 
-from integrations.documentos.ats import CORREO, telefonos
+from integrations.documentos.contacto import CORREO, telefonos
 
 CORREO_MASCARA = "[CORREO]"
 TELEFONO_MASCARA = "[TELÉFONO]"
 ENLACE_MASCARA = "[ENLACE]"
 NOMBRE_MASCARA = "[NOMBRE]"
 
-# El patrón de `ats.URL` solo marca el comienzo de un enlace (para detectarlo);
+# El patrón de `contacto.URL` solo marca el comienzo de un enlace (para detectarlo);
 # para taparlo hace falta la palabra entera.
 _ENLACE = re.compile(r"\S*(?:https?://|www\.|linkedin\.com|github\.com)\S*", re.IGNORECASE)
 

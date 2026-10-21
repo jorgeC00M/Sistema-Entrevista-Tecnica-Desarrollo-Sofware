@@ -11,7 +11,7 @@ interface Opciones {
   mensajeDeError?: string
 }
 
-export interface EstadoDePeticion<T> {
+interface EstadoDePeticion<T> {
   datos: T | null
   cargando: boolean
   error: string

@@ -1,12 +1,6 @@
+import { CRITERIOS_POR_DEFECTO, NIVEL_MAXIMO_POR_DEFECTO } from '@/features/resultados/rubricaPorDefecto'
 import type { Rubrica } from '@/types/catalogos'
-import type { CodigoDeCriterio, Niveles } from '@/types/evaluacion'
-
-const NIVEL_MAXIMO_POR_DEFECTO = 4
-const CRITERIOS_POR_DEFECTO: { codigo: CodigoDeCriterio; nombre: string }[] = [
-  { codigo: 'correccion', nombre: 'Corrección técnica' },
-  { codigo: 'completitud', nombre: 'Completitud' },
-  { codigo: 'claridad', nombre: 'Claridad' },
-]
+import type { Niveles } from '@/types/evaluacion'
 
 interface Props {
   niveles: Niveles

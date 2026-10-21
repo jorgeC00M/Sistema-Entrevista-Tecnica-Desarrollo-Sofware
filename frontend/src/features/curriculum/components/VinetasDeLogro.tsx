@@ -59,7 +59,7 @@ export default function VinetasDeLogro({ vinetas, sugerencias = {} }: Props) {
               {vinetas.sin_resultado.map((texto) => (
                 <li key={texto} className="flex items-start gap-2.5">
                   <span className="mt-0.5 shrink-0 text-progreso-texto">
-                    <Icono nombre="mejora" className="h-4 w-4" aria-hidden />
+                    <Icono nombre="mejora" className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <span className="text-sm text-vidrio-texto italic">«{texto}»</span>

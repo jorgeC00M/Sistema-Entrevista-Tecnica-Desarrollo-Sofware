@@ -88,7 +88,6 @@ export default function RevisaTuCV() {
                 <Icono
                   nombre={leido ? 'fortaleza' : 'cerrar'}
                   className={`h-4 w-4 self-center ${leido ? 'text-exito-texto' : 'text-error-texto'}`}
-                  aria-hidden
                 />
                 <dt className="text-meta font-medium text-vidrio-ink">{campo}</dt>
                 <dd className={`text-meta ${leido ? 'text-vidrio-texto' : 'font-medium text-error-texto'}`}>

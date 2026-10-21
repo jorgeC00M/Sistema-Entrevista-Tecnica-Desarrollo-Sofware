@@ -22,7 +22,7 @@ export default function ListaDeFunciones({ funciones }: { funciones: Funcion[] }
     <ul className="divide-y divide-vidrio-linea border-y border-vidrio-linea">
       {funciones.map(({ icono, colorIcono, titulo, texto }) => (
         <li key={titulo} className="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-3 py-5">
-          <Icono nombre={icono} className={`mt-1 h-5 w-5 ${colorIcono}`} aria-hidden />
+          <Icono nombre={icono} className={`mt-1 h-5 w-5 ${colorIcono}`} />
           <div>
             <h3 className="text-tarjeta text-vidrio-ink">{titulo}</h3>
             <p className="mt-1 max-w-[62ch] text-cuerpo text-vidrio-texto">{texto}</p>

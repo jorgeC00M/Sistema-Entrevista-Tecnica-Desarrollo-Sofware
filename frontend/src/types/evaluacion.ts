@@ -34,40 +34,8 @@ export interface Evaluacion {
   puntos_clave: string[]
 }
 
-export interface PromedioPorArea {
-  /** Código del área, no su id numérico. */
-  area: string
-  area_display: string
-  promedio: number
-  /** En cuántas entrevistas distintas apareció este tema. */
-  entrevistas: number
-}
-
-/**
- * Un punto del gráfico de progreso: una entrevista completa en el tiempo.
- *
- * Se identifica por el puesto y no por el área, porque una entrevista recorre
- * varios temas — "mi entrevista de Backend", no "mi entrevista de Bases de
- * Datos".
- */
-export interface PuntoDeEvolucion {
-  entrevista_id: number
-  puesto: string
-  puesto_display: string
-  fecha_fin: FechaISO
-  puntuacion_promedio: number
-}
-
-export interface Estadisticas {
-  entrevistas_completadas: number
-  /** `null` mientras el usuario no tenga ninguna entrevista finalizada. */
-  promedio_general: number | null
-  promedio_por_area: PromedioPorArea[]
-  evolucion: PuntoDeEvolucion[]
-}
-
 /** Cuántas respuestas del usuario cayeron en cada banda, dentro de un área. */
-export type ConteoPorBanda = Record<BandaDeRubrica, number>
+type ConteoPorBanda = Record<BandaDeRubrica, number>
 
 export interface RepartoPorArea {
   area: string
@@ -94,9 +62,8 @@ export interface Observacion {
 /**
  * Retroalimentación acumulada de todas las entrevistas del usuario.
  *
- * A diferencia de `Estadisticas`, cuenta también las respuestas de entrevistas
- * abandonadas: una media necesita entrevistas completas para ser comparable,
- * pero una debilidad detectada a mitad sigue siendo una debilidad real.
+ * Cuenta también las respuestas de entrevistas abandonadas: una debilidad
+ * detectada a mitad sigue siendo una debilidad real.
  */
 export interface RetroalimentacionAcumulada {
   total_respuestas_evaluadas: number

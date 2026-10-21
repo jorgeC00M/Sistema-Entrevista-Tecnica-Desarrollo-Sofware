@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
+import { mensajeDeError } from '@/api/errores'
 import { obtenerEstado, obtenerResultados, responder } from '@/api/entrevistas'
 import type { AutorDeMensaje } from '@/features/entrevista/components/BurbujaPregunta'
 
@@ -69,7 +69,7 @@ export function useEntrevista(id: string) {
         setDesdeConvocatoria(estado.entrevista.desde_convocatoria)
       } catch (err: unknown) {
         if (!cancelado) {
-          setError(err instanceof ErrorAPI ? err.message : 'No se pudo cargar la entrevista.')
+          setError(mensajeDeError(err, 'No se pudo cargar la entrevista.'))
         }
       } finally {
         if (!cancelado) setCargandoInicial(false)
@@ -110,7 +110,7 @@ export function useEntrevista(id: string) {
         // idempotente ante reintentos): se retira del chat local para no
         // duplicarla visualmente y se ofrece reintentar sin perder lo escrito.
         setMensajes((previos) => previos.slice(0, -1))
-        setError(err instanceof ErrorAPI ? err.message : 'No se pudo evaluar tu respuesta.')
+        setError(mensajeDeError(err, 'No se pudo evaluar tu respuesta.'))
         setEnviando(false)
       }
     },

@@ -9,7 +9,7 @@ import type { CodigoDeCriterio } from './evaluacion'
  * añadir una opción, que es justo el acoplamiento que se eliminó al normalizar
  * el catálogo.
  */
-export interface ElementoDeCatalogo {
+interface ElementoDeCatalogo {
   codigo: string
   nombre: string
   descripcion: string
@@ -17,7 +17,6 @@ export interface ElementoDeCatalogo {
 
 export type Area = ElementoDeCatalogo
 export type Nivel = ElementoDeCatalogo
-export type Tecnologia = ElementoDeCatalogo
 
 /**
  * El rol al que se postula: lo que de verdad se elige al empezar.
@@ -83,7 +82,6 @@ export interface UltimaConfiguracion {
 export interface Catalogos {
   puestos: Puesto[]
   niveles: Nivel[]
-  tecnologias: Tecnologia[]
   /** Se publican aunque no se elijan: cada puesto declara las que cubre. */
   areas: Area[]
   /** Fuente única de la duración de una entrevista; el cliente no la asume. */
@@ -92,7 +90,7 @@ export interface Catalogos {
   rubrica: Rubrica
 }
 
-export interface CriterioDeRubrica {
+interface CriterioDeRubrica {
   codigo: CodigoDeCriterio
   nombre: string
   peso: number

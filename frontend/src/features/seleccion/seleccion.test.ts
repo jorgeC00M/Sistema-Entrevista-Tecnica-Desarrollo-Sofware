@@ -10,7 +10,6 @@ import {
   agruparPorGrupo,
   campoFaltante,
   capasDe,
-  estaCompleta,
   nombreDeTecnologias,
   reducirSeleccion,
 } from './seleccion'
@@ -85,12 +84,10 @@ describe('campoFaltante', () => {
     )
 
     expect(campoFaltante(estado, CATALOGO)).toBe('tecnologia')
-    expect(estaCompleta(estado, CATALOGO)).toBe(false)
   })
 
   it('con todo elegido no falta nada', () => {
     expect(campoFaltante(fullStackCompleto, CATALOGO)).toBeNull()
-    expect(estaCompleta(fullStackCompleto, CATALOGO)).toBe(true)
   })
 })
 

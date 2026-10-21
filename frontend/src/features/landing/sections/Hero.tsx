@@ -38,7 +38,7 @@ export default function Hero({ totalPreguntas }: Props) {
       <Wrap className="grid items-center gap-x-12 gap-y-14 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <div>
           <h1 className={`font-serif text-display text-balance ${clasesRevelado(visible)}`}>
-            Practica tu próxima entrevista, antes de la evaluación real
+            Prepárate para tu próxima entrevista técnica.
           </h1>
 
           <p

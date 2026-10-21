@@ -58,7 +58,7 @@ export default function EspejoDelATS({ analisis, meta }: Props) {
                   campo.detectado ? 'bg-exito-fondo text-exito-texto' : 'bg-error-fondo text-error-texto'
                 }`}
               >
-                <Icono nombre={campo.detectado ? 'fortaleza' : 'cerrar'} className="h-3 w-3" aria-hidden />
+                <Icono nombre={campo.detectado ? 'fortaleza' : 'cerrar'} className="h-3 w-3" />
               </span>
               <span>
                 {campo.nombre}

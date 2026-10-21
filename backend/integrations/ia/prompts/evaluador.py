@@ -20,6 +20,7 @@ from .schemas import (
     PUNTOS_CLAVE_MINIMOS,
     AreaTecnica,
     ContextoDeEntrevista,
+    linea_de_tecnologia,
 )
 
 # Rúbrica analítica: tres criterios de igual peso, cada uno con cinco niveles
@@ -76,13 +77,7 @@ RUBRICA = _texto_de_rubrica()
 
 
 def sistema(contexto: ContextoDeEntrevista, area: AreaTecnica) -> str:
-    # Se omite la línea entera cuando no hay tecnología: decir "ninguna"
-    # invitaría al modelo a comentar la ausencia en vez de ignorarla.
-    linea_tecnologia = (
-        f"\nTecnología elegida por el candidato: {contexto.tecnologia}"
-        if contexto.tecnologia is not None
-        else ""
-    )
+    linea_tecnologia = linea_de_tecnologia(contexto)
 
     return f"""\
 Eres un evaluador técnico que califica respuestas de una entrevista simulada en \

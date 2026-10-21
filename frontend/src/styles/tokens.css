@@ -23,6 +23,19 @@
   --color-error-texto: #b91c1c;
   --color-error-fondo: #fee2e2;
 
+  /* Categóricos: un color fijo por puesto, para las líneas de "Evolución en el
+     tiempo". Paleta Okabe-Ito, pensada para distinguirse con daltonismo; sin
+     su amarillo, que no se lee sobre blanco (el gris oscuro ocupa su lugar).
+     No expresan estado: nunca se usan para decir si una nota es buena. El
+     sufijo es el `codigo` del puesto (`lib/puestos.ts::colorDePuesto`). */
+  --color-puesto-backend: #0072b2;
+  --color-puesto-frontend: #e69f00;
+  --color-puesto-full_stack: #cc79a7;
+  --color-puesto-movil: #009e73;
+  --color-puesto-escritorio: #56b4e9;
+  --color-puesto-qa: #d55e00;
+  --color-puesto-videojuegos: #4d4d4d;
+
   /* Sistema "vidrio": la paleta del producto entero (landing, auth y
      aplicación). */
   --color-vidrio-acento: #2b55a3;

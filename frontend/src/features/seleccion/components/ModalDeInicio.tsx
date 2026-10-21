@@ -1,3 +1,5 @@
+import Alerta from '@/components/ui/Alerta'
+import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
 import ModalDeConfirmacion from '@/components/ui/ModalDeConfirmacion'
 
 interface Props {
@@ -44,9 +46,7 @@ export default function ModalDeInicio({
         {tecnologia} · {nivel}
       </p>
       {desdeConvocatoria && (
-        <span className="mt-2 inline-flex rounded-full bg-vidrio-acento-suave px-2 py-0.5 text-meta text-vidrio-acento">
-          Basada en tu convocatoria
-        </span>
+        <EtiquetaConvocatoria className="mt-2">Basada en tu convocatoria</EtiquetaConvocatoria>
       )}
 
       <ul className="mt-4 list-disc space-y-1.5 pl-5 text-vidrio-texto marker:text-vidrio-tenue">
@@ -56,9 +56,9 @@ export default function ModalDeInicio({
       </ul>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-control bg-error-fondo px-3 py-2 text-error-texto">
+        <Alerta variante="enLinea" className="mt-4">
           {error}
-        </p>
+        </Alerta>
       )}
     </ModalDeConfirmacion>
   )

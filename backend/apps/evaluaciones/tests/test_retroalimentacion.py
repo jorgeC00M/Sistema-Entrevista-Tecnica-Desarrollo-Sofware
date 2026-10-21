@@ -110,8 +110,8 @@ class RetroalimentacionTest(APITestCase):
         self.assertEqual(observacion["sugerencias"], "Repasa costes de las operaciones")
 
     def test_incluye_entrevistas_no_finalizadas(self):
-        """La diferencia deliberada con /api/estadisticas/: una entrevista
-        abandonada a mitad sigue aportando sus respuestas ya evaluadas."""
+        """Una entrevista abandonada a mitad sigue aportando sus respuestas ya
+        evaluadas: una debilidad detectada no deja de serlo por no terminar."""
         proveedor = ProveedorPuntuacionFija(70)
         entrevista = servicio.iniciar(self.usuario, self.puesto, self.nivel, proveedor=proveedor)
         self._responder(entrevista, veces=2, puntuacion=67)
@@ -120,11 +120,8 @@ class RetroalimentacionTest(APITestCase):
         )
 
         retro = self.client.get("/api/estadisticas/retroalimentacion/")
-        estadisticas = self.client.get("/api/estadisticas/")
 
         self.assertEqual(retro.data["total_respuestas_evaluadas"], 2)
-        self.assertEqual(estadisticas.data["entrevistas_completadas"], 0)
-        self.assertIsNone(estadisticas.data["promedio_general"])
 
     def test_no_mezcla_datos_de_otro_usuario(self):
         otro = crear_usuario(email="otro@example.com")

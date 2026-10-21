@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import Icono from '@/components/ui/Icono'
-import { prefiereMovimientoReducido } from '@/features/landing/hooks/useRevelarAlEntrar'
+import { prefiereMovimientoReducido } from '@/lib/movimiento'
 
 const PREGUNTA =
   '¿Cuál es la diferencia entre una pila y una cola? Da un ejemplo de uso de cada una.'

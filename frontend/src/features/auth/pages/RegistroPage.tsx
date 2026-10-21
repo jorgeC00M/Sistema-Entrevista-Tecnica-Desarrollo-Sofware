@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { campoDeRegistro } from '@/api/auth'
-import { ErrorAPI } from '@/api/client'
-import { repartirErrores } from '@/api/errores'
+import { mensajeDeError, repartirErrores, sinErrorDeCampo } from '@/api/errores'
 import FormularioRegistro from '@/features/auth/components/FormularioRegistro'
 import TarjetaAuth from '@/features/auth/components/TarjetaAuth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -40,16 +39,12 @@ export default function RegistroPage() {
       await iniciarSesionConGoogle(idToken)
       navigate('/')
     } catch (err) {
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo continuar con Google.')
+      setError(mensajeDeError(err, 'No se pudo continuar con Google.'))
     }
   }
 
   const limpiarErrorDeCampo = (campo: keyof DatosDeRegistro) => {
-    setErroresPorCampo((previos) => {
-      if (!(campo in previos)) return previos
-      const { [campo]: _descartado, ...resto } = previos
-      return resto
-    })
+    setErroresPorCampo((previos) => sinErrorDeCampo(previos, campo))
   }
 
   return (

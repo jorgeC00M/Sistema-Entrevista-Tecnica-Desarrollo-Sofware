@@ -1,6 +1,7 @@
 import type { Ref } from 'react'
 
 import Boton from '@/components/ui/Boton'
+import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
 
 /** Lo elegido, ya completo y con nombres para mostrar ("React + Node.js"). */
 interface EleccionCompleta {
@@ -58,9 +59,7 @@ export default function ResumenDeEntrevista({
           )}
         </div>
         {desdeConvocatoria && (
-          <span className="inline-flex self-start rounded-full bg-vidrio-acento-suave px-2 py-0.5 text-meta text-vidrio-acento">
-            Desde convocatoria
-          </span>
+          <EtiquetaConvocatoria className="self-start">Desde convocatoria</EtiquetaConvocatoria>
         )}
       </div>
 

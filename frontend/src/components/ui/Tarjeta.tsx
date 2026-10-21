@@ -1,13 +1,7 @@
 import type { ElementType, ReactNode } from 'react'
 
-/**
- * El vidrio: fondo translúcido, filete claro y desenfoque de fondo.
- *
- * Se exporta aparte del componente para los pocos sitios que no pueden usarlo
- * —los que necesitan una `ref`, o que calculan el color del borde según el
- * estado— y que aun así deben salir del mismo sitio que el resto.
- */
-export const CLASES_TARJETA =
+/** El vidrio: fondo translúcido, filete claro y desenfoque de fondo. */
+const CLASES_TARJETA =
   'rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]'
 
 interface Props {

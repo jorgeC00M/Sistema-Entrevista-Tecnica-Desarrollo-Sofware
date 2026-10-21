@@ -35,7 +35,7 @@ export default function ListaDeHallazgos({ titulo, hallazgos, vacio }: Props) {
               className="flex scroll-mt-32 items-start gap-3 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-vidrio-acento"
             >
               <span className={`mt-0.5 shrink-0 ${SEVERIDADES[hallazgo.severidad].icono}`}>
-                <Icono nombre="mejora" className="h-4 w-4" aria-hidden />
+                <Icono nombre="mejora" className="h-4 w-4" />
               </span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

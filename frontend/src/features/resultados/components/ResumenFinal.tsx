@@ -1,8 +1,10 @@
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Tarjeta from '@/components/ui/Tarjeta'
+import { CRITERIOS_POR_DEFECTO, NIVEL_MAXIMO_POR_DEFECTO } from '@/features/resultados/rubricaPorDefecto'
 import type { Rubrica } from '@/types/catalogos'
 import type { Entrevista, ResumenEntrevista } from '@/types/entrevista'
+import type { CodigoDeCriterio } from '@/types/evaluacion'
 
 interface Props {
   entrevista: Entrevista
@@ -10,12 +12,6 @@ interface Props {
   /** Para los nombres de los criterios y el máximo de la escala; puede faltar. */
   rubrica: Rubrica | null
 }
-
-const NOMBRE_POR_DEFECTO = {
-  correccion: 'Corrección técnica',
-  completitud: 'Completitud',
-  claridad: 'Claridad',
-} as const
 
 function Diferencia({ valor }: { valor: number }) {
   const texto = valor > 0 ? `+${valor}` : `${valor}`
@@ -39,9 +35,11 @@ function Diferencia({ valor }: { valor: number }) {
 export default function ResumenFinal({ entrevista, resumen, rubrica }: Props) {
   const parcial = entrevista.estado === 'abandonada'
   const { criterios } = resumen
-  const nivelMaximo = rubrica?.nivel_maximo ?? 4
-  const nombreDe = (codigo: keyof typeof NOMBRE_POR_DEFECTO) =>
-    rubrica?.criterios.find((c) => c.codigo === codigo)?.nombre ?? NOMBRE_POR_DEFECTO[codigo]
+  const nivelMaximo = rubrica?.nivel_maximo ?? NIVEL_MAXIMO_POR_DEFECTO
+  const nombreDe = (codigo: CodigoDeCriterio) =>
+    rubrica?.criterios.find((c) => c.codigo === codigo)?.nombre ??
+    CRITERIOS_POR_DEFECTO.find((c) => c.codigo === codigo)?.nombre ??
+    codigo
 
   return (
     <Tarjeta className="mb-6 grid gap-6 p-5 sm:p-6 md:grid-cols-2">
@@ -66,7 +64,7 @@ export default function ResumenFinal({ entrevista, resumen, rubrica }: Props) {
 
         {criterios && (
           <dl className="mt-5 space-y-3">
-            {(Object.keys(NOMBRE_POR_DEFECTO) as (keyof typeof NOMBRE_POR_DEFECTO)[]).map((codigo) => {
+            {CRITERIOS_POR_DEFECTO.map(({ codigo }) => {
               const nivel = criterios[codigo]
               return (
                 <div key={codigo}>

@@ -20,13 +20,6 @@ class NivelSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class TecnologiaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tecnologia
-        fields = ["codigo", "nombre", "descripcion", "orden"]
-        read_only_fields = fields
-
-
 class PuestoSerializer(serializers.ModelSerializer):
     areas = serializers.SerializerMethodField()
 

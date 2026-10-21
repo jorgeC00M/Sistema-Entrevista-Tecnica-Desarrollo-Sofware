@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from integrations.documentos.extractor import extraer
+from integrations.documentos.extractor import EXTENSIONES_SOPORTADAS, extraer
 
 #: Tope de tamaño del archivo, verificado **antes** de parsearlo. Un CV de dos
 #: páginas pesa unos cientos de kilobytes; dos megas admiten con holgura uno con
@@ -18,16 +18,15 @@ from integrations.documentos.extractor import extraer
 #: documento, porque contarlas exige haberlo abierto.
 MAXIMO_BYTES = 2 * 1024 * 1024
 
-#: Lo que el cliente puede mandar. Las imágenes se rechazan aquí, con su motivo,
-#: en lugar de dejar que el extractor lo haga: decirlo de inmediato es más útil
-#: que fingir un análisis.
-EXTENSIONES_ACEPTADAS = (".pdf", ".docx")
-
-
 def validar_archivo(archivo):
-    """Formato y peso."""
+    """Formato y peso.
+
+    El formato se comprueba con la misma lista que usa el extractor, pero aquí,
+    antes de abrir el archivo: rechazar una imagen de inmediato y con su motivo
+    es más útil que fingir un análisis.
+    """
     nombre = archivo.name.lower()
-    if not nombre.endswith(EXTENSIONES_ACEPTADAS):
+    if not nombre.endswith(EXTENSIONES_SOPORTADAS):
         raise serializers.ValidationError(
             "Solo se aceptan archivos PDF o DOCX. Una imagen (JPG, PNG) no la puede "
             "leer ningún ATS: exporta el documento desde Word o Google Docs."

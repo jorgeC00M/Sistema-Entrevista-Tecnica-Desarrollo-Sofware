@@ -1,0 +1,5 @@
+Pregunta: ¿Qué es un índice?
+
+Respuesta del candidato: Una estructura que acelera las búsquedas.
+
+Evalúa esta respuesta.

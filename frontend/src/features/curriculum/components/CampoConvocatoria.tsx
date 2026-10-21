@@ -5,7 +5,7 @@ import Icono from '@/components/ui/Icono'
 import ZonaDeArchivo from '@/features/curriculum/components/ZonaDeArchivo'
 
 /** Cota del lado cliente, igual que `MAXIMO_CARACTERES_CONVOCATORIA` en el backend. */
-export const MAXIMO_CARACTERES = 20_000
+const MAXIMO_CARACTERES = 20_000
 
 type Via = 'pegar' | 'archivo'
 
@@ -108,7 +108,7 @@ export default function CampoConvocatoria({
           )}
           {texto.length > 0 && (
             <p className="mt-1.5 flex items-center gap-1.5 text-label-mono text-vidrio-muted uppercase">
-              <Icono nombre="info" className="h-3.5 w-3.5" aria-hidden />
+              <Icono nombre="info" className="h-3.5 w-3.5" />
               {texto.length} / {MAXIMO_CARACTERES} caracteres
             </p>
           )}

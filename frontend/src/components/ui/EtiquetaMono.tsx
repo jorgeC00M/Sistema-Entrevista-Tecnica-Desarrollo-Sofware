@@ -9,7 +9,7 @@ const TONOS = {
   suelto: 'text-vidrio-muted',
 } as const
 
-export type TonoDeEtiqueta = keyof typeof TONOS
+type TonoDeEtiqueta = keyof typeof TONOS
 
 interface Props {
   children: ReactNode

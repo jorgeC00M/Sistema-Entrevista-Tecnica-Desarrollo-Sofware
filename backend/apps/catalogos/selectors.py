@@ -20,10 +20,6 @@ def niveles_activos() -> QuerySet[Nivel]:
     return Nivel.objects.filter(activo=True)
 
 
-def tecnologias_activas() -> QuerySet[Tecnologia]:
-    return Tecnologia.objects.filter(activo=True)
-
-
 def areas_activas() -> QuerySet[Area]:
     """Áreas vigentes. Ya no se eligen al iniciar una entrevista —eso lo decide
     el puesto— pero se siguen publicando: la pantalla de selección muestra qué

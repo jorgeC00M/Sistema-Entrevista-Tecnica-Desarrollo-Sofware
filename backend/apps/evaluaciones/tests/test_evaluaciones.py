@@ -1,8 +1,8 @@
-"""Verifica /api/estadisticas/: promedio general, promedio por área y
-evolución cronológica, calculados con agregaciones reales sobre PostgreSQL —
-no reimplementadas en Python en la prueba, para no validar el cálculo contra
-sí mismo. Se arman entrevistas completas conocidas y se comprueban los
-números exactos que deberían salir.
+"""Verifica el desglose por área de la retroalimentación (y que el viejo
+/api/estadisticas/ ya no existe), calculado con agregaciones reales sobre
+PostgreSQL — no reimplementadas en Python en la prueba, para no validar el
+cálculo contra sí mismo. Se arman entrevistas completas conocidas y se
+comprueban los números exactos que deberían salir.
 """
 
 from django.contrib.auth import get_user_model
@@ -19,6 +19,8 @@ from integrations.ia.prompts.schemas import (
 )
 
 Usuario = get_user_model()
+
+URL_RETROALIMENTACION = "/api/estadisticas/retroalimentacion/"
 
 
 class ProveedorPuntuacionFija(FakeProveedorIA):
@@ -53,134 +55,63 @@ def _completar_entrevista(usuario, puesto, nivel, puntuacion):
     return entrevista
 
 
-class EstadisticasSinDatosTest(APITestCase):
+class EndpointDeEstadisticasRetiradoTest(APITestCase):
+    """`/api/estadisticas/` solo alimentaba las cifras del encabezado del
+    historial, que se quitaron; la retroalimentación sigue bajo el mismo prefijo."""
+
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
             email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
         )
         self.client.force_authenticate(self.usuario)
 
-    def test_sin_entrevistas_completadas(self):
-        respuesta = self.client.get("/api/estadisticas/")
-
-        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertEqual(respuesta.data["entrevistas_completadas"], 0)
-        self.assertIsNone(respuesta.data["promedio_general"])
-        self.assertEqual(respuesta.data["promedio_por_area"], [])
-        self.assertEqual(respuesta.data["evolucion"], [])
-
-    def test_endpoint_requiere_autenticacion(self):
-        self.client.force_authenticate(None)
-        respuesta = self.client.get("/api/estadisticas/")
-        self.assertEqual(respuesta.status_code, status.HTTP_401_UNAUTHORIZED)
+    def test_ya_no_existe_y_la_retroalimentacion_sigue(self):
+        self.assertEqual(self.client.get("/api/estadisticas/").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            self.client.get("/api/estadisticas/retroalimentacion/").status_code, status.HTTP_200_OK
+        )
 
 
-class EstadisticasConDatosTest(APITestCase):
+class DesglosePorAreaTest(APITestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
             email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
         )
         self.client.force_authenticate(self.usuario)
 
-    def test_promedio_general_es_el_promedio_real_de_las_evaluaciones(self):
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 58)
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 83)
-
-        respuesta = self.client.get("/api/estadisticas/")
-
-        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertEqual(float(respuesta.data["promedio_general"]), 70.5)
-        self.assertEqual(respuesta.data["entrevistas_completadas"], 2)
-
-    def test_promedio_por_area_desglosa_los_temas_de_la_entrevista(self):
+    def test_el_desglose_por_area_reparte_los_temas_de_la_entrevista(self):
         """Una sola entrevista aporta a varias áreas, porque el puesto reparte
         los temas entre sus preguntas. Antes la entrevista tenía un área única y
         las cinco respuestas heredaban esa etiqueta; ahora el desglose dice de
-        verdad en qué temas le fue bien o mal al candidato.
+        verdad en qué temas le fue bien o mal al candidato. Ese desglose vive en
+        la retroalimentación acumulada.
         """
         _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 92)
 
-        respuesta = self.client.get("/api/estadisticas/")
+        respuesta = self.client.get(URL_RETROALIMENTACION)
 
-        por_area = {fila["area"]: fila for fila in respuesta.data["promedio_por_area"]}
+        por_area = {fila["area"]: fila for fila in respuesta.data["por_area"]}
         esperadas = {a.value for a in areas_que_cubre(Puesto.BACKEND)}
         self.assertEqual(set(por_area), esperadas)
         for codigo, fila in por_area.items():
             with self.subTest(area=codigo):
                 self.assertEqual(float(fila["promedio"]), 92.0)
-                # La misma entrevista es la que aportó a cada área.
-                self.assertEqual(fila["entrevistas"], 1)
 
     def test_dos_puestos_distintos_tocan_conjuntos_de_areas_distintos(self):
         """Elegir Backend o Frontend cambia los temas que se evalúan: es lo que
         hace que el puesto signifique algo y no sea solo una etiqueta."""
         _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
 
-        del_backend = {
-            fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
-        }
+        del_backend = {fila["area"] for fila in self.client.get(URL_RETROALIMENTACION).data["por_area"]}
 
         _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 67)
-        con_ambos = {
-            fila["area"] for fila in self.client.get("/api/estadisticas/").data["promedio_por_area"]
-        }
+        con_ambos = {fila["area"] for fila in self.client.get(URL_RETROALIMENTACION).data["por_area"]}
 
         # El frontend aporta temas que el backend no toca.
         self.assertTrue(con_ambos - del_backend)
 
-    def test_dos_entrevistas_del_mismo_puesto_muestran_variacion(self):
-        """Criterio de aceptación del incremento: tras completar dos
-        entrevistas del mismo puesto, se puede observar la variación de
-        desempeño entre ambas.
-        """
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 42)
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 92)
 
-        respuesta = self.client.get("/api/estadisticas/")
 
-        evolucion = respuesta.data["evolucion"]
-        self.assertEqual(len(evolucion), 2)
-        puntuaciones = [float(e["puntuacion_promedio"]) for e in evolucion]
-        self.assertEqual(puntuaciones, [42.0, 92.0])
-        self.assertNotEqual(puntuaciones[0], puntuaciones[1])
-
-    def test_la_evolucion_identifica_cada_entrevista_por_su_puesto(self):
-        """La evolución es por entrevista, no por tema, así que lo que la
-        identifica es el puesto: un punto del gráfico es "mi entrevista de
-        Backend", no "mi entrevista de Bases de Datos"."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
-
-        punto = self.client.get("/api/estadisticas/").data["evolucion"][0]
-
-        self.assertEqual(punto["puesto"], Puesto.BACKEND.value)
-        self.assertEqual(punto["puesto_display"], "Desarrollador Backend")
-
-    def test_evolucion_esta_ordenada_cronologicamente(self):
-        primera = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
-        segunda = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 83)
-
-        respuesta = self.client.get("/api/estadisticas/")
-
-        ids = [e["entrevista_id"] for e in respuesta.data["evolucion"]]
-        self.assertEqual(ids, [primera.id, segunda.id])
-
-    def test_entrevistas_en_progreso_no_cuentan(self):
-        servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=FakeProveedorIA())
-
-        respuesta = self.client.get("/api/estadisticas/")
-
-        self.assertEqual(respuesta.data["entrevistas_completadas"], 0)
-        self.assertIsNone(respuesta.data["promedio_general"])
-
-    def test_solo_cuenta_entrevistas_del_usuario_autenticado(self):
-        otro = Usuario.objects.create_user(
-            email="otro@example.com", password="clave-segura-123", nombre_completo="Otro"
-        )
-        _completar_entrevista(otro, puesto_de("backend"), nivel_de("junior"), 100)
-
-        respuesta = self.client.get("/api/estadisticas/")
-
-        self.assertEqual(respuesta.data["entrevistas_completadas"], 0)
 
 
 if __name__ == "__main__":

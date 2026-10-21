@@ -28,7 +28,7 @@ import logging
 from dataclasses import asdict
 
 from integrations.documentos.anonimizar import enmascarar
-from integrations.documentos.ats import detectar_nombre
+from integrations.documentos.contacto import detectar_nombre
 from integrations.documentos.brecha import AUSENTE, DECLARADO, NO_ALCANZA, NO_CALCULABLE
 from integrations.documentos.extractor import DocumentoExtraido
 from integrations.documentos.secciones import segmentar

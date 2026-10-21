@@ -20,8 +20,8 @@ export const TRAZOS = {
   desplegar: 'M7 7l5 5l-5 5M13 7l5 5l-5 5',
   /** Chevron de un desplegable cerrado (`CampoSelect`). */
   abajo: 'M6 9l6 6l6-6',
-  terminal:
-    'M8 9l3 3l-3 3M13 15l3 0M3 6a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -12',
+  /** Lupa del buscador del historial (search de Tabler). */
+  buscar: 'M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6 -6',
   resultados: 'M4 19l16 0M4 15l4 -6l4 2l4 -5l4 4',
   reloj: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M12 7v5l3 3',
 
@@ -56,8 +56,6 @@ export const TRAZOS = {
   // en la selección, de icono específico de Programación.
   area: 'M7 8l-4 4l4 4M17 8l4 4l-4 4M14 4l-4 16',
   datos: 'M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0M4 6v6a8 3 0 0 0 16 0v-6M4 12v6a8 3 0 0 0 16 0v-6',
-  arbol:
-    'M6 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 4a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M16 20a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M11 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M21 12a2 2 0 1 0 -4 0a2 2 0 0 0 4 0M5.058 18.306l2.88 -4.606M10.061 10.303l2.877 -4.604M10.065 13.705l2.876 4.6M15.063 5.7l2.881 4.61',
   web: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18',
 
   // Landing (rediseño): flecha de los botones "Crear cuenta ↗", chevrons del
@@ -66,15 +64,17 @@ export const TRAZOS = {
   'chevron-izquierda': 'm15 6-6 6 6 6',
   'chevron-derecha': 'm9 6 6 6-6 6',
   info: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18M12 8h.01M11 12h1v4h1',
-  // Puestos que no tenían icono propio (device-mobile, device-desktop y
-  // list-check de Tabler). El catálogo los nombra en `Puesto.icono`.
+  // Puestos que no tenían icono propio (device-mobile, device-desktop,
+  // list-check y device-gamepad-2 de Tabler). El catálogo los nombra en
+  // `Puesto.icono`.
   movil: 'M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14M11 4h2M12 17v.01',
   escritorio:
     'M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10M7 20h10M9 16v4M15 16v4',
   pruebas: 'M3.5 5.5l1.5 1.5l2.5 -2.5M3.5 11.5l1.5 1.5l2.5 -2.5M3.5 17.5l1.5 1.5l2.5 -2.5M11 6l9 0M11 12l9 0M11 18l9 0',
-  // Pantalla de selección: buscador, "Repetir configuración" y convocatoria
-  // (search, repeat y file-text de Tabler).
-  buscar: 'M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6 -6',
+  mando:
+    'M12 5h3.5a5 5 0 0 1 0 10h-5.5l-4.015 4.227a2.3 2.3 0 0 1 -3.923 -2.035l1.634 -8.173a5 5 0 0 1 4.904 -4.019h3.4zM14 15l4.07 4.284a2.3 2.3 0 0 0 3.925 -2.023l-1.6 -8.232M8 9v2M7 10h2M14 10h2',
+  // Pantalla de selección: "Repetir configuración" y convocatoria (repeat y
+  // file-text de Tabler).
   repetir: 'M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3',
   documento:
     'M14 3v4a1 1 0 0 0 1 1h4M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2M9 9l1 0M9 13l6 0M9 17l6 0',

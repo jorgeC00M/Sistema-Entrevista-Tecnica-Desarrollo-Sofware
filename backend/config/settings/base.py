@@ -195,18 +195,17 @@ CORS_ALLOWED_ORIGINS = lista_de_entorno(
 )
 
 # --- Proveedor de IA ----------------------------------------------------
-# `fake` por defecto: determinista y sin red, para que ninguna ejecución
-# accidental queme cuota de API.
-IA_PROVEEDOR = os.environ.get("IA_PROVEEDOR", "fake").strip() or "fake"
-
+# No hay setting: `integrations/ia/factory.py` lee `IA_PROVEEDOR` y las claves
+# (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`…) directamente del entorno, porque esa
+# capa no depende de Django. Sin la variable usa `fake`: determinista y sin
+# red, para que ninguna ejecución accidental queme cuota de API.
+#
 # Ese "por defecto" solo protege cuando la variable no está puesta. En cuanto
 # alguien configura un proveedor real en su .env para probar la aplicación, la
 # suite pasaría a llamar a la API de verdad: cuota gastada en cada corrida y
 # tests que fallan según lo rápido que responda el proveedor. El runner fija
 # `fake` para las pruebas, pase lo que pase en el entorno.
 TEST_RUNNER = "tests.runner.RunnerAislado"
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 
 # --- Inicio de sesión con Google ----------------------------------------
 # El frontend obtiene un ID token con Google Identity Services y lo envía a

@@ -1,20 +1,32 @@
 import { Link } from 'react-router-dom'
 
+import { VIGENCIA_DEL_CATALOGO_MS, obtenerPuestos } from '@/api/catalogos'
 import Alerta from '@/components/ui/Alerta'
 import EstadoVacio from '@/components/ui/EstadoVacio'
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Spinner from '@/components/ui/Spinner'
-import ComparativaAreas from '@/features/historial/components/ComparativaAreas'
-import GraficoProgreso from '@/features/historial/components/GraficoProgreso'
-import ListaEntrevistas from '@/features/historial/components/ListaEntrevistas'
+import EvolucionPorNivel from '@/features/historial/components/EvolucionPorNivel'
+import TablaDeEntrevistas from '@/features/historial/components/TablaDeEntrevistas'
+import { evolucionPorNivel } from '@/features/historial/historial'
+import { useFiltrosDeHistorial } from '@/features/historial/hooks/useFiltrosDeHistorial'
 import { useHistorial } from '@/features/historial/hooks/useHistorial'
+import { usePeticion } from '@/hooks/usePeticion'
 
 export default function HistorialPage() {
-  const { entrevistas, estadisticas, cargando, error } = useHistorial()
+  const { entrevistas, cargando, error } = useHistorial()
+  // Los niveles y el orden de los puestos salen del catálogo, no de una lista
+  // escrita aquí. Su fallo no bloquea la página: solo se omiten el filtro de
+  // nivel y los gráficos.
+  const catalogo = usePeticion('catalogo-puestos', obtenerPuestos, { vigenciaMs: VIGENCIA_DEL_CATALOGO_MS })
+  const niveles = catalogo.datos?.niveles ?? null
+  // Una sola lista filtrada para la tabla y los gráficos: lo que se dibuja es
+  // exactamente lo que se ve en la tabla.
+  const filtros = useFiltrosDeHistorial(
+    entrevistas ?? [],
+    (niveles ?? []).map((n) => n.codigo),
+  )
 
   if (error) return <Alerta>{error}</Alerta>
-  if (cargando || !entrevistas || !estadisticas)
-    return <Spinner texto="Cargando tu historial…" />
+  if (cargando || !entrevistas) return <Spinner texto="Cargando tu historial…" />
 
   if (entrevistas.length === 0) {
     return (
@@ -26,44 +38,45 @@ export default function HistorialPage() {
     )
   }
 
-  const completadas = estadisticas.entrevistas_completadas
+  const hayFinalizadas = entrevistas.some((e) => e.estado === 'finalizada')
+  // Con un nivel elegido, solo su tarjeta: mostrar las otras vacías diría
+  // «Aún sin entrevistas Senior» aunque las hubiera.
+  const nivelesDelGrafico =
+    niveles && filtros.nivel !== 'todos' ? niveles.filter((n) => n.codigo === filtros.nivel) : niveles
 
   return (
     <div className="space-y-6">
       <div>
-        <EtiquetaMono tono="suelto">
-          {entrevistas.length} entrevista{entrevistas.length === 1 ? '' : 's'} registrada
-          {entrevistas.length === 1 ? '' : 's'}
-        </EtiquetaMono>
-        <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">
-          Historial y progreso
-        </h1>
-        {completadas > 0 && estadisticas.promedio_general !== null ? (
-          <p className="text-base text-vidrio-texto">
-            {completadas} entrevista{completadas === 1 ? '' : 's'} completada
-            {completadas === 1 ? '' : 's'} · promedio general{' '}
-            <span className="font-mono-vidrio text-metric-counter">
-              {Math.round(estadisticas.promedio_general)}
-            </span>
-          </p>
-        ) : (
-          <p className="text-base text-vidrio-texto">
-            Tu progreso aparecerá aquí cuando completes la primera entrevista.
-          </p>
-        )}
+        <h1 className="font-serif text-headline-xl font-semibold text-vidrio-ink">Historial y progreso</h1>
+        <p className="max-w-prose text-base text-vidrio-texto">
+          Revisa tus entrevistas anteriores y sigue cómo evoluciona tu puntaje en cada puesto y nivel.
+        </p>
       </div>
 
-      {completadas > 0 && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <GraficoProgreso puntos={estadisticas.evolucion} />
-          <ComparativaAreas areas={estadisticas.promedio_por_area} />
-        </div>
+      {/* Primero lo que se viene a hacer aquí: encontrar una entrevista. */}
+      <section aria-labelledby="titulo-tus-entrevistas">
+        <h2 id="titulo-tus-entrevistas" className="mb-3 text-headline-md font-semibold text-vidrio-ink">
+          Tus entrevistas
+        </h2>
+        <TablaDeEntrevistas filtros={filtros} niveles={niveles} />
+      </section>
+
+      {/* El desglose por área vive en Retroalimentación; aquí, la evolución
+          de cada puesto dentro de cada nivel, con lo que muestra la tabla. */}
+      {hayFinalizadas && catalogo.datos && nivelesDelGrafico && (
+        <section aria-labelledby="titulo-evolucion">
+          <h2 id="titulo-evolucion" className="mb-3 text-headline-md font-semibold text-vidrio-ink">
+            Evolución en el tiempo
+          </h2>
+          <EvolucionPorNivel
+            niveles={evolucionPorNivel(
+              filtros.filtradas,
+              nivelesDelGrafico,
+              catalogo.datos.puestos.map((p) => p.codigo),
+            )}
+          />
+        </section>
       )}
-
-      <div>
-        <h2 className="mb-3 text-headline-md font-semibold text-vidrio-ink">Tus entrevistas</h2>
-        <ListaEntrevistas entrevistas={entrevistas} />
-      </div>
     </div>
   )
 }

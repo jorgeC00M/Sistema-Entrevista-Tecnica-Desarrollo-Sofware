@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { prefiereMovimientoReducido } from '@/features/landing/hooks/useRevelarAlEntrar'
+import { prefiereMovimientoReducido } from '@/lib/movimiento'
 
 interface ResultadoCarrusel {
   indice: number

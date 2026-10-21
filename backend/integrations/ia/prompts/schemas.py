@@ -37,6 +37,7 @@ class AreaTecnica(str, Enum):
     PRUEBAS = "pruebas"
     DESARROLLO_MOVIL = "desarrollo_movil"
     DESARROLLO_ESCRITORIO = "desarrollo_escritorio"
+    DESARROLLO_VIDEOJUEGOS = "desarrollo_videojuegos"
 
     @property
     def etiqueta(self) -> str:
@@ -51,6 +52,7 @@ class AreaTecnica(str, Enum):
             AreaTecnica.PRUEBAS: "Pruebas de Software",
             AreaTecnica.DESARROLLO_MOVIL: "Desarrollo Móvil",
             AreaTecnica.DESARROLLO_ESCRITORIO: "Desarrollo de Escritorio",
+            AreaTecnica.DESARROLLO_VIDEOJUEGOS: "Desarrollo de Videojuegos",
         }[self]
 
 
@@ -63,6 +65,7 @@ class Puesto(str, Enum):
     MOVIL = "movil"
     ESCRITORIO = "escritorio"
     QA = "qa"
+    VIDEOJUEGOS = "videojuegos"
 
     @property
     def etiqueta(self) -> str:
@@ -73,6 +76,7 @@ class Puesto(str, Enum):
             Puesto.MOVIL: "Desarrollador Móvil",
             Puesto.ESCRITORIO: "Desarrollador de Escritorio",
             Puesto.QA: "QA Tester / Automatizador",
+            Puesto.VIDEOJUEGOS: "Desarrollador de Videojuegos",
         }[self]
 
 
@@ -110,7 +114,7 @@ class ContextoDeEntrevista:
     con qué experiencia y sobre qué tecnología.
 
     La tecnología llega por su **nombre** ("React", "Kotlin (Android)") y no
-    como enum: hay una veintena, se dan de alta con `cargar_catalogos`, y la IA
+    como enum: hay más de cincuenta, se dan de alta con `cargar_catalogos`, y la IA
     solo necesita leerla. `None` solo en entrevistas anteriores al catálogo por
     puesto, que no la tenían. El área queda fuera a propósito: es lo único que
     varía de una pregunta a otra.
@@ -123,6 +127,18 @@ class ContextoDeEntrevista:
     #: lee el entrevistador: el evaluador califica con la misma rúbrica haya o
     #: no convocatoria, para que las notas sigan siendo comparables.
     requisitos: tuple[str, ...] = ()
+
+
+def linea_de_tecnologia(contexto: ContextoDeEntrevista) -> str:
+    """La línea del prompt que nombra la tecnología, para el entrevistador y el
+    evaluador por igual.
+
+    Se omite entera cuando no hay: decir "ninguna" invitaría al modelo a
+    comentar la ausencia en vez de ignorarla.
+    """
+    if contexto.tecnologia is None:
+        return ""
+    return f"\nTecnología elegida por el candidato: {contexto.tecnologia}"
 
 
 class Enfoque(str, Enum):
@@ -172,7 +188,8 @@ def _plan(tecnologia: AreaTecnica, datos: AreaTecnica, profundidad: AreaTecnica,
 #
 # "Datos" son bases de datos donde el puesto vive de ellas (backend, full stack
 # y QA, que valida datos con SQL) y estructuras de datos donde el estado vive en
-# memoria (frontend, móvil, escritorio).
+# memoria (frontend, móvil, escritorio y videojuegos, cuyas entidades, escenas y
+# colas de eventos viven en memoria durante la partida).
 #
 # Determinista a propósito, no aleatorio: así la entrevista es reproducible,
 # explicable ante un tribunal y verificable por un test. Vive aquí y no en la
@@ -192,6 +209,12 @@ PLAN_POR_PUESTO: dict[Puesto, tuple[PasoDelPlan, ...]] = {
         _A.DESARROLLO_ESCRITORIO,
     ),
     Puesto.QA: _plan(_A.PRUEBAS, _A.BASES_DE_DATOS, _A.PRUEBAS, _A.PRUEBAS),
+    Puesto.VIDEOJUEGOS: _plan(
+        _A.DESARROLLO_VIDEOJUEGOS,
+        _A.ESTRUCTURAS_DE_DATOS,
+        _A.DESARROLLO_VIDEOJUEGOS,
+        _A.DESARROLLO_VIDEOJUEGOS,
+    ),
 }
 del _A
 

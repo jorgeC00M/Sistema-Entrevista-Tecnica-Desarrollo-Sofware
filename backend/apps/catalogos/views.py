@@ -3,8 +3,8 @@
 Se sirven en una sola respuesta porque el frontend los necesita juntos y son
 pocos registros: cuatro peticiones para una docena de filas no compensan.
 
-`puestos` y `niveles` son lo que se elige; `tecnologias`, lo que se puede
-elegir. `areas` se sigue publicando aunque ya no se seleccione: cada puesto
+`puestos` y `niveles` son lo que se elige; las tecnologías de cada puesto
+llegan por `/puestos/`, que es lo que lee la pantalla. `areas` se sigue publicando aunque ya no se seleccione: cada puesto
 declara qué áreas cubre, y la pantalla necesita sus nombres para mostrarlas.
 """
 
@@ -28,14 +28,12 @@ from .selectors import (
     niveles_activos,
     puestos_activos,
     puestos_con_tecnologias,
-    tecnologias_activas,
 )
 from .serializers import (
     AreaSerializer,
     NivelSerializer,
     PuestoConTecnologiasSerializer,
     PuestoSerializer,
-    TecnologiaSerializer,
 )
 
 
@@ -47,7 +45,6 @@ class CatalogosView(APIView):
             {
                 "puestos": PuestoSerializer(puestos_activos(), many=True).data,
                 "niveles": NivelSerializer(niveles_activos(), many=True).data,
-                "tecnologias": TecnologiaSerializer(tecnologias_activas(), many=True).data,
                 "areas": AreaSerializer(areas_activas(), many=True).data,
                 "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
                 "rubrica": _rubrica(),

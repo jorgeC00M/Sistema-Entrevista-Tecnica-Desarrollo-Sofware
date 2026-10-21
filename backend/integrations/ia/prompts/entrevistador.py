@@ -15,15 +15,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from .schemas import AreaTecnica, ContextoDeEntrevista, TemaEvaluado, paso_de_la_pregunta
-
-
-def _linea_tecnologia(contexto: ContextoDeEntrevista) -> str:
-    """La tecnología se omite entera cuando no hay: decir "ninguna" invitaría al
-    modelo a comentar la ausencia en vez de ignorarla."""
-    if contexto.tecnologia is None:
-        return ""
-    return f"\nTecnología elegida por el candidato: {contexto.tecnologia}"
+from .schemas import (
+    AreaTecnica,
+    ContextoDeEntrevista,
+    TemaEvaluado,
+    linea_de_tecnologia,
+    paso_de_la_pregunta,
+)
 
 
 def _linea_requisitos(contexto: ContextoDeEntrevista) -> str:
@@ -64,7 +62,7 @@ entrevista simulada en español para un egresado de Ingeniería de Sistemas que 
 un puesto.
 
 Puesto al que postula: {contexto.puesto.etiqueta}
-Experiencia del candidato: {contexto.nivel.con_experiencia}{_linea_tecnologia(contexto)}{_linea_requisitos(contexto)}
+Experiencia del candidato: {contexto.nivel.con_experiencia}{linea_de_tecnologia(contexto)}{_linea_requisitos(contexto)}
 Total de preguntas de la entrevista: {total_preguntas}
 
 Vas a formular las primeras {len(areas)} preguntas, que abren la entrevista:
@@ -103,7 +101,7 @@ def _encargo(contexto: ContextoDeEntrevista, numero: int, area: AreaTecnica) -> 
 def sistema(
     contexto: ContextoDeEntrevista, area: AreaTecnica, numero: int, total_preguntas: int
 ) -> str:
-    linea_tecnologia = _linea_tecnologia(contexto)
+    linea_tecnologia = linea_de_tecnologia(contexto)
 
     return f"""\
 Eres un entrevistador técnico de una empresa de desarrollo de software. Conduces una \

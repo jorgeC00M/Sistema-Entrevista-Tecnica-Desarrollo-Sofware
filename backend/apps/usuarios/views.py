@@ -93,8 +93,12 @@ class CambiarContrasenaView(APIView):
         with transaction.atomic():
             usuario.set_password(serializer.validated_data["nueva"])
             usuario.save(update_fields=["password"])
-            for token in OutstandingToken.objects.filter(user=usuario):
-                BlacklistedToken.objects.get_or_create(token=token)
+            # Una sola inserción para todos; los que ya estaban en la lista
+            # negra (un cambio anterior) se saltan en vez de fallar.
+            BlacklistedToken.objects.bulk_create(
+                [BlacklistedToken(token=token) for token in OutstandingToken.objects.filter(user=usuario)],
+                ignore_conflicts=True,
+            )
 
         return Response(_tokens_para(usuario), status=status.HTTP_200_OK)
 

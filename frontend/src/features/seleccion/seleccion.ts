@@ -93,10 +93,6 @@ export function campoFaltante(seleccion: Seleccion, catalogo: CatalogoDeSeleccio
   return null
 }
 
-export function estaCompleta(seleccion: Seleccion, catalogo: CatalogoDeSeleccion): boolean {
-  return campoFaltante(seleccion, catalogo) === null
-}
-
 /** "React" o, con dos capas, "React + Node.js": el mismo nombre que guarda el servidor. */
 export function nombreDeTecnologias(seleccion: Seleccion, puesto: PuestoConTecnologias): string {
   return tecnologiasElegidas(seleccion, puesto)

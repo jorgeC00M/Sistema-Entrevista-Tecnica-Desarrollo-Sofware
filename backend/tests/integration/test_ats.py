@@ -66,7 +66,7 @@ class CapaDeTextoTest(unittest.TestCase):
         # texto vacío produciría una lista de debilidades falsas que ahogaría la
         # única que importa.
         self.assertEqual(len(analisis.hallazgos), 1)
-        self.assertEqual(analisis.parseabilidad, "0/8")
+        self.assertEqual((analisis.campos_detectados, len(analisis.campos)), (0, 8))
 
     def test_un_pdf_sin_texto_habla_de_escaneo(self):
         analisis = analizar(_documento("1", paginas=1))
@@ -263,7 +263,8 @@ class FichaTest(unittest.TestCase):
         self.assertEqual(tuple(c.nombre for c in analisis.campos), CAMPOS_DE_LA_FICHA)
 
     def test_un_cv_completo_llena_los_ocho_campos(self):
-        self.assertEqual(analizar(_documento(CV_CORRECTO)).parseabilidad, "8/8")
+        analisis = analizar(_documento(CV_CORRECTO))
+        self.assertEqual((analisis.campos_detectados, len(analisis.campos)), (8, 8))
 
 
 class UbicacionTest(unittest.TestCase):
@@ -374,7 +375,7 @@ class ExtractorTest(unittest.TestCase):
 
         self.assertTrue(documento.tiene_capa_de_texto)
         self.assertEqual(analisis.debilidades, [])
-        self.assertEqual(analisis.parseabilidad, "8/8")
+        self.assertEqual((analisis.campos_detectados, len(analisis.campos)), (8, 8))
 
     def test_dos_columnas_se_detectan_por_las_coordenadas(self):
         _, analisis = self._analizar("dos_columnas.pdf")

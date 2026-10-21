@@ -6,7 +6,7 @@ export interface Destino {
   icono: NombreDeIcono
 }
 
-export interface GrupoDeDestinos {
+interface GrupoDeDestinos {
   /** En tipo oración: se muestra en mayúsculas con CSS, para que el lector de pantalla no lo deletree. */
   titulo: string
   destinos: Destino[]

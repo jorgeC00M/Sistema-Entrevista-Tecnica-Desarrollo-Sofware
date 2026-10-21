@@ -11,12 +11,12 @@ Lo leen dos caminos:
   si los dos divergen, se nota.
 
 Los nombres y descripciones vienen del prototype `nueva-entrevista.html`.
-`icono` es un nombre de `components/ui/Icono.tsx`.
+`icono` es un nombre de `components/ui/trazosDeIconos.ts`.
 
 Se ofrecen **frameworks**, que es lo que piden las ofertas ("Django", no
-"Python"); `grupo` los agrupa en pantalla por lenguaje, o por tipo de prueba
-en QA. En Full Stack las tecnologías tienen además `capa`: el candidato elige
-una de frontend y una de backend. Las cuatro combinaciones fijas anteriores ("React + Node.js",
+"Python"); `grupo` los agrupa en pantalla por lenguaje, por tipo de prueba en
+QA o por tipo de motor en Videojuegos. En Full Stack las tecnologías tienen
+además `capa`: el candidato elige una de frontend y una de backend. Las cuatro combinaciones fijas anteriores ("React + Node.js",
 …) ya no figuran aquí; la migración `0011` las dejó inactivas porque hay
 entrevistas que las usaron, y `cargar_catalogos` nunca borra.
 
@@ -161,6 +161,49 @@ PUESTOS: tuple[DatosPuesto, ...] = (
             *_tec("qa", ("postman", "Postman"), ("rest_assured", "REST Assured"), grupo="APIs"),
             *_tec("qa", ("jmeter", "JMeter"), ("k6", "k6"), grupo="Rendimiento"),
             *_tec("qa", ("pytest", "Pytest"), ("junit", "JUnit"), grupo="Unitarias"),
+        ),
+    ),
+    DatosPuesto(
+        codigo="videojuegos",
+        nombre="Desarrollador de Videojuegos",
+        descripcion="Crea juegos para PC, consola, móvil o web.",
+        icono="mando",
+        # Agrupadas por tipo, como QA: el lenguaje va en el nombre porque un
+        # mismo motor se programa de dos formas (Unreal en C++ o con Blueprints).
+        tecnologias=(
+            *_tec(
+                "videojuegos",
+                ("unity", "Unity (C#)"),
+                ("unreal_cpp", "Unreal Engine (C++)"),
+                ("unreal_blueprints", "Unreal Engine (Blueprints)"),
+                ("godot", "Godot (GDScript)"),
+                ("godot_csharp", "Godot (C#)"),
+                grupo="Motores",
+            ),
+            *_tec(
+                "videojuegos",
+                ("gamemaker", "GameMaker (GML)"),
+                ("roblox", "Roblox Studio (Luau)"),
+                ("defold", "Defold (Lua)"),
+                ("cocos", "Cocos Creator (TypeScript)"),
+                grupo="Motores 2D y plataformas",
+            ),
+            *_tec(
+                "videojuegos",
+                ("phaser", "Phaser (JavaScript)"),
+                ("threejs", "Three.js"),
+                ("babylon", "Babylon.js"),
+                grupo="Web",
+            ),
+            *_tec(
+                "videojuegos",
+                ("monogame", "MonoGame (C#)"),
+                ("pygame", "Pygame (Python)"),
+                ("love", "LÖVE (Lua)"),
+                ("bevy", "Bevy (Rust)"),
+                ("sdl_sfml", "SDL / SFML (C++)"),
+                grupo="Frameworks de código",
+            ),
         ),
     ),
 )

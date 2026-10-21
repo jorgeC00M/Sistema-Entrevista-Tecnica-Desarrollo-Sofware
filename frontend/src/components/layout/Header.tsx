@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import type { Ref } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { resolverTitulo } from '@/components/layout/titulosDeRuta'
@@ -8,6 +8,8 @@ import BotonIcono from '@/components/ui/BotonIcono'
 interface Props {
   onAbrirMenu: () => void
   menuAbierto: boolean
+  /** React 19: la ref llega como prop, sin `forwardRef`. */
+  ref?: Ref<HTMLButtonElement>
 }
 
 /**
@@ -24,10 +26,7 @@ interface Props {
  * Recibe la referencia del botón de menú para que el cajón pueda devolverle
  * el foco al cerrarse.
  */
-const Header = forwardRef<HTMLButtonElement, Props>(function Header(
-  { onAbrirMenu, menuAbierto },
-  disparadorRef,
-) {
+export default function Header({ onAbrirMenu, menuAbierto, ref }: Props) {
   const { pathname } = useLocation()
   const { titulo, subtitulo } = resolverTitulo(pathname)
 
@@ -38,7 +37,7 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
     <header className="sticky top-0 z-40 h-16 border-b border-vidrio-linea bg-vidrio-bg/80 backdrop-blur-md">
       <div className="flex h-full items-center gap-3 px-4">
         <BotonIcono
-          ref={disparadorRef}
+          ref={ref}
           icono="menu"
           onClick={onAbrirMenu}
           aria-expanded={menuAbierto}
@@ -66,6 +65,4 @@ const Header = forwardRef<HTMLButtonElement, Props>(function Header(
       </div>
     </header>
   )
-})
-
-export default Header
+}

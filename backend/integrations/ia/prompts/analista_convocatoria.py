@@ -18,23 +18,15 @@ entrada, y el aviso llega ya enmascarado (sin correos, teléfonos ni enlaces).
 
 from __future__ import annotations
 
-import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
 from ..exceptions import RespuestaIAInvalida
+from .marcadores import MARCADOR, SIN_PUESTO
 
 MAXIMO_REQUISITOS = 8
 MAXIMO_FUERA_DE_ALCANCE = 5
-
-#: Lo que responde el modelo si ningún puesto encaja. Es un valor del enum y no
-#: `null` porque no todos los proveedores aceptan tipos anulables en el esquema.
-SIN_PUESTO = "ninguno"
-
-# Los marcadores que deja `anonimizar.enmascarar`: aparecen en el aviso, pero no
-# son requisitos, y mostrarlos al usuario sería mostrarle "[CORREO]".
-_MARCADOR = re.compile(r"\[(?:CORREO|TELÉFONO|ENLACE|NOMBRE)\]")
 
 
 @dataclass(frozen=True)
@@ -187,7 +179,7 @@ def _anclados(candidatos: list[str], entrada: EntradaDeConvocatoria, maximo: int
     resultado: list[str] = []
     for candidato in candidatos:
         clave = comparable(candidato)
-        if _MARCADOR.search(candidato) or clave in vistos or not (clave in aviso or clave in reconocidos):
+        if MARCADOR.search(candidato) or clave in vistos or not (clave in aviso or clave in reconocidos):
             continue
         vistos.add(clave)
         # Si es un término reconocido, se muestra con su nombre canónico.

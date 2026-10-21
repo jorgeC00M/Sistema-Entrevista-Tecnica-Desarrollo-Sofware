@@ -24,7 +24,7 @@ export interface Hallazgo {
 }
 
 /** Un dato que el ATS intenta extraer, y si lo consiguió. */
-export interface CampoDelEspejo {
+interface CampoDelEspejo {
   nombre: string
   detectado: boolean
   valor: string
@@ -99,7 +99,7 @@ export interface AnalisisDeVinetas {
  * CV lo reintenta. `omitida`: no se envió nada (CV ilegible o sin secciones
  * reconocidas), y `motivo` dice por qué.
  */
-export type EstadoDeRevision = 'ok' | 'no_disponible' | 'omitida'
+type EstadoDeRevision = 'ok' | 'no_disponible' | 'omitida'
 
 export type TipoDeCorreccion = 'ortografia' | 'persona' | 'tiempo_verbal'
 

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
-import { repartirErrores } from '@/api/errores'
+import { mensajeDeError, repartirErrores } from '@/api/errores'
 import FormularioLogin from '@/features/auth/components/FormularioLogin'
 import TarjetaAuth from '@/features/auth/components/TarjetaAuth'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -35,7 +34,7 @@ export default function LoginPage() {
       await iniciarSesionConGoogle(idToken)
       navigate('/')
     } catch (err) {
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo iniciar sesión con Google.')
+      setError(mensajeDeError(err, 'No se pudo iniciar sesión con Google.'))
     }
   }
 

@@ -16,11 +16,12 @@ from integrations.ia.prompts.schemas import areas_que_cubre
 class CatalogoSembradoTest(APITestCase):
     """La migración de datos debe dejar el catálogo listo, sin fixtures."""
 
-    def test_migracion_siembra_las_diez_areas(self):
+    def test_migracion_siembra_las_once_areas(self):
         """Las cuatro del alcance original, POO, APIs, control de versiones,
-        pruebas, y desarrollo móvil y de escritorio para los puestos nuevos. El
-        alcance las enumera con "tales como", lista ejemplificativa."""
-        self.assertEqual(Area.objects.count(), 10)
+        pruebas, y desarrollo móvil, de escritorio y de videojuegos para los
+        puestos nuevos. El alcance las enumera con "tales como", lista
+        ejemplificativa."""
+        self.assertEqual(Area.objects.count(), 11)
 
     def test_migracion_siembra_los_tres_niveles(self):
         # Junior, Semi-Senior y Senior: inicial, intermedio y avanzado. Senior
@@ -32,8 +33,8 @@ class CatalogoSembradoTest(APITestCase):
         )
 
     def test_migracion_siembra_los_puestos_y_tecnologias(self):
-        self.assertEqual(Puesto.objects.filter(activo=True).count(), 6)
-        self.assertEqual(Tecnologia.objects.filter(activo=True).count(), 53)
+        self.assertEqual(Puesto.objects.filter(activo=True).count(), 7)
+        self.assertEqual(Tecnologia.objects.filter(activo=True).count(), 70)
         # Las combinaciones fijas de Full Stack quedan inactivas, con su puesto:
         # entrevistas anteriores las referencian. Las reemplazan las de capa.
         combinaciones = Tecnologia.objects.filter(codigo__in=["full_stack_react_node", "full_stack_vue_php"])
@@ -138,10 +139,14 @@ class CatalogoAPITest(APITestCase):
         respuesta = self.client.get("/api/catalogos/")
 
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(respuesta.data["puestos"]), 6)
+        self.assertEqual(len(respuesta.data["puestos"]), 7)
         self.assertEqual(len(respuesta.data["niveles"]), 3)
-        self.assertEqual(len(respuesta.data["tecnologias"]), 53)
-        self.assertEqual(len(respuesta.data["areas"]), 10)
+        # Las tecnologías no viajan aquí sino por puesto, en `/puestos/`: es lo
+        # único que consume la pantalla de selección.
+        self.assertNotIn("tecnologias", respuesta.data)
+        puestos = self.client.get("/api/catalogos/puestos/").data["puestos"]
+        self.assertEqual(sum(len(p["tecnologias"]) for p in puestos), 70)
+        self.assertEqual(len(respuesta.data["areas"]), 11)
         # El frontend lee de aquí cuántas preguntas tiene una entrevista en
         # lugar de hardcodear el número.
         self.assertEqual(respuesta.data["preguntas_por_entrevista"], PREGUNTAS_POR_ENTREVISTA)
@@ -159,7 +164,7 @@ class CatalogoAPITest(APITestCase):
 
     def test_respeta_el_orden_configurado(self):
         respuesta = self.client.get("/api/catalogos/")
-        for clave in ("puestos", "niveles", "tecnologias", "areas"):
+        for clave in ("puestos", "niveles", "areas"):
             with self.subTest(catalogo=clave):
                 ordenes = [fila["orden"] for fila in respuesta.data[clave]]
                 self.assertEqual(ordenes, sorted(ordenes))
@@ -171,7 +176,7 @@ class CatalogoAPITest(APITestCase):
 
         codigos = [p["codigo"] for p in respuesta.data["puestos"]]
         self.assertNotIn(PuestoIA.FRONTEND.value, codigos)
-        self.assertEqual(len(codigos), 5)
+        self.assertEqual(len(codigos), 6)
 
     def test_no_se_puede_iniciar_entrevista_en_puesto_inactivo(self):
         """Dar de baja un puesto lo retira de verdad, no solo de la vista."""

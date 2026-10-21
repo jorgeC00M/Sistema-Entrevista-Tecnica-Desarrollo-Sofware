@@ -15,7 +15,7 @@ import type { BandaDeRubrica } from '@/types/evaluacion'
 
 export type NivelDePuntaje = 'error' | 'progreso' | 'exito'
 
-export const NIVEL_POR_BANDA: Record<BandaDeRubrica, NivelDePuntaje> = {
+const NIVEL_POR_BANDA: Record<BandaDeRubrica, NivelDePuntaje> = {
   insuficiente: 'error',
   en_desarrollo: 'error',
   aceptable: 'progreso',

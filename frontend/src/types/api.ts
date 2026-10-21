@@ -1,7 +1,7 @@
 /** Formas de error que produce DRF, normalizadas por `extraerMensaje` en api/client.ts. */
 
 /** Error con un único mensaje: permisos, 404, conflictos, fallos del proveedor de IA. */
-export interface ErrorConDetalle {
+interface ErrorConDetalle {
   detail: string
 }
 

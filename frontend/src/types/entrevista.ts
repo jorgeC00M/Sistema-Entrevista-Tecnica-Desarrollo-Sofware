@@ -31,6 +31,13 @@ export interface Entrevista {
    */
   puntuacion_promedio: number | null
   /**
+   * Media de lo respondido en una entrevista **abandonada**, la misma que su
+   * reporte llama "parcial"; `null` en cualquier otro estado. Una en curso la
+   * trae nula aunque ya tenga respuestas calificadas: la nota no se publica
+   * hasta terminar.
+   */
+  puntuacion_parcial: number | null
+  /**
    * Sobre cuántas preguntas se calculó `puntuacion_promedio`. En una
    * abandonada es menor que `preguntas_previstas` y la nota es parcial.
    */

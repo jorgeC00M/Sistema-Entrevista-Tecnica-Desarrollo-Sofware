@@ -40,7 +40,7 @@ export default function PreguntasProbables({ revision }: { revision: RevisionIA 
             {preguntas.map(({ pregunta, motivo }) => (
               <li key={pregunta} className="flex items-start gap-2.5">
                 <span className="mt-0.5 shrink-0 text-vidrio-acento">
-                  <Icono nombre="respuesta" className="h-4 w-4" aria-hidden />
+                  <Icono nombre="respuesta" className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-vidrio-ink">{pregunta}</p>

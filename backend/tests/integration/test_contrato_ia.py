@@ -96,6 +96,13 @@ class PlanPorPuestoTest(unittest.TestCase):
                 A.DESARROLLO_ESCRITORIO,
             ],
             Puesto.QA: [A.PROGRAMACION, A.PRUEBAS, A.BASES_DE_DATOS, A.PRUEBAS, A.PRUEBAS],
+            Puesto.VIDEOJUEGOS: [
+                A.PROGRAMACION,
+                A.DESARROLLO_VIDEOJUEGOS,
+                A.ESTRUCTURAS_DE_DATOS,
+                A.DESARROLLO_VIDEOJUEGOS,
+                A.DESARROLLO_VIDEOJUEGOS,
+            ],
         }
         self.assertEqual(set(esperado), set(Puesto))
         for puesto, areas in esperado.items():

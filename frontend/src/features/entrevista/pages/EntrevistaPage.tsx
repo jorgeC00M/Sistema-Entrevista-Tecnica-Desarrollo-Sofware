@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { ErrorAPI } from '@/api/client'
+import { mensajeDeError } from '@/api/errores'
 import { abandonarEntrevista } from '@/api/entrevistas'
 import Boton from '@/components/ui/Boton'
 import Cronometro from '@/components/ui/Cronometro'
@@ -47,7 +47,7 @@ export default function EntrevistaPage() {
       // `replace`: "atrás" no debe volver a una entrevista que ya no sigue.
       navigate(`/entrevista/${id}/resultados`, { replace: true })
     } catch (err) {
-      setErrorAbandono(err instanceof ErrorAPI ? err.message : 'No se pudo abandonar la entrevista.')
+      setErrorAbandono(mensajeDeError(err, 'No se pudo abandonar la entrevista.'))
       setAbandonando(false)
     }
   }

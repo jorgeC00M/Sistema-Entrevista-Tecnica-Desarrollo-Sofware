@@ -1,4 +1,4 @@
-import CampoSelect, { type OpcionDeCampo } from '@/features/seleccion/components/CampoSelect'
+import CampoSelect, { type OpcionDeCampo } from '@/components/ui/CampoSelect'
 import {
   type AccionDeSeleccion,
   type CatalogoDeSeleccion,

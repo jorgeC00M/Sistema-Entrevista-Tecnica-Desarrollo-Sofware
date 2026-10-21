@@ -15,16 +15,19 @@ interface Props {
 }
 
 /**
- * Botón junto al título para volver a la configuración de la última
- * entrevista. El modal muestra solo esa configuración; confirmar la aplica y
- * lleva al siguiente paso, cancelar no toca nada.
+ * Las tecnologías de la configuración anterior, para mostrarlas en el modal.
+ * Las dos capas solo si ambas siguen vigentes: media combinación no se repite.
  */
-/** Las dos capas solo si ambas siguen vigentes: media combinación no se repite. */
-function nombreDeTecnologias({ tecnologia_nombre, segunda_tecnologia, segunda_tecnologia_nombre }: UltimaConfiguracion) {
+function tecnologiasDeLaConfiguracion({ tecnologia_nombre, segunda_tecnologia, segunda_tecnologia_nombre }: UltimaConfiguracion) {
   if (!tecnologia_nombre) return null
   return segunda_tecnologia ? `${tecnologia_nombre} + ${segunda_tecnologia_nombre}` : tecnologia_nombre
 }
 
+/**
+ * Botón junto al título para volver a la configuración de la última
+ * entrevista. El modal muestra solo esa configuración; confirmar la aplica y
+ * lleva al siguiente paso, cancelar no toca nada.
+ */
 export default function RepetirConfiguracion({ configuracion, onConfirmar, focoTrasConfirmar }: Props) {
   const [abierto, setAbierto] = useState(false)
   // Distingue cómo se cerró el modal: solo tras confirmar el foco avanza.
@@ -34,7 +37,7 @@ export default function RepetirConfiguracion({ configuracion, onConfirmar, focoT
   const filas: { etiqueta: string; valor: string | null }[] = [
     { etiqueta: 'Puesto', valor: configuracion.puesto_nombre },
     // Con dos capas, "React + Node.js"; nula si ya no se ofrece.
-    { etiqueta: 'Tecnología', valor: nombreDeTecnologias(configuracion) },
+    { etiqueta: 'Tecnología', valor: tecnologiasDeLaConfiguracion(configuracion) },
     { etiqueta: 'Nivel', valor: configuracion.nivel_nombre },
   ]
 

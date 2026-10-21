@@ -78,7 +78,7 @@ function FilaDeRequisito({
       <span
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${aspecto.clases}`}
       >
-        <Icono nombre={aspecto.icono} className="h-3 w-3" aria-hidden />
+        <Icono nombre={aspecto.icono} className="h-3 w-3" />
       </span>
       {/* En móvil se apilan: con una columna fija de 128 px, la sugerencia de
           IA quedaba en una columna de una palabra por línea. */}

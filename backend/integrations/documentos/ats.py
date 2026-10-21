@@ -20,21 +20,24 @@ añadirla al registro; el flujo no cambia.
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 
 from integrations.documentos import fechas, ubicaciones
-from integrations.documentos.extractor import DocumentoExtraido, Palabra
-from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado, segmentar, titulo_de
+from integrations.documentos.contacto import CORREO, detectar_nombre, detectar_telefono
+# Se reexportan: los detectores vivían aquí y hay código que aún los busca en `ats`.
+from integrations.documentos.contacto import URL, telefonos  # noqa: F401
+from integrations.documentos.extractor import DocumentoExtraido
+from integrations.documentos.geometria import hay_dos_columnas
+from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado, titulo_de
 from integrations.documentos.terminos import escritos_de_una_sola_forma
 
 #: Versión del conjunto de reglas. Se guarda con cada análisis para que uno hecho
 #: con reglas anteriores se recalcule al volver a subir el mismo CV, en vez de
 #: mostrarle al usuario un diagnóstico que ya no es el vigente. **Hay que subirla
 #: cada vez que cambie lo que el análisis o la brecha producen.**
-VERSION_DE_REGLAS = 3
+VERSION_DE_REGLAS = 4
 
 #: Los campos de la ficha que arma el ATS, en el orden en que se muestran. Es la
 #: única lista: el caso sin capa de texto la recorre y un test comprueba que las
@@ -62,19 +65,6 @@ MINIMO_CARACTERES_OCULTOS = 20
 
 #: Cuántas líneas se miran como encabezado cuando no hay títulos que lo delimiten.
 LINEAS_DE_ENCABEZADO_SIN_TITULOS = 8
-
-CORREO = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-# Tolerante a propósito: separadores variados y prefijo internacional opcional,
-# porque un número boliviano se escribe de muchas formas (+591 7xx xx xxx,
-# 7xxxxxxx, 7-xxx-xxxx).
-# Los grupos admiten uno a cuatro dígitos, no dos a cuatro: con el mínimo en dos
-# un número escrito «+591 7 123 4567» empezaba a encajar recién en «123 4567» y
-# el espejo le mostraba al usuario su teléfono truncado. Lo que evita que el
-# patrón se desborde no es su rigidez sino el mínimo de dígitos que exige
-# `detectar_telefono`.
-_TELEFONO = re.compile(r"(?:\+\s?\d{1,3}[\s.-]?)?(?:\(?\d{1,4}\)?[\s.-]?){2,5}\d{2,4}")
-URL = re.compile(r"(?:https?://|www\.|linkedin\.com|github\.com)", re.IGNORECASE)
-
 
 @dataclass(frozen=True)
 class Hallazgo:
@@ -107,22 +97,10 @@ class Analisis:
 
     campos: list[Campo] = field(default_factory=list)
     hallazgos: list[Hallazgo] = field(default_factory=list)
-    paginas: int = 0
-    formato: str = ""
 
     @property
     def campos_detectados(self) -> int:
         return sum(1 for campo in self.campos if campo.detectado)
-
-    @property
-    def parseabilidad(self) -> str:
-        """Métrica honesta: campos extraídos sobre campos intentados.
-
-        No es un puntaje de calidad del CV ni una predicción de contratación. Es
-        exactamente lo que dice: cuántos de los campos que un ATS intenta llenar
-        se pudieron llenar con este documento.
-        """
-        return f"{self.campos_detectados}/{len(self.campos)}"
 
     @property
     def debilidades(self) -> list[Hallazgo]:
@@ -142,10 +120,11 @@ class _Contexto:
     """Lo que varias reglas necesitan, calculado una sola vez por análisis."""
 
     documento: DocumentoExtraido
-    hoy: date
-    secciones: dict[str, str]
     encabezado: str
     experiencia: fechas.Experiencia
+    #: El nombre que vería el ATS, o cadena vacía. Lo leen la ficha y la regla de
+    #: ubicación, que descarta su línea.
+    nombre: str
     #: Campo de contacto → zona que el ATS no lee donde sí aparece. Lo llena la
     #: verificación de zonas ocultas, que corre antes que la de contacto.
     contacto_oculto: dict[str, str] = field(default_factory=dict)
@@ -205,7 +184,7 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
     `hoy` fija hasta cuándo llega un periodo abierto ("– Actualidad"); por
     defecto, la fecha actual.
     """
-    analisis = Analisis(paginas=documento.paginas, formato=documento.formato)
+    analisis = Analisis()
 
     # Sin capa de texto no hay nada más que verificar: el resto de las reglas
     # mediría un texto vacío y produciría una lista de debilidades falsas que
@@ -228,13 +207,12 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
     texto = documento.texto
     contexto = _Contexto(
         documento=documento,
-        hoy=hoy,
-        secciones=segmentar(texto),
         # Sin títulos no hay dónde cortar: se toman las primeras líneas, que es
         # donde cualquier plantilla pone los datos personales.
         encabezado=encabezado(texto)
         or "\n".join(texto.splitlines()[:LINEAS_DE_ENCABEZADO_SIN_TITULOS]),
         experiencia=fechas.experiencia(texto, hoy),
+        nombre=detectar_nombre(texto),
     )
 
     for verificar in _VERIFICACIONES:
@@ -323,7 +301,7 @@ def _nota_de_contacto(contexto: _Contexto, campo: str, sin_dato: str) -> str:
 def _verificar_contacto(contexto: _Contexto, analisis: Analisis) -> None:
     texto = contexto.texto
 
-    nombre = detectar_nombre(texto)
+    nombre = contexto.nombre
     analisis.campos.append(
         Campo(
             nombre="Nombre",
@@ -399,8 +377,7 @@ def _verificar_ubicacion(contexto: _Contexto, analisis: Analisis) -> None:
     Solo en el encabezado y sin la línea del nombre: "Santa Cruz" en una
     experiencia puede ser una empresa, y "Lima" o "Pando" son también apellidos.
     """
-    nombre = detectar_nombre(contexto.texto)
-    lineas = [linea for linea in contexto.encabezado.splitlines() if linea.strip() != nombre]
+    lineas = [linea for linea in contexto.encabezado.splitlines() if linea.strip() != contexto.nombre]
     lugares = ubicaciones.encontrar("\n".join(lineas))
 
     analisis.campos.append(
@@ -427,58 +404,6 @@ def _verificar_ubicacion(contexto: _Contexto, analisis: Analisis) -> None:
             )
         )
 
-
-def telefonos(texto: str) -> list[str]:
-    """Todos los teléfonos del texto, descartando antes lo que se les parece.
-
-    Un rango de fechas como «2016-02 – 2021» encaja en cualquier patrón de
-    teléfono razonablemente tolerante, y un correo o una URL también traen
-    dígitos. Se eliminan primero, y al final se exige un mínimo de dígitos: en
-    Bolivia un celular tiene ocho y una línea fija siete, así que menos de siete
-    no es un teléfono.
-
-    Devuelve todos y no solo el primero porque el enmascarado que precede a
-    cualquier envío a la IA tiene que taparlos todos.
-    """
-    MINIMO_DE_DIGITOS = 7
-
-    sin_ruido = URL.sub(" ", CORREO.sub(" ", texto))
-    for patron in fechas.FORMATOS_DE_FECHA.values():
-        sin_ruido = patron.sub(" ", sin_ruido)
-
-    candidatos = (candidato.group(0).strip() for candidato in _TELEFONO.finditer(sin_ruido))
-    return [
-        candidato
-        for candidato in candidatos
-        if sum(1 for caracter in candidato if caracter.isdigit()) >= MINIMO_DE_DIGITOS
-    ]
-
-
-def detectar_telefono(texto: str) -> str:
-    """El primer teléfono del texto, o cadena vacía: el que vería el ATS."""
-    encontrados = telefonos(texto)
-    return encontrados[0] if encontrados else ""
-
-
-def detectar_nombre(texto: str) -> str:
-    """Heurística: el nombre es de las primeras líneas con aspecto de nombre.
-
-    Es una heurística declarada, no un reconocedor de entidades. Un ATS real usa
-    modelos entrenados para esto; replicarlo queda fuera del alcance. Lo que sí
-    reproduce es la condición que de verdad importa: que el nombre esté como
-    texto corriente cerca del inicio. Si está dentro de una imagen o de un cuadro
-    de texto, no aparece y eso es justo lo que hay que avisar.
-    """
-    for linea in texto.splitlines()[:8]:
-        candidato = linea.strip()
-        if not candidato or len(candidato) > 60:
-            continue
-        if CORREO.search(candidato) or URL.search(candidato) or any(c.isdigit() for c in candidato):
-            continue
-        palabras = candidato.split()
-        if 2 <= len(palabras) <= 5 and all(palabra[:1].isupper() for palabra in palabras):
-            return candidato
-    return ""
 
 def _verificar_secciones(contexto: _Contexto, analisis: Analisis) -> None:
     # `titulo_de` vive en `secciones.py` y es el mismo criterio que usa
@@ -602,7 +527,7 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
     columnas se hace con tablas, que se verifican aparte.
     """
     documento = contexto.documento
-    if documento.formato == "pdf" and documento.palabras and _hay_dos_columnas(documento.palabras):
+    if documento.formato == "pdf" and documento.palabras and hay_dos_columnas(documento.palabras):
         analisis.hallazgos.append(
             Hallazgo(
                 codigo="dos_columnas",
@@ -666,61 +591,6 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
             )
         )
 
-
-def _hay_dos_columnas(palabras: list[Palabra]) -> bool:
-    """Busca un canal vertical sin texto que parta la página en dos.
-
-    Un CV a dos columnas deja una franja vertical vacía entre ellas. Se mide el
-    ancho real del contenido —no el de la página, que incluye márgenes— y se
-    busca en su zona central una franja que ninguna palabra cruce, con suficiente
-    texto a ambos lados para descartar que sea una tabulación suelta.
-    """
-    ANCHO_MINIMO_DEL_CANAL = 0.06  # 6% del ancho del contenido
-    ZONA_CENTRAL = (0.25, 0.75)
-    PROPORCION_MINIMA_POR_LADO = 0.2
-
-    for pagina in {palabra.pagina for palabra in palabras}:
-        de_la_pagina = [p for p in palabras if p.pagina == pagina]
-        if len(de_la_pagina) < 40:
-            continue
-
-        izquierda = min(p.x0 for p in de_la_pagina)
-        derecha = max(p.x1 for p in de_la_pagina)
-        ancho = derecha - izquierda
-        if ancho <= 0:
-            continue
-
-        inicio_zona = izquierda + ancho * ZONA_CENTRAL[0]
-        fin_zona = izquierda + ancho * ZONA_CENTRAL[1]
-
-        # Se recorre la zona central en pasos y se mide la franja contigua más
-        # ancha que ninguna palabra atraviesa.
-        PASOS = 60
-        paso = (fin_zona - inicio_zona) / PASOS
-        mejor_canal = 0.0
-        canal_actual = 0.0
-        centro_del_canal = 0.0
-
-        for indice in range(PASOS):
-            x = inicio_zona + paso * indice
-            if any(p.x0 <= x <= p.x1 for p in de_la_pagina):
-                canal_actual = 0.0
-            else:
-                canal_actual += paso
-                if canal_actual > mejor_canal:
-                    mejor_canal = canal_actual
-                    centro_del_canal = x - canal_actual / 2
-
-        if mejor_canal < ancho * ANCHO_MINIMO_DEL_CANAL:
-            continue
-
-        a_la_izquierda = sum(1 for p in de_la_pagina if p.x1 <= centro_del_canal)
-        a_la_derecha = sum(1 for p in de_la_pagina if p.x0 >= centro_del_canal)
-        minimo = len(de_la_pagina) * PROPORCION_MINIMA_POR_LADO
-        if a_la_izquierda >= minimo and a_la_derecha >= minimo:
-            return True
-
-    return False
 
 def _verificar_texto_oculto(contexto: _Contexto, analisis: Analisis) -> None:
     """Texto blanco o diminuto: invisible para quien lee, no para el ATS."""

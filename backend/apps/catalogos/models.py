@@ -6,15 +6,15 @@ darlas de alta o de baja sin tocar código ni migrar datos, y para que el
 frontend las lea de la API en lugar de duplicarlas.
 
 `codigo` es el puente con la capa de IA: sus valores coinciden con los de los
-enums `AreaTecnica`, `Nivel`, `Puesto` y `Tecnologia` de `integrations.ia`, que
-siguen siendo el contrato con el proveedor — esa capa no conoce Django ni la
-base de datos.
+enums `AreaTecnica`, `Nivel` y `Puesto` de `integrations.ia`, que siguen siendo
+el contrato con el proveedor — esa capa no conoce Django ni la base de datos.
+La tecnología no tiene enum: a la IA le llega solo su nombre.
 
 Qué elige el usuario y qué es interno:
 
-- `Puesto` y `Nivel` son lo que se elige al iniciar una entrevista, y `Tecnologia`
-  lo que se elige opcionalmente. Es el encuadre de una postulación real: se
-  postula a "Desarrollador Backend", no a "Bases de Datos".
+- `Puesto`, `Nivel` y una `Tecnologia` del puesto (una por capa en Full Stack)
+  son lo que se elige al iniciar una entrevista. Es el encuadre de una
+  postulación real: se postula a "Desarrollador Backend", no a "Bases de Datos".
 - `Area` dejó de elegirse directamente. Ahora el puesto determina qué áreas
   recorren las preguntas (`PLAN_POR_PUESTO`, en la capa de IA) y cada
   intercambio guarda la suya. Sigue siendo el eje con el que se agrupan las
@@ -31,7 +31,7 @@ from apps.common.models import ModeloDeCatalogo
 class Puesto(ModeloDeCatalogo):
     """Rol al que postula el candidato: lo que de verdad se elige al empezar."""
 
-    # Nombre de un icono de `components/ui/Icono.tsx`. Vive aquí y no en el
+    # Nombre de un trazo de `components/ui/trazosDeIconos.ts`. Vive aquí y no en el
     # frontend para que un puesto nuevo no exija tocar la interfaz.
     icono = models.CharField(max_length=30, blank=True, default="")
 
@@ -41,13 +41,9 @@ class Puesto(ModeloDeCatalogo):
         sola. Lo decide el catálogo: basta que una tecnología activa tenga capa."""
         return self.tecnologias.filter(activo=True).exclude(capa=Tecnologia.Capa.NINGUNA).exists()
 
-    class Meta:
-        ordering = ["orden", "nombre"]
+    class Meta(ModeloDeCatalogo.Meta):
         verbose_name = "puesto"
         verbose_name_plural = "puestos"
-
-    def __str__(self) -> str:
-        return self.nombre
 
 
 class Tecnologia(ModeloDeCatalogo):
@@ -88,8 +84,7 @@ class Tecnologia(ModeloDeCatalogo):
     # valida ni llega a la IA. Vacío si el puesto no agrupa.
     grupo = models.CharField(max_length=40, blank=True, default="")
 
-    class Meta:
-        ordering = ["orden", "nombre"]
+    class Meta(ModeloDeCatalogo.Meta):
         verbose_name = "tecnología"
         verbose_name_plural = "tecnologías"
         constraints = [
@@ -99,25 +94,14 @@ class Tecnologia(ModeloDeCatalogo):
             )
         ]
 
-    def __str__(self) -> str:
-        return self.nombre
-
 
 class Area(ModeloDeCatalogo):
-    class Meta:
-        ordering = ["orden", "nombre"]
+    class Meta(ModeloDeCatalogo.Meta):
         verbose_name = "área técnica"
         verbose_name_plural = "áreas técnicas"
 
-    def __str__(self) -> str:
-        return self.nombre
-
 
 class Nivel(ModeloDeCatalogo):
-    class Meta:
-        ordering = ["orden", "nombre"]
+    class Meta(ModeloDeCatalogo.Meta):
         verbose_name = "nivel de dificultad"
         verbose_name_plural = "niveles de dificultad"
-
-    def __str__(self) -> str:
-        return self.nombre

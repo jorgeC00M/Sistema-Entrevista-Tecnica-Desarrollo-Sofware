@@ -92,9 +92,10 @@ def iniciar(
     """Crea la entrevista y sus preguntas de calentamiento.
 
     `puesto`, `nivel`, `tecnologia` y `segunda_tecnologia` son instancias de los
-    modelos de catálogo (las tecnologías, opcionales; la segunda solo en un
-    puesto con capas, como Full Stack); los enums que necesita el proveedor se derivan de su
-    `codigo`. El área de cada pregunta no se recibe: la decide el puesto.
+    modelos de catálogo. `tecnologia` es opcional aquí solo porque la validación
+    vive en `IniciarEntrevistaSerializer`, que la exige; `segunda_tecnologia` va
+    solo en un puesto con capas, como Full Stack. Los enums que necesita el
+    proveedor se derivan de su `codigo`. El área de cada pregunta no se recibe: la decide el puesto.
 
     Las primeras `PREGUNTAS_DE_CALENTAMIENTO` se piden en una sola llamada porque
     ninguna puede ser adaptativa todavía — no hay respuestas de las que

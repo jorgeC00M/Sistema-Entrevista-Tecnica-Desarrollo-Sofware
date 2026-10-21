@@ -8,6 +8,7 @@ from apps.evaluaciones.serializers import EvaluacionSerializer
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from .models import Convocatoria, Entrevista, Intercambio
+from .selectors import promedio_de_evaluaciones
 
 
 class IniciarEntrevistaSerializer(serializers.Serializer):
@@ -119,6 +120,9 @@ class EntrevistaSerializer(serializers.ModelSerializer):
     # parcial y la interfaz lo dice en vez de presentarla como completa.
     preguntas_calificadas = serializers.SerializerMethodField()
     preguntas_previstas = serializers.SerializerMethodField()
+    # La nota parcial de una abandonada, para el historial; `null` en el resto
+    # de estados (en una en curso, porque la nota no se publica hasta terminar).
+    puntuacion_parcial = serializers.SerializerMethodField()
     desde_convocatoria = serializers.SerializerMethodField()
 
     def get_desde_convocatoria(self, entrevista) -> bool:
@@ -132,6 +136,21 @@ class EntrevistaSerializer(serializers.ModelSerializer):
 
     def get_preguntas_previstas(self, entrevista) -> int:
         return PREGUNTAS_POR_ENTREVISTA
+
+    def get_puntuacion_parcial(self, entrevista) -> float | None:
+        """La media de lo respondido en una entrevista abandonada, o `None`.
+
+        Solo una abandonada la publica. Una en curso también tiene respuestas
+        calificadas, pero su nota no sale de la API hasta que termina (como en
+        `/resultados/`), y una finalizada ya tiene su `puntuacion_promedio`.
+        """
+        if entrevista.estado != Entrevista.Estado.ABANDONADA:
+            return None
+        if hasattr(entrevista, "promedio_calificado"):
+            promedio = entrevista.promedio_calificado
+        else:
+            promedio = promedio_de_evaluaciones(entrevista)
+        return round(float(promedio), 2) if promedio is not None else None
 
     class Meta:
         model = Entrevista
@@ -149,6 +168,7 @@ class EntrevistaSerializer(serializers.ModelSerializer):
             "fecha_inicio",
             "fecha_fin",
             "puntuacion_promedio",
+            "puntuacion_parcial",
             "preguntas_calificadas",
             "preguntas_previstas",
             "desde_convocatoria",
@@ -209,24 +229,21 @@ class ConfiguracionSerializer(serializers.Serializer):
     segunda_tecnologia_nombre = serializers.SerializerMethodField()
 
     @staticmethod
-    def _vigente(tecnologia):
-        return tecnologia if tecnologia is not None and tecnologia.activo else None
+    def _si_vigente(tecnologia, atributo: str) -> str | None:
+        """`codigo` o `nombre` de la tecnología, o `None` si no hay o ya no se ofrece."""
+        return getattr(tecnologia, atributo) if tecnologia is not None and tecnologia.activo else None
 
     def get_tecnologia(self, entrevista) -> str | None:
-        tecnologia = self._vigente(entrevista.tecnologia)
-        return tecnologia.codigo if tecnologia else None
+        return self._si_vigente(entrevista.tecnologia, "codigo")
 
     def get_tecnologia_nombre(self, entrevista) -> str | None:
-        tecnologia = self._vigente(entrevista.tecnologia)
-        return tecnologia.nombre if tecnologia else None
+        return self._si_vigente(entrevista.tecnologia, "nombre")
 
     def get_segunda_tecnologia(self, entrevista) -> str | None:
-        tecnologia = self._vigente(entrevista.segunda_tecnologia)
-        return tecnologia.codigo if tecnologia else None
+        return self._si_vigente(entrevista.segunda_tecnologia, "codigo")
 
     def get_segunda_tecnologia_nombre(self, entrevista) -> str | None:
-        tecnologia = self._vigente(entrevista.segunda_tecnologia)
-        return tecnologia.nombre if tecnologia else None
+        return self._si_vigente(entrevista.segunda_tecnologia, "nombre")
 
 
 #: Menos de esto no alcanza para identificar un puesto; más, no es un aviso.

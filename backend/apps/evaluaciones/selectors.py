@@ -4,24 +4,22 @@ Todo se resuelve con agregaciones de la base de datos (`Avg`, `Count`), nunca
 sumando listas en Python — es lo que sostiene el verbo "mejorar" del objetivo
 general con datos reales.
 
-El promedio general y el promedio por área se calculan sobre `Evaluacion`
-directamente (una fila por pregunta respondida), no promediando los
-`puntuacion_promedio` ya promediados de cada entrevista: promediar promedios
-pondera mal cuando las entrevistas no tienen el mismo número de preguntas
-evaluadas.
+Los promedios se calculan sobre `Evaluacion` directamente (una fila por
+pregunta respondida), no promediando los `puntuacion_promedio` ya promediados
+de cada entrevista: promediar promedios pondera mal cuando las entrevistas no
+tienen el mismo número de preguntas evaluadas.
 
-El área se lee del intercambio, no de la entrevista. Antes la entrevista tenía
-una sola área y las cinco respuestas heredaban esa etiqueta; hoy cada pregunta
-lleva la suya, así que agrupar por `intercambio__area` describe de verdad en qué
-temas le fue bien o mal al usuario. La evolución en el tiempo, en cambio, es por
-entrevista, y lo que la identifica ahí es el puesto.
+El desglose por área vive solo en la retroalimentación acumulada, y se lee del
+intercambio, no de la entrevista: cada pregunta lleva su área, así que agrupar
+por `intercambio__area` describe de verdad en qué temas le fue bien o mal al
+usuario. La evolución en el tiempo no sale de aquí: la pantalla la arma con el
+historial de entrevistas (`GET /api/entrevistas/`), el mismo que filtra la
+tabla, para que el gráfico muestre exactamente lo que se ve en ella.
 """
 
 from __future__ import annotations
 
 from django.db.models import Avg, Count, Q
-
-from apps.entrevistas.models import Entrevista
 
 from .models import Evaluacion
 from .rubricas import BANDAS, banda_de
@@ -32,64 +30,12 @@ from .rubricas import BANDAS, banda_de
 MAXIMO_OBSERVACIONES = 20
 
 
-def calcular_estadisticas(usuario) -> dict:
-    finalizadas = Entrevista.objects.filter(usuario=usuario, estado=Entrevista.Estado.FINALIZADA)
-
-    promedio_general = Evaluacion.objects.filter(
-        intercambio__entrevista__usuario=usuario,
-        intercambio__entrevista__estado=Entrevista.Estado.FINALIZADA,
-    ).aggregate(promedio=Avg("puntuacion"))["promedio"]
-
-    # Se agrupa desde `Evaluacion` y no desde `Entrevista` porque el área vive
-    # ahora en el intercambio: una entrevista aporta respuestas a varias áreas.
-    # `entrevistas` sigue contando entrevistas distintas, para que la cifra
-    # responda "en cuántas entrevistas toqué este tema".
-    por_area = [
-        {
-            "area": fila["intercambio__area__codigo"],
-            "area_display": fila["intercambio__area__nombre"],
-            "promedio": fila["promedio"],
-            "entrevistas": fila["entrevistas"],
-        }
-        for fila in Evaluacion.objects.filter(
-            intercambio__entrevista__in=finalizadas,
-        )
-        .values("intercambio__area__codigo", "intercambio__area__nombre")
-        .annotate(
-            promedio=Avg("puntuacion"),
-            entrevistas=Count("intercambio__entrevista", distinct=True),
-        )
-        .order_by("intercambio__area__codigo")
-    ]
-
-    evolucion = [
-        {
-            "entrevista_id": fila["id"],
-            "puesto": fila["puesto__codigo"],
-            "puesto_display": fila["puesto__nombre"],
-            "fecha_fin": fila["fecha_fin"],
-            "puntuacion_promedio": fila["puntuacion_promedio"],
-        }
-        for fila in finalizadas.order_by("fecha_fin").values(
-            "id", "puesto__codigo", "puesto__nombre", "fecha_fin", "puntuacion_promedio"
-        )
-    ]
-
-    return {
-        "entrevistas_completadas": finalizadas.count(),
-        "promedio_general": promedio_general,
-        "promedio_por_area": por_area,
-        "evolucion": evolucion,
-    }
-
-
 def calcular_retroalimentacion(usuario) -> dict:
     """Reúne lo que las evaluaciones dijeron del usuario en todas sus entrevistas.
 
-    A diferencia de `calcular_estadisticas`, esto NO filtra por entrevistas
-    finalizadas, y es deliberado: una media solo es comparable entre entrevistas
-    completas, pero una debilidad detectada en la pregunta 3 de una entrevista
-    que se dejó a medias sigue siendo una debilidad real que conviene mostrar.
+    NO filtra por entrevistas finalizadas, y es deliberado: una debilidad
+    detectada en la pregunta 3 de una entrevista que se dejó a medias sigue
+    siendo una debilidad real que conviene mostrar.
 
     Las preguntas todavía sin responder quedan fuera por construcción: se
     consulta `Evaluacion`, y un intercambio sin calificar no tiene fila aquí.

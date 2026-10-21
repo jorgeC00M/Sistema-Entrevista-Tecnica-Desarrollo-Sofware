@@ -203,10 +203,12 @@ class FakeProveedorIA(ProveedorIA):
 
 
 # De lo más específico a lo más general: un aviso de "full stack" también dice
-# "backend", y uno de QA puede nombrar Selenium para web.
+# "backend", uno de QA puede nombrar Selenium para web, y uno de "juegos móviles
+# con Unity" es de videojuegos aunque diga "mobile".
 _PALABRAS_DE_PUESTO: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("full_stack", ("full stack", "fullstack", "full-stack")),
     ("qa", ("qa ", "tester", "testing", "automatizacion de pruebas", "quality assurance")),
+    ("videojuegos", ("videojuego", "game developer", "unity", "unreal", "godot")),
     ("movil", ("movil", "mobile", "android", "ios", "flutter", "react native")),
     ("escritorio", ("escritorio", "desktop")),
     ("frontend", ("frontend", "front end", "front-end")),

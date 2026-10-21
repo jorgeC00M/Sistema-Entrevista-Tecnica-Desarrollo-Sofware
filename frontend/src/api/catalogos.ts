@@ -25,6 +25,13 @@ export function obtenerCatalogosPublicos(signal?: AbortSignal): Promise<Catalogo
 }
 
 /**
+ * Cuánto se reutiliza `obtenerPuestos` en la caché de `usePeticion` (clave
+ * `catalogo-puestos`, compartida por Nueva entrevista y el historial). El
+ * catálogo cambia muy poco: igual que la cabecera `Cache-Control` del servidor.
+ */
+export const VIGENCIA_DEL_CATALOGO_MS = 5 * 60_000
+
+/**
  * Puestos con sus tecnologías (cada una con su capa), niveles, áreas y
  * duración: todo lo que necesita la pantalla de nueva entrevista.
  */

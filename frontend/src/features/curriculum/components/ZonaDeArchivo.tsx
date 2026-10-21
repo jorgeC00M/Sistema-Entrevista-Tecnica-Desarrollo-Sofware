@@ -142,7 +142,7 @@ export default function ZonaDeArchivo({
           seguir invitando a arrastrar haría dudar de si ya se eligió. */}
       {archivo ? (
         <div className="flex items-center gap-2 rounded-control bg-vidrio-field px-3 py-2">
-          <Icono nombre="documento" className="h-4 w-4 shrink-0 text-vidrio-tenue" aria-hidden />
+          <Icono nombre="documento" className="h-4 w-4 shrink-0 text-vidrio-tenue" />
           <span title={archivo.name} className="min-w-0 flex-1 truncate font-mono-vidrio text-sm text-vidrio-texto">
             {archivo.name}
           </span>
@@ -185,7 +185,7 @@ export default function ZonaDeArchivo({
               arrastrando ? 'bg-vidrio-acento text-white' : 'bg-vidrio-field text-vidrio-muted'
             }`}
           >
-            <Icono nombre={arrastrando ? 'resultados' : 'mas'} className="h-5 w-5" aria-hidden />
+            <Icono nombre={arrastrando ? 'resultados' : 'mas'} className="h-5 w-5" />
           </span>
 
           <span className="text-sm text-vidrio-texto">

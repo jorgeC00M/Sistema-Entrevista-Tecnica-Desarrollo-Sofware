@@ -23,7 +23,6 @@ interface Props {
   /** Pasa a "Personalizada" con lo detectado cargado, conservando la convocatoria. */
   onCompletar: () => void
   refBoton?: Ref<HTMLButtonElement>
-  refResumen?: Ref<HTMLElement>
 }
 
 const NOMBRE_DE_CAPA = { '': '', frontend: 'frontend', backend: 'backend' } as const
@@ -41,7 +40,6 @@ export default function ResumenDeConvocatoria({
   onIniciar,
   onCompletar,
   refBoton,
-  refResumen,
 }: Props) {
   const puesto = puestoDe(seleccion, catalogo)
   const nivel = nivelDe(seleccion, catalogo)
@@ -66,7 +64,6 @@ export default function ResumenDeConvocatoria({
 
   return (
     <section
-      ref={refResumen}
       tabIndex={-1}
       aria-labelledby="titulo-detectado"
       className="flex min-w-0 flex-col gap-4 border-t border-vidrio-linea pt-5 outline-none lg:border-t-0 lg:pt-0"

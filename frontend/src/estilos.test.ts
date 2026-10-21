@@ -41,10 +41,6 @@ const EXCEPCIONES: Record<string, { reglas: Regla[]; motivo: string }> = {
     reglas: ['color-hex'],
     motivo: 'colores de marca de Google, fijados por su guía de uso del logo',
   },
-  'features/historial/components/GraficoProgreso.tsx': {
-    reglas: ['color-hex'],
-    motivo: 'colores de categoría del gráfico: deben distinguirse del acento y entre sí',
-  },
   'features/curriculum/components/ZonaDeArchivo.tsx': {
     reglas: ['boton-suelto'],
     motivo: 'zona de arrastre: es un <button> a propósito (accesible con teclado y clic), no una acción con texto',

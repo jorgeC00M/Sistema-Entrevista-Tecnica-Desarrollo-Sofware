@@ -21,26 +21,17 @@ enmascarada por quien la construye.
 
 from __future__ import annotations
 
-import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
 from ..exceptions import RespuestaIAInvalida
+from .marcadores import MARCADOR, SIN_PUESTO
 from .schemas import Puesto
 
 MAXIMO_PREGUNTAS = 5
 MAXIMO_CORRECCIONES = 10
 TIPOS_DE_CORRECCION = ("ortografia", "persona", "tiempo_verbal")
-
-#: Lo que el modelo responde cuando ningún puesto del catálogo encaja. Es un
-#: valor del enum y no `null` porque no todos los proveedores aceptan tipos
-#: anulables en el esquema.
-SIN_PUESTO = "ninguno"
-
-# Los marcadores que deja `anonimizar.enmascarar`. Una sugerencia que los
-# contenga le mostraría al usuario "[CORREO]" en lugar de su texto.
-_MARCADOR = re.compile(r"\[(?:CORREO|TELÉFONO|ENLACE|NOMBRE)\]")
 
 
 @dataclass(frozen=True)
@@ -237,7 +228,7 @@ def _texto(item: dict[str, Any], clave: str) -> str:
 
 def _limpio(*textos: str) -> bool:
     """Todos con contenido y ninguno con un marcador de dato oculto."""
-    return all(texto and not _MARCADOR.search(texto) for texto in textos)
+    return all(texto and not MARCADOR.search(texto) for texto in textos)
 
 
 def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> RevisionDeCV:

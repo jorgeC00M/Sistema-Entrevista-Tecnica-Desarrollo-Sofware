@@ -32,14 +32,17 @@ def entrevistas_de(usuario):
 
 
 def _con_conteo(consulta):
-    """Anota cuántas preguntas tienen nota, en la misma consulta.
+    """Anota cuántas preguntas tienen nota y su media, en la misma consulta.
 
     Lo usa el serializer para marcar como parcial la nota de una entrevista
-    abandonada ("sobre 2 de 5"); anotarlo evita una consulta por fila en el
-    historial.
+    abandonada ("48 · parcial", "sobre 2 de 5"); anotarlo evita una consulta
+    por fila en el historial. Los dos agregados recorren el mismo join, así que
+    ninguno multiplica las filas del otro. La media se anota siempre, pero el
+    serializer solo la publica para una abandonada.
     """
     return consulta.select_related("puesto", "nivel", "tecnologia", "segunda_tecnologia").annotate(
-        preguntas_calificadas=Count("intercambios__evaluacion")
+        preguntas_calificadas=Count("intercambios__evaluacion"),
+        promedio_calificado=Avg("intercambios__evaluacion__puntuacion"),
     )
 
 
@@ -109,7 +112,6 @@ def anterior_comparable(entrevista) -> Entrevista | None:
             fecha_fin__lt=entrevista.fecha_inicio,
             puntuacion_promedio__isnull=False,
         )
-        .exclude(pk=entrevista.pk)
         .order_by("-fecha_fin")
         .first()
     )

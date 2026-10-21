@@ -1,0 +1,5 @@
+Preguntas previas de esta entrevista y desempeño del candidato:
+1. ¿Qué es una transacción? — 75/100
+2. ¿Cómo funciona el ORM de Django? — 50/100
+
+Formula la pregunta #3, calibrando la exigencia según ese desempeño.

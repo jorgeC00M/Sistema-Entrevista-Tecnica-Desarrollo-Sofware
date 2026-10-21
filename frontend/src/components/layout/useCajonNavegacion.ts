@@ -15,7 +15,6 @@ import { DESDE_TABLET } from '@/hooks/useMediaQuery'
 export function useCajonNavegacion() {
   const [abierto, setAbierto] = useState(false)
 
-  const abrir = useCallback(() => setAbierto(true), [])
   const cerrar = useCallback(() => setAbierto(false), [])
   const alternar = useCallback(() => setAbierto((v) => !v), [])
 
@@ -35,5 +34,5 @@ export function useCajonNavegacion() {
     cerrar,
   )
 
-  return { abierto, abrir, cerrar, alternar, cajonRef, disparadorRef }
+  return { abierto, cerrar, alternar, cajonRef, disparadorRef }
 }

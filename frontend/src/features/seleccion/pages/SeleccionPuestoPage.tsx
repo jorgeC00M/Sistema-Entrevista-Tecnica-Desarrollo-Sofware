@@ -1,8 +1,8 @@
 import { useId, useReducer, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { obtenerPuestos } from '@/api/catalogos'
-import { ErrorAPI } from '@/api/client'
+import { VIGENCIA_DEL_CATALOGO_MS, obtenerPuestos } from '@/api/catalogos'
+import { mensajeDeError } from '@/api/errores'
 import { iniciarEntrevista, obtenerUltimaConfiguracion } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
 import Pestanas from '@/components/ui/Pestanas'
@@ -27,10 +27,8 @@ import {
 } from '@/features/seleccion/seleccion'
 import { usePeticion } from '@/hooks/usePeticion'
 import { nombresDeAreas } from '@/lib/catalogos'
+import { prefiereMovimientoReducido } from '@/lib/movimiento'
 import type { CatalogoDePuestos, ConvocatoriaAnalizada, UltimaConfiguracion } from '@/types/catalogos'
-
-/** El catálogo cambia muy poco: igual que la cabecera `Cache-Control` del servidor. */
-const VIGENCIA_DEL_CATALOGO_MS = 5 * 60_000
 
 /** Lo que falta, en la barra y en el anuncio. */
 const FALTA: Record<Campo, string> = {
@@ -47,8 +45,7 @@ const MODOS = [
 ]
 
 function desplazarSuave(elemento: HTMLElement | null) {
-  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  elemento?.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'nearest' })
+  elemento?.scrollIntoView({ behavior: prefiereMovimientoReducido() ? 'auto' : 'smooth', block: 'nearest' })
 }
 
 /**
@@ -225,7 +222,7 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
       })
       navigate(`/entrevista/${datos.entrevista.id}`)
     } catch (err) {
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo iniciar la entrevista.')
+      setError(mensajeDeError(err, 'No se pudo iniciar la entrevista.'))
       setIniciando(false)
     }
   }

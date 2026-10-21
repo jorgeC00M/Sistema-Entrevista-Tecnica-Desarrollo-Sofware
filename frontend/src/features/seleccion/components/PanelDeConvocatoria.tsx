@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { ErrorAPI } from '@/api/client'
+import { mensajeDeError } from '@/api/errores'
 import { analizarConvocatoria } from '@/api/entrevistas'
+import Alerta from '@/components/ui/Alerta'
 import Boton from '@/components/ui/Boton'
 import Icono from '@/components/ui/Icono'
 import Textarea from '@/components/ui/Textarea'
@@ -53,7 +54,7 @@ export default function PanelDeConvocatoria({ onAnalizada, resumen }: Props) {
       onAnalizada(analizada)
     } catch (err) {
       // 422 (no es de software), 400 (archivo ilegible) y 503 llegan con su mensaje.
-      setError(err instanceof ErrorAPI ? err.message : 'No se pudo analizar la convocatoria.')
+      setError(mensajeDeError(err, 'No se pudo analizar la convocatoria.'))
     } finally {
       setCargando(false)
     }
@@ -88,9 +89,9 @@ export default function PanelDeConvocatoria({ onAnalizada, resumen }: Props) {
         )}
 
         {error && (
-          <p role="alert" className="rounded-control bg-error-fondo px-3 py-2 text-sm text-error-texto">
+          <Alerta variante="enLinea" className="text-sm">
             {error}
-          </p>
+          </Alerta>
         )}
 
         <div className="flex justify-end">

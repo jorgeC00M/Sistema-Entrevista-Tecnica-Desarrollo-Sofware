@@ -47,6 +47,11 @@ TERMINOS: dict[str, tuple[str, ...]] = {
     "Kotlin": ("kotlin",),
     "Swift": ("swift",),
     "Dart": ("dart",),
+    "C++": ("c++", "cpp"),
+    "Rust": ("rust",),
+    "Lua": ("lua",),
+    "Luau": ("luau",),
+    "GDScript": ("gdscript",),
     "SQL": ("sql",),
     # Frameworks de backend
     "Django": ("django",),
@@ -67,6 +72,25 @@ TERMINOS: dict[str, tuple[str, ...]] = {
     "Svelte": ("svelte", "sveltekit"),
     "Flutter": ("flutter",),
     "React Native": ("react native",),
+    # Videojuegos. Solo variantes inequívocas: LÖVE se busca como "love2d"
+    # porque, sin la diéresis, "love" encajaría en cualquier texto en inglés; y
+    # "blueprints" no entra, que también es una palabra corriente.
+    "Unity": ("unity", "unity3d"),
+    "Unreal Engine": ("unreal engine", "unreal", "ue4", "ue5"),
+    "Godot": ("godot",),
+    "GameMaker": ("gamemaker", "game maker"),
+    "Roblox": ("roblox", "roblox studio"),
+    "Defold": ("defold",),
+    "Cocos Creator": ("cocos creator", "cocos2d", "cocos2d-x"),
+    "Phaser": ("phaser", "phaser.js", "phaserjs"),
+    "Three.js": ("three.js", "threejs"),
+    "Babylon.js": ("babylon.js", "babylonjs"),
+    "MonoGame": ("monogame",),
+    "Pygame": ("pygame",),
+    "LÖVE": ("love2d", "love 2d"),
+    "Bevy": ("bevy",),
+    "SDL": ("sdl", "sdl2"),
+    "SFML": ("sfml",),
     # Interfaz
     "HTML": ("html", "html5"),
     "CSS": ("css", "css3"),
@@ -149,11 +173,14 @@ def _patron(variante: str) -> re.Pattern[str]:
     return re.compile(f"{izquierda}{re.escape(variante)}{derecha}")
 
 
+def _compilar(variantes: tuple[str, ...]) -> tuple[re.Pattern[str], ...]:
+    return tuple(_patron(variante) for variante in variantes)
+
+
 #: Patrones precompilados. Se construyen una vez al importar porque `encontrar()`
 #: se llama sobre el CV y sobre la convocatoria en cada análisis.
 _PATRONES: dict[str, tuple[re.Pattern[str], ...]] = {
-    canonico: tuple(_patron(variante) for variante in variantes)
-    for canonico, variantes in TERMINOS.items()
+    canonico: _compilar(variantes) for canonico, variantes in TERMINOS.items()
 }
 
 
@@ -173,10 +200,6 @@ def encontrar(texto: str) -> set[str]:
         for canonico, patrones in _PATRONES.items()
         if any(patron.search(normalizado) for patron in patrones)
     }
-
-
-def _compilar(variantes: tuple[str, ...]) -> tuple[re.Pattern[str], ...]:
-    return tuple(_patron(variante) for variante in variantes)
 
 
 # --- Sigla y nombre largo ----------------------------------------------------
@@ -263,6 +286,10 @@ CARGOS: dict[str, tuple[str, ...]] = {
     "Desarrollador Móvil": (
         "desarrollador movil", "desarrollador mobile", "desarrollador android",
         "desarrollador ios", "mobile developer", "android developer", "ios developer",
+    ),
+    "Desarrollador de Videojuegos": (
+        "desarrollador de videojuegos", "programador de videojuegos", "desarrollador de juegos",
+        "ingeniero de videojuegos", "game developer", "game programmer", "gameplay programmer",
     ),
     "Ingeniero de Software": (
         "ingeniero de software", "desarrollador de software", "software engineer",
