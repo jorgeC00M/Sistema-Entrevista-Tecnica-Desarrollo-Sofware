@@ -70,6 +70,9 @@ class Convocatoria:
     anos_requeridos: int | None = None
     #: El cargo que nombra la convocatoria, canónico, o `None`.
     cargo: str | None = None
+    #: Lo que el aviso exige, como texto: de aquí se leen las preguntas de filtro
+    #: (título, idioma, ubicación). Lo deseable no excluye a nadie.
+    texto_obligatorio: str = ""
 
     @property
     def tiene_requisitos(self) -> bool:
@@ -163,6 +166,7 @@ def partir(texto: str) -> Convocatoria:
             separada=False,
             anos_requeridos=anos_requeridos(texto),
             cargo=cargo,
+            texto_obligatorio=texto,
         )
 
     bloques: dict[str, list[str]] = {"obligatorios": [], "deseables": []}
@@ -188,4 +192,5 @@ def partir(texto: str) -> Convocatoria:
         separada=True,
         anos_requeridos=anos_requeridos(texto_obligatorio),
         cargo=cargo,
+        texto_obligatorio=texto_obligatorio,
     )

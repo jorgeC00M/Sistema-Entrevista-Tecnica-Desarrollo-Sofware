@@ -32,6 +32,24 @@ from .prompts.schemas import (
 )
 
 
+def _dos_caminos(termino: str) -> dict[str, str]:
+    """Los dos caminos fijos para un requisito ausente, como los pediría el prompt."""
+    return {
+        "muestralo": f"Si ya usaste {termino}, nómbralo dentro de un logro: qué hiciste con él y qué lograste.",
+        "ejemplo": f"Implementé [cifra] servicios con {termino}, lo que redujo [cifra] el tiempo de despliegue.",
+        "aprendelo": f"Si aún no lo usaste, practícalo en un proyecto propio o un curso de {termino} antes de agregarlo.",
+    }
+
+
+def _lectura_neutra(entrada: EntradaDeRevision) -> str:
+    """Un resumen que solo describe; vacío sin convocatoria, como el real."""
+    if not entrada.convocatoria.strip():
+        return ""
+    coinciden = ", ".join(entrada.demostrados) or "ningún requisito con evidencia"
+    ausentes = ", ".join(r.termino for r in entrada.requisitos if r.estado == "ausente") or "ninguno"
+    return f"Tu CV muestra con evidencia {coinciden}. No se detectaron en tu CV: {ausentes}."
+
+
 class FakeProveedorIA(ProveedorIA):
     """Genera preguntas y evaluaciones fijas, sin red ni cuota.
 
@@ -145,6 +163,7 @@ class FakeProveedorIA(ProveedorIA):
                 SugerenciaDeRequisito(
                     termino=requisito.termino,
                     sugerencia=f"Menciona {requisito.termino} dentro de un logro de tu experiencia o de un proyecto.",
+                    **(_dos_caminos(requisito.termino) if requisito.estado == "ausente" else {}),
                 )
                 for requisito in entrada.requisitos
             ),
@@ -155,6 +174,7 @@ class FakeProveedorIA(ProveedorIA):
             ),
             puesto_sugerido=Puesto.BACKEND,
             correcciones=(),
+            lectura=_lectura_neutra(entrada),
         )
 
     def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:

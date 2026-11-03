@@ -5,9 +5,16 @@ resultado, qué requisitos están solo declarados o ausentes— y la IA propone
 *cómo* redactarlo. La IA nunca cambia un veredicto: no reclasifica requisitos, no
 puntúa, no extrae requisitos nuevos de la convocatoria.
 
-Cuatro tareas en una sola llamada, porque leen el mismo contexto: reescribir
-viñetas, cerrar la brecha, anticipar preguntas de entrevista y corregir la
-redacción. Cuatro llamadas cuadruplicarían coste, latencia y superficie de fallo.
+Todas las tareas van en una sola llamada, porque leen el mismo contexto:
+reescribir viñetas, cerrar la brecha (con dos caminos por requisito ausente:
+mostrarlo si ya se usó, aprenderlo si no), anticipar preguntas de entrevista,
+corregir la redacción y resumir el match en una lectura general. Una llamada por
+tarea multiplicaría coste, latencia y superficie de fallo.
+
+**La lectura general nunca juzga la aptitud.** Si concluye que la persona es apta
+o idónea, estima una probabilidad o da un porcentaje, se descarta entera
+(`_CONCLUYE_APTITUD`): la pantalla promete que no evalúa si alguien es apto, y esa
+promesa la cumple el código, no el prompt.
 
 **El parser descarta todo lo que no está anclado a la entrada.** Una viñeta que
 no se envió, un requisito que la convocatoria no pide, una corrección cuyo texto
@@ -21,6 +28,7 @@ enmascarada por quien la construye.
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Any
@@ -32,6 +40,13 @@ from .schemas import Puesto
 MAXIMO_PREGUNTAS = 5
 MAXIMO_CORRECCIONES = 10
 TIPOS_DE_CORRECCION = ("ortografia", "persona", "tiempo_verbal")
+
+#: Lo que delata una lectura que juzga en vez de resumir. Se busca sobre el texto
+#: sin acentos y con límites de palabra, para no descartar «aptitudes».
+_CONCLUYE_APTITUD = re.compile(
+    r"\b(?:apt[oa]s?|idone\w*|calificad\w*|cualificad\w*|probabilidad\w*|porcentaje\w*"
+    r"|deberias postular\w*|encajas perfectamente)\b|%"
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +69,8 @@ class EntradaDeRevision:
     secciones: str
     #: La convocatoria recortada, o cadena vacía.
     convocatoria: str = ""
+    #: Términos del aviso que el CV sí demuestra: solo nombres del diccionario.
+    demostrados: tuple[str, ...] = ()
 
     @property
     def texto_del_cv(self) -> str:
@@ -76,6 +93,11 @@ class VinetaReescrita:
 class SugerenciaDeRequisito:
     termino: str
     sugerencia: str
+    #: Solo para un requisito ausente: cómo escribirlo si ya se usó, con un ejemplo...
+    muestralo: str = ""
+    ejemplo: str = ""
+    #: ...y cómo conseguir la experiencia si todavía no.
+    aprendelo: str = ""
 
 
 @dataclass(frozen=True)
@@ -99,6 +121,8 @@ class RevisionDeCV:
     preguntas: tuple[PreguntaProbable, ...]
     puesto_sugerido: Puesto | None
     correcciones: tuple[Correccion, ...]
+    #: Resumen del match con la convocatoria; vacío sin convocatoria o si juzgaba.
+    lectura: str = ""
 
 
 def sistema() -> str:
@@ -111,9 +135,9 @@ vuelves a evaluar: solo propones cómo redactar mejor lo que ese análisis seña
 Reglas que no puedes romper:
 - No inventes experiencia, tecnologías, empresas ni cifras. Si una viñeta no trae \
 un número, usa el marcador [cifra] para que la persona ponga el suyo.
-- Para un requisito ausente, no lo redactes como si la persona lo tuviera: sugiere \
-cómo aprenderlo o cómo presentarlo con honestidad (un proyecto personal, "en \
-formación").
+- Para un requisito ausente, no lo redactes como si la persona lo tuviera ni \
+propongas agregarlo sin respaldo: da siempre los dos caminos, mostrarlo si ya lo \
+usó y aprenderlo si todavía no.
 - No cambies el estado de ningún requisito ni añadas requisitos que no te dieron.
 - El texto viene con datos personales ocultos como [CORREO], [TELÉFONO], [ENLACE] \
 o [NOMBRE]. No los reproduzcas ni intentes adivinarlos.
@@ -123,7 +147,11 @@ Tareas:
 1. vinetas: para cada viñeta recibida, una versión orientada a resultado. Copia \
 el texto original exactamente como lo recibiste.
 2. requisitos: para cada requisito recibido, una sugerencia concreta y breve. \
-Usa el término exactamente como lo recibiste.
+Usa el término exactamente como lo recibiste. Si su estado es "ausente", llena \
+además "muestralo" (cómo escribirlo dentro de un logro si ya lo usó), "ejemplo" \
+(una viñeta de ejemplo con [cifra] en lugar de números) y "aprendelo" (cómo \
+conseguir esa experiencia: un proyecto propio, un curso o una certificación). \
+Para los demás estados, deja esos tres campos vacíos.
 3. preguntas: hasta {MAXIMO_PREGUNTAS} preguntas que un entrevistador haría a \
 partir de lo que el CV afirma (y de la convocatoria, si la hay). En "motivo" copia \
 literalmente el fragmento del CV o de la convocatoria que la motiva.
@@ -131,7 +159,11 @@ literalmente el fragmento del CV o de la convocatoria que la motiva.
 Responde "{SIN_PUESTO}" si ninguno encaja.
 5. correcciones: hasta {MAXIMO_CORRECCIONES} errores reales de ortografía, de \
 persona gramatical o de tiempos verbales mezclados. En "original" copia el \
-fragmento exacto con el error; no inventes errores para llenar la lista."""
+fragmento exacto con el error; no inventes errores para llenar la lista.
+6. lectura: si hay convocatoria, un párrafo breve que resuma qué requisitos \
+coinciden y cuáles no se detectaron en el CV. Solo describe: no digas si la \
+persona es apta, idónea o calificada, no estimes probabilidades ni des \
+porcentajes. Sin convocatoria, deja "lectura" vacía."""
 
 
 def usuario(entrada: EntradaDeRevision) -> str:
@@ -140,6 +172,7 @@ def usuario(entrada: EntradaDeRevision) -> str:
         "\n".join(f"- {requisito.termino} ({requisito.estado})" for requisito in entrada.requisitos)
         or "(ninguno)"
     )
+    demostrados = "\n".join(f"- {termino}" for termino in entrada.demostrados) or "(ninguno)"
     convocatoria = entrada.convocatoria.strip() or "(no se aportó convocatoria)"
     return f"""\
 Secciones del CV:
@@ -153,6 +186,9 @@ Viñetas sin un resultado medible:
 
 Requisitos de la convocatoria que el CV no demuestra:
 {requisitos}
+
+Requisitos de la convocatoria que el CV sí demuestra:
+{demostrados}
 
 Devuelve las sugerencias en el formato pedido."""
 
@@ -175,7 +211,15 @@ ESQUEMA_REVISION: dict[str, Any] = {
         },
         "requisitos": {
             "type": "array",
-            "items": _objeto({"termino": "El término tal como se recibió", "sugerencia": "Cómo cerrarlo"}),
+            "items": _objeto(
+                {
+                    "termino": "El término tal como se recibió",
+                    "sugerencia": "Cómo cerrarlo",
+                    "muestralo": "Si es ausente: cómo escribirlo en un logro si ya lo usó; si no, vacío",
+                    "ejemplo": "Si es ausente: una viñeta de ejemplo con [cifra]; si no, vacío",
+                    "aprendelo": "Si es ausente: cómo conseguir la experiencia; si no, vacío",
+                }
+            ),
         },
         "preguntas": {
             "type": "array",
@@ -197,8 +241,9 @@ ESQUEMA_REVISION: dict[str, Any] = {
                 "additionalProperties": False,
             },
         },
+        "lectura": {"type": "string", "description": "Resumen del match sin juzgar la aptitud; vacío sin convocatoria"},
     },
-    "required": ["vinetas", "requisitos", "preguntas", "puesto_sugerido", "correcciones"],
+    "required": ["vinetas", "requisitos", "preguntas", "puesto_sugerido", "correcciones", "lectura"],
     "additionalProperties": False,
 }
 
@@ -231,6 +276,30 @@ def _limpio(*textos: str) -> bool:
     return all(texto and not MARCADOR.search(texto) for texto in textos)
 
 
+def _campo_limpio(item: dict[str, Any], clave: str) -> str:
+    """El texto si está limpio; vacío si falta o reproduce un dato oculto."""
+    texto = _texto(item, clave)
+    return texto if _limpio(texto) else ""
+
+
+def _lectura(datos: dict[str, Any], entrada: EntradaDeRevision) -> str:
+    """La lectura general, o vacía: sin convocatoria no hay match que resumir, y
+    una lectura que juzga la aptitud se descarta entera."""
+    lectura = _campo_limpio(datos, "lectura")
+    if not entrada.convocatoria.strip() or _CONCLUYE_APTITUD.search(_comparable(lectura)):
+        return ""
+    return lectura
+
+
+def _sugerencia_de_requisito(item: dict[str, Any], termino: str, estado: str) -> SugerenciaDeRequisito | None:
+    """Los dos caminos solo valen para un ausente; sin ningún texto limpio, nada."""
+    caminos = {clave: _campo_limpio(item, clave) for clave in ("muestralo", "ejemplo", "aprendelo")}
+    if estado != "ausente":
+        caminos = dict.fromkeys(caminos, "")
+    sugerencia = SugerenciaDeRequisito(termino=termino, sugerencia=_campo_limpio(item, "sugerencia"), **caminos)
+    return sugerencia if sugerencia.sugerencia or any(caminos.values()) else None
+
+
 def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> RevisionDeCV:
     """Valida la forma y descarta, uno por uno, los elementos no anclados.
 
@@ -243,7 +312,7 @@ def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> Revis
 
     referencia = _comparable(entrada.texto_de_referencia)
     vinetas_enviadas = {_comparable(vineta): vineta for vineta in entrada.vinetas}
-    terminos_enviados = {_comparable(r.termino): r.termino for r in entrada.requisitos}
+    enviados = {_comparable(r.termino): r for r in entrada.requisitos}
 
     vinetas = tuple(
         VinetaReescrita(original=vinetas_enviadas[_comparable(original)], sugerida=sugerida)
@@ -254,11 +323,10 @@ def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> Revis
     )
 
     requisitos = tuple(
-        SugerenciaDeRequisito(termino=terminos_enviados[_comparable(termino)], sugerencia=sugerencia)
+        sugerencia
         for item in _items(datos, "requisitos")
-        if (termino := _texto(item, "termino")) and (sugerencia := _texto(item, "sugerencia"))
-        and _comparable(termino) in terminos_enviados
-        and _limpio(sugerencia)
+        if (enviado := enviados.get(_comparable(_texto(item, "termino"))))
+        and (sugerencia := _sugerencia_de_requisito(item, enviado.termino, enviado.estado))
     )
 
     preguntas = tuple(
@@ -290,4 +358,5 @@ def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> Revis
         preguntas=preguntas,
         puesto_sugerido=puesto,
         correcciones=correcciones,
+        lectura=_lectura(datos, entrada),
     )

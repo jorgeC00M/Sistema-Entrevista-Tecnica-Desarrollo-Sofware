@@ -17,6 +17,7 @@ from docx import Document
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from apps.curriculums import revision
 from apps.curriculums.models import AnalisisATS, Curriculum
 from apps.curriculums.services import construir_analisis
 from integrations.documentos.ats import VERSION_DE_REGLAS
@@ -316,6 +317,51 @@ class RevisionConIATest(BaseDeCurriculums):
         self.assertEqual(caido.llamadas, 0)
         self.assertEqual(segunda.data["revision_ia"]["estado"], "ok")
 
+    def test_la_revision_dirigida_trae_version_lectura_y_dos_caminos(self):
+        pk = self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND).data["id"]
+
+        revision_ia = self.pedir_revision(pk).data["revision_ia"]
+
+        self.assertEqual(revision_ia["version"], revision.VERSION_DE_REVISION)
+        self.assertTrue(revision_ia["lectura"])
+        brecha = AnalisisATS.objects.get(curriculum_id=pk).brecha
+        ausentes = {
+            r["termino"]
+            for grupo in ("obligatorios", "deseables")
+            for r in brecha[grupo]["requisitos"]
+            if r["estado"] == "ausente"
+        }
+        self.assertTrue(ausentes, "la convocatoria de prueba debe dejar algún requisito ausente")
+        for sugerencia in revision_ia["requisitos"]:
+            with self.subTest(termino=sugerencia["termino"]):
+                tiene_caminos = bool(sugerencia["muestralo"] and sugerencia["ejemplo"] and sugerencia["aprendelo"])
+                self.assertEqual(tiene_caminos, sugerencia["termino"] in ausentes)
+
+    def test_sin_convocatoria_la_lectura_queda_vacia(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+
+        self.assertEqual(self.pedir_revision(pk).data["revision_ia"]["lectura"], "")
+
+    def test_una_revision_correcta_de_la_version_anterior_se_vuelve_a_pedir(self):
+        pk = self.subir("una_columna.pdf", convocatoria=CONVOCATORIA_BACKEND).data["id"]
+        anterior = {**revision._sin_revision(revision.OK, ""), "puesto_sugerido": "backend"}
+        del anterior["version"], anterior["lectura"]
+        AnalisisATS.objects.filter(curriculum_id=pk).update(revision_ia=anterior)
+
+        renovada = self.pedir_revision(pk).data["revision_ia"]
+
+        self.assertEqual(renovada["version"], revision.VERSION_DE_REVISION)
+        self.assertTrue(renovada["lectura"])
+
+    def test_necesita_revision_segun_estado_y_version(self):
+        self.assertTrue(revision.necesita_revision(None))
+        self.assertTrue(revision.necesita_revision({"estado": revision.NO_DISPONIBLE}))
+        self.assertTrue(revision.necesita_revision({"estado": revision.OK}))
+        self.assertTrue(revision.necesita_revision({"estado": revision.OK, "version": 1}))
+        self.assertFalse(revision.necesita_revision({"estado": revision.OK, "version": revision.VERSION_DE_REVISION}))
+        # Una omitida no se reintenta: el motivo está en el documento.
+        self.assertFalse(revision.necesita_revision({"estado": revision.OMITIDA}))
+
     def test_la_revision_de_otro_usuario_es_404(self):
         pk = self.subir("una_columna.pdf").data["id"]
         otro = Usuario.objects.create_user(email="otro@example.com", password="clave-segura-123")
@@ -441,6 +487,125 @@ class HistorialTest(BaseDeCurriculums):
         self.assertIn("parseabilidad", historial.data[0])
         self.assertIn("con_convocatoria", historial.data[0])
 
+    def test_el_estado_del_cv_coincide_con_el_veredicto_del_resumen(self):
+        """La regla de `hallazgos.ts::veredictoDeLegibilidad`, sobre el detalle."""
+
+        clave = {"Nombre", "Correo", "Teléfono", "Experiencia", "Habilidades"}
+
+        def del_detalle(analisis):
+            campos = analisis["campos"]
+            if any(c["nombre"] in clave and not c["detectado"] for c in campos):
+                return "perdidas_importantes"
+            if any(not c["detectado"] or c["incompleto"] for c in campos):
+                return "legible_con_perdidas"
+            return "legible"
+
+        esperados = {}
+        for nombre in ("una_columna.pdf", "dos_columnas.pdf", "escaneado.pdf"):
+            respuesta = self.subir(nombre)
+            esperados[respuesta.data["id"]] = del_detalle(respuesta.data["analisis"])
+
+        historial = self.client.get("/api/curriculums/")
+
+        self.assertEqual({fila["id"]: fila["veredicto"] for fila in historial.data}, esperados)
+        # Los casos no son todos el mismo: el test distingue de verdad.
+        self.assertGreater(len(set(esperados.values())), 1)
+
+    def test_un_pdf_escaneado_pierde_datos_clave_en_el_historial(self):
+        self.subir("escaneado.pdf")
+
+        historial = self.client.get("/api/curriculums/")
+
+        self.assertEqual(historial.data[0]["veredicto"], "perdidas_importantes")
+
+    def test_un_analisis_anterior_sin_incompleto_se_publica(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+        analisis = AnalisisATS.objects.get(curriculum_id=pk)
+        analisis.campos = [{k: v for k, v in campo.items() if k != "incompleto"} for campo in analisis.campos]
+        analisis.save()
+
+        detalle = self.client.get(f"/api/curriculums/{pk}/")
+
+        self.assertEqual(detalle.status_code, status.HTTP_200_OK)
+        self.assertTrue(all(campo["incompleto"] is False for campo in detalle.data["analisis"]["campos"]))
+
+    def test_sin_analisis_el_estado_es_nulo(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+        AnalisisATS.objects.filter(curriculum_id=pk).delete()
+
+        historial = self.client.get("/api/curriculums/")
+
+        self.assertIsNone(historial.data[0]["veredicto"])
+
+
+class VeredictoTest(SimpleTestCase):
+    """El estado del historial es `ats.estado_del_cv` sobre los campos guardados."""
+
+    NOMBRES = ("Nombre", "Correo", "Teléfono", "Ubicación", "Experiencia", "Educación", "Habilidades", "Antigüedad")
+
+    def analisis(self, sin=(), incompletos=()):
+        return AnalisisATS(
+            campos=[
+                {"nombre": n, "detectado": n not in sin, "valor": "", "nota": "", "incompleto": n in incompletos}
+                for n in self.NOMBRES
+            ],
+            hallazgos={"fortalezas": [], "debilidades": []},
+            campos_detectados=8 - len(sin),
+            campos_intentados=8,
+        )
+
+    def test_sin_un_dato_clave_son_perdidas_importantes(self):
+        self.assertEqual(self.analisis(sin=("Habilidades",)).veredicto, "perdidas_importantes")
+
+    def test_un_incompleto_o_un_no_clave_perdido_es_legible_con_perdidas(self):
+        self.assertEqual(self.analisis(incompletos=("Experiencia",)).veredicto, "legible_con_perdidas")
+        self.assertEqual(self.analisis(sin=("Antigüedad",)).veredicto, "legible_con_perdidas")
+
+    def test_todo_completo_es_legible(self):
+        self.assertEqual(self.analisis().veredicto, "legible")
+
+
+class AccionDeLasCorreccionesTest(BaseDeCurriculums):
+    """Cada corrección publica su acción, también la de un análisis anterior."""
+
+    def test_cada_debilidad_publica_su_accion(self):
+        respuesta = self.subir("dos_columnas.pdf")
+
+        debilidades = respuesta.data["analisis"]["debilidades"]
+        self.assertTrue(debilidades)
+        self.assertTrue(all(h["accion"] for h in debilidades))
+
+    def test_un_analisis_guardado_sin_accion_se_publica_con_accion_vacia(self):
+        pk = self.subir("dos_columnas.pdf").data["id"]
+        analisis = AnalisisATS.objects.get(curriculum_id=pk)
+        for grupo in analisis.hallazgos.values():
+            for hallazgo in grupo:
+                hallazgo.pop("accion")
+        analisis.save()
+
+        respuesta = self.client.get(f"/api/curriculums/{pk}/")
+
+        self.assertEqual({h["accion"] for h in respuesta.data["analisis"]["debilidades"]}, {""})
+
+    def test_un_analisis_guardado_sin_ejemplo_se_publica_con_ejemplo_vacio(self):
+        pk = self.subir("dos_columnas.pdf").data["id"]
+        analisis = AnalisisATS.objects.get(curriculum_id=pk)
+        for grupo in analisis.hallazgos.values():
+            for hallazgo in grupo:
+                hallazgo.pop("ejemplo")
+        analisis.save()
+
+        respuesta = self.client.get(f"/api/curriculums/{pk}/")
+
+        self.assertEqual({h["ejemplo"] for h in respuesta.data["analisis"]["debilidades"]}, {""})
+
+    def test_el_texto_extraido_no_tiene_ruta_propia(self):
+        pk = self.subir("una_columna.pdf").data["id"]
+
+        respuesta = self.client.get(f"/api/curriculums/{pk}/texto/")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class PertenenciaTest(APITestCase):
     """El CV de otra persona no existe, no está prohibido."""
@@ -508,3 +673,4 @@ class ConstruirAnalisisTest(SimpleTestCase):
 
     def test_se_guarda_la_version_de_las_reglas(self):
         self.assertEqual(self._construir("")["version_reglas"], VERSION_DE_REGLAS)
+

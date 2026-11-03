@@ -21,7 +21,7 @@ añadirla al registro; el flujo no cambia.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 
 from integrations.documentos import fechas, ubicaciones
@@ -30,14 +30,14 @@ from integrations.documentos.contacto import CORREO, detectar_nombre, detectar_t
 from integrations.documentos.contacto import URL, telefonos  # noqa: F401
 from integrations.documentos.extractor import DocumentoExtraido
 from integrations.documentos.geometria import hay_dos_columnas
-from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado, titulo_de
+from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado_del_cv, titulo_de
 from integrations.documentos.terminos import escritos_de_una_sola_forma
 
 #: Versión del conjunto de reglas. Se guarda con cada análisis para que uno hecho
 #: con reglas anteriores se recalcule al volver a subir el mismo CV, en vez de
 #: mostrarle al usuario un diagnóstico que ya no es el vigente. **Hay que subirla
 #: cada vez que cambie lo que el análisis o la brecha producen.**
-VERSION_DE_REGLAS = 4
+VERSION_DE_REGLAS = 8
 
 #: Los campos de la ficha que arma el ATS, en el orden en que se muestran. Es la
 #: única lista: el caso sin capa de texto la recorre y un test comprueba que las
@@ -63,8 +63,6 @@ MAXIMO_PAGINAS_RECOMENDADO = 2
 #: Menos que esto puede ser un espacio o un punto blanco suelto de la plantilla.
 MINIMO_CARACTERES_OCULTOS = 20
 
-#: Cuántas líneas se miran como encabezado cuando no hay títulos que lo delimiten.
-LINEAS_DE_ENCABEZADO_SIN_TITULOS = 8
 
 @dataclass(frozen=True)
 class Hallazgo:
@@ -72,6 +70,15 @@ class Hallazgo:
 
     `favorable` separa las fortalezas de las debilidades. Se reportan las dos:
     decirle al usuario solo lo que está mal no le dice qué conservar al corregir.
+
+    En una debilidad, `accion` es lo que hay que hacer, en imperativo («Pásalo a
+    una sola columna»), y es el título que ve el usuario; `titulo` queda como el
+    diagnóstico («Tu CV está maquetado a dos columnas») y `detalle` explica qué le
+    pasa al CV dentro del ATS y cómo arreglarlo. Las fortalezas no llevan acción.
+
+    `ejemplo` muestra cómo debe quedar, en texto fijo con datos inventados —nunca
+    copiado del CV— y que pasa las propias reglas del módulo (`EjemploTest`).
+    Vacío donde un ejemplo no ayuda, y siempre en las fortalezas.
     """
 
     codigo: str
@@ -79,16 +86,42 @@ class Hallazgo:
     titulo: str
     detalle: str
     favorable: bool = False
+    accion: str = ""
+    ejemplo: str = ""
+
+
+# Los ejemplos de las correcciones. Comparten datos para que se lean como un
+# mismo CV, y un test los pasa por los detectores: un ejemplo que el módulo
+# marcara como error sería peor que no darlo.
+EJEMPLO_DE_CONTACTO = "Ana Quispe\nana.quispe@gmail.com · +591 70000000 · Cochabamba, Bolivia"
+EJEMPLO_DE_SECCIONES = "Experiencia laboral\nEducación\nHabilidades técnicas"
+EJEMPLO_DE_PERIODO = "Desarrolladora Backend, Jalasoft\nEne 2022 – Actualidad"
+EJEMPLO_DE_FECHAS = "Ene 2020 – Mar 2022\nAbr 2022 – Actualidad"
+EJEMPLO_DE_HABILIDADES = "Habilidades\nPython (avanzado), Django (intermedio), PostgreSQL"
+EJEMPLO_DE_UNA_COLUMNA = (
+    f"{EJEMPLO_DE_CONTACTO}\n\n"
+    f"Experiencia\n{EJEMPLO_DE_PERIODO}\n\n"
+    "Educación\nIngeniería de Sistemas, UMSS\n\n"
+    "Habilidades\nPython, Django, PostgreSQL"
+)
+EJEMPLO_SIN_TABLAS = "Desarrolladora Backend, Jalasoft · Ene 2022 – Actualidad\nPython, Django, PostgreSQL"
+EJEMPLO_DE_SIGLA = "Amazon Web Services (AWS)"
 
 
 @dataclass(frozen=True)
 class Campo:
-    """Un campo de la ficha que el ATS armaría, y si se pudo llenar."""
+    """Un campo de la ficha que el ATS armaría, y si se pudo llenar.
+
+    `incompleto` marca un campo que sí se llenó pero que un hallazgo ya medido
+    dice que llega dañado (fechas mezcladas, dos columnas); su `nota` dice por
+    qué. Nunca es verdadero en un campo sin detectar.
+    """
 
     nombre: str
     detectado: bool
     valor: str = ""
     nota: str = ""
+    incompleto: bool = False
 
 
 @dataclass
@@ -141,11 +174,12 @@ IDIOMA_DISTINTO = Hallazgo(
     codigo="idioma_distinto",
     severidad="alta",
     titulo="Tu CV y la convocatoria están en idiomas distintos",
+    accion="Envía tu CV en el idioma del aviso",
     detalle=(
-        "La búsqueda del reclutador usa las palabras de la convocatoria. Los nombres "
-        "de tecnologías coinciden en cualquier idioma, pero «experiencia en desarrollo "
-        "de APIs» no encuentra «API development experience». Si la oferta está en "
-        "otro idioma, envía tu CV en ese idioma."
+        "El reclutador busca con las palabras de la convocatoria. Los nombres de "
+        "tecnologías coinciden en cualquier idioma, pero «experiencia en desarrollo de "
+        "APIs» no encuentra «API development experience». Si la oferta está en otro "
+        "idioma, prepara una versión de tu CV en ese idioma."
     ),
 )
 
@@ -195,6 +229,7 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
                 codigo="sin_capa_de_texto",
                 severidad="critica",
                 titulo="El ATS no puede leer nada de tu CV",
+                accion="Genera tu CV como texto, no como imagen",
                 detalle=_detalle_sin_capa_de_texto(documento),
             )
         )
@@ -207,10 +242,7 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
     texto = documento.texto
     contexto = _Contexto(
         documento=documento,
-        # Sin títulos no hay dónde cortar: se toman las primeras líneas, que es
-        # donde cualquier plantilla pone los datos personales.
-        encabezado=encabezado(texto)
-        or "\n".join(texto.splitlines()[:LINEAS_DE_ENCABEZADO_SIN_TITULOS]),
+        encabezado=encabezado_del_cv(texto),
         experiencia=fechas.experiencia(texto, hoy),
         nombre=detectar_nombre(texto),
     )
@@ -218,7 +250,62 @@ def analizar(documento: DocumentoExtraido, hoy: date | None = None) -> Analisis:
     for verificar in _VERIFICACIONES:
         verificar(contexto, analisis)
 
+    _marcar_incompletos(analisis)
     return analisis
+
+
+#: Hallazgo → (campos que deja incompletos si se detectaron, por qué). Solo
+#: hallazgos que ya existen: ninguna detección nueva decide un estado. No está
+#: `habilidades_en_graficos`: solo se emite con las habilidades sin detectar.
+_INCOMPLETOS_POR_HALLAZGO: dict[str, tuple[tuple[str, ...], str]] = {
+    "formatos_de_fecha_mezclados": (("Experiencia",), "las fechas mezclan formatos y el ATS puede no ordenarlas"),
+    "dos_columnas": (
+        ("Experiencia", "Educación", "Habilidades"),
+        "a dos columnas el ATS puede leer esta sección desordenada",
+    ),
+}
+
+
+def _marcar_incompletos(analisis: Analisis) -> None:
+    """Marca incompletos los campos detectados que un hallazgo ya medido daña."""
+    notas: dict[str, str] = {}
+    for hallazgo in analisis.debilidades:
+        afectados, nota = _INCOMPLETOS_POR_HALLAZGO.get(hallazgo.codigo, ((), ""))
+        for nombre in afectados:
+            notas.setdefault(nombre, nota)
+    analisis.campos = [
+        replace(campo, incompleto=True, nota=notas[campo.nombre])
+        if campo.detectado and campo.nombre in notas
+        else campo
+        for campo in analisis.campos
+    ]
+
+
+#: Los datos sin los que el reclutador no puede encontrarte ni contactarte: el
+#: contacto, la experiencia y las habilidades. Copia en `hallazgos.ts::CAMPOS_CLAVE`.
+CAMPOS_CLAVE = ("Nombre", "Correo", "Teléfono", "Experiencia", "Habilidades")
+
+
+def _dato(campo, nombre: str, defecto=None):
+    return campo.get(nombre, defecto) if isinstance(campo, dict) else getattr(campo, nombre, defecto)
+
+
+def estado_del_cv(campos) -> str:
+    """El estado del CV, derivado de sus campos (objetos `Campo` o el JSON guardado).
+
+    - `perdidas_importantes`: falta algún dato clave.
+    - `legible_con_perdidas`: están los clave, pero algún dato quedó incompleto
+      o falta uno que no es clave.
+    - `legible`: los datos se extrajeron completos.
+
+    Es la misma regla que `hallazgos.ts::veredictoDeLegibilidad`. Un campo
+    guardado con reglas anteriores no trae `incompleto` y cuenta como completo.
+    """
+    if any(_dato(c, "nombre") in CAMPOS_CLAVE and not _dato(c, "detectado") for c in campos):
+        return "perdidas_importantes"
+    if any(not _dato(c, "detectado") or _dato(c, "incompleto", False) for c in campos):
+        return "legible_con_perdidas"
+    return "legible"
 
 
 def _extracto(texto: str, largo: int = 80) -> str:
@@ -245,12 +332,27 @@ def _verificar_zonas_ocultas(contexto: _Contexto, analisis: Analisis) -> None:
     documento = contexto.documento
     en_el_cuerpo = _contacto_en(contexto.texto)
 
+    # (código, texto, zona, severidad, dónde quitar el dato, acción si no hay datos de contacto)
     zonas = (
-        ("texto_en_cuadros", documento.texto_en_cuadros, "un cuadro de texto", "alta"),
-        ("texto_en_encabezado", documento.texto_en_encabezado, "el encabezado o pie de página", "media"),
+        (
+            "texto_en_cuadros",
+            documento.texto_en_cuadros,
+            "un cuadro de texto",
+            "alta",
+            "del cuadro de texto",
+            "Pasa el texto de los cuadros al cuerpo del CV",
+        ),
+        (
+            "texto_en_encabezado",
+            documento.texto_en_encabezado,
+            "el encabezado o pie de página",
+            "media",
+            "del encabezado",
+            "Pasa el encabezado y el pie al cuerpo del CV",
+        ),
     )
 
-    for codigo, texto_de_la_zona, zona, severidad in zonas:
+    for codigo, texto_de_la_zona, zona, severidad, de_la_zona, accion in zonas:
         if not texto_de_la_zona.strip():
             continue
 
@@ -269,9 +371,11 @@ def _verificar_zonas_ocultas(contexto: _Contexto, analisis: Analisis) -> None:
                     codigo=codigo,
                     severidad="critica",
                     titulo=f"Tu {datos} {'está' if len(escondidos) == 1 else 'están'} en {zona}",
+                    accion=f"Saca tu {datos} {de_la_zona}",
+                    ejemplo=EJEMPLO_DE_CONTACTO,
                     detalle=(
                         f"Muchos ATS no leen {zona}, así que para el reclutador tu "
-                        f"{datos} no existe aunque se vea en el documento. Escríbelo "
+                        f"{datos} no existe aunque tú lo veas en el documento. Escríbelo "
                         "como texto normal en el cuerpo del CV, debajo de tu nombre. "
                         f"Lo que hay ahí: «{_extracto(texto_de_la_zona)}»."
                     ),
@@ -283,10 +387,11 @@ def _verificar_zonas_ocultas(contexto: _Contexto, analisis: Analisis) -> None:
                     codigo=codigo,
                     severidad=severidad,
                     titulo=f"Parte de tu CV está en {zona}",
+                    accion=accion,
                     detalle=(
                         f"Muchos ATS no leen {zona}: lo que pongas ahí puede no llegar "
-                        "a la búsqueda del reclutador. Pásalo al cuerpo del documento "
-                        f"como texto normal. Lo que hay ahí: «{_extracto(texto_de_la_zona)}»."
+                        "a la búsqueda del reclutador. Escríbelo en el cuerpo del "
+                        f"documento como texto normal. Lo que hay ahí: «{_extracto(texto_de_la_zona)}»."
                     ),
                 )
             )
@@ -328,10 +433,12 @@ def _verificar_contacto(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="sin_correo",
                 severidad="critica",
                 titulo="No se detectó tu correo electrónico",
+                accion="Escribe tu correo como texto",
+                ejemplo="ana.quispe@gmail.com",
                 detalle=(
-                    "Es el campo con el que el reclutador te contacta. Si está dentro "
-                    "de una imagen, de un icono o del encabezado del documento, el ATS "
-                    "no lo extrae. Escríbelo como texto normal en el cuerpo del CV."
+                    "Es el dato con el que el reclutador te contacta. Si está dentro de "
+                    "una imagen o de un ícono, el ATS no lo lee y tu ficha queda sin "
+                    "correo. Escríbelo como texto normal debajo de tu nombre."
                 ),
             )
         )
@@ -351,10 +458,12 @@ def _verificar_contacto(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="sin_telefono",
                 severidad="media",
                 titulo="No se detectó un número de teléfono",
+                accion="Agrega tu número de teléfono",
+                ejemplo="+591 70000000",
                 detalle=(
                     "No todos los procesos lo exigen, pero muchos formularios de "
-                    "postulación lo rellenan automáticamente desde el CV y lo dejan "
-                    "vacío si no lo encuentran."
+                    "postulación lo llenan solos desde el CV y lo dejan vacío si no lo "
+                    "encuentran. Escríbelo junto a tu correo, con el código de país."
                 ),
             )
         )
@@ -377,8 +486,7 @@ def _verificar_ubicacion(contexto: _Contexto, analisis: Analisis) -> None:
     Solo en el encabezado y sin la línea del nombre: "Santa Cruz" en una
     experiencia puede ser una empresa, y "Lima" o "Pando" son también apellidos.
     """
-    lineas = [linea for linea in contexto.encabezado.splitlines() if linea.strip() != contexto.nombre]
-    lugares = ubicaciones.encontrar("\n".join(lineas))
+    lugares = ubicaciones.del_encabezado(contexto.encabezado, contexto.nombre)
 
     analisis.campos.append(
         Campo(
@@ -395,11 +503,13 @@ def _verificar_ubicacion(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="sin_ubicacion",
                 severidad="media",
                 titulo="No se detectó tu ciudad",
+                accion="Escribe tu ciudad y país",
+                ejemplo="Cochabamba, Bolivia",
                 detalle=(
                     "Los reclutadores filtran candidatos por ubicación antes de leer "
                     "nada más, y un CV sin ciudad queda fuera de ese filtro. Escribe tu "
-                    "ciudad y país junto a tus datos de contacto, por ejemplo "
-                    "«Cochabamba, Bolivia». Si buscas trabajo remoto, dilo también."
+                    "ciudad y país junto a tus datos de contacto. Si buscas trabajo "
+                    "remoto, dilo también."
                 ),
             )
         )
@@ -435,12 +545,14 @@ def _verificar_secciones(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="secciones_no_reconocidas",
                 severidad="alta",
                 titulo=f"El ATS no reconoce tus secciones de {' y '.join(faltantes)}",
+                accion="Usa títulos de sección convencionales",
+                ejemplo=EJEMPLO_DE_SECCIONES,
                 detalle=(
-                    "El parser decide dónde guardar cada bloque leyendo el título que "
-                    "lo encabeza. Con títulos creativos como «Mi trayectoria» o "
-                    "«Toolkit» no sabe en qué campo ponerlo, y el contenido puede no "
-                    "registrarse en ninguno. Usa títulos convencionales: "
-                    "«Experiencia», «Educación», «Habilidades»."
+                    "El ATS decide dónde guardar cada parte de tu CV leyendo el título "
+                    "que la encabeza. Con títulos creativos como «Mi trayectoria» o "
+                    "«Toolkit» no sabe en qué campo ponerla, y lo que escribiste puede "
+                    "no guardarse en ninguno. Usa los títulos de siempre, uno por "
+                    "línea."
                 ),
             )
         )
@@ -482,12 +594,14 @@ def _verificar_fechas(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="antiguedad_no_calculable",
                 severidad="alta",
                 titulo="El ATS no puede calcular tus años de experiencia",
+                accion="Pon fecha de inicio y fin a cada empleo",
+                ejemplo=EJEMPLO_DE_PERIODO,
                 detalle=(
                     "No se encontró ningún periodo con fecha de inicio y fin. Los "
-                    "reclutadores filtran por antigüedad, y un candidato cuya "
-                    "experiencia no se puede calcular queda por debajo de otros con "
-                    "menos trayectoria pero fechas legibles. Escribe cada empleo como "
-                    "«Ene 2020 – Mar 2023» o «Ene 2023 – Actualidad»."
+                    "reclutadores filtran por años de experiencia, y si el ATS no puede "
+                    "calcular los tuyos quedas por debajo de candidatos con menos "
+                    "trayectoria pero fechas claras. Escribe en cada empleo el mes y "
+                    "el año de inicio y de fin, o «Actualidad» si sigues ahí."
                 ),
             )
         )
@@ -499,12 +613,14 @@ def _verificar_fechas(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="formatos_de_fecha_mezclados",
                 severidad="alta",
                 titulo="Mezclas varios formatos de fecha",
+                accion="Usa un solo formato de fecha",
+                ejemplo=EJEMPLO_DE_FECHAS,
                 detalle=(
                     f"Se detectaron {len(presentes)} formatos distintos en el mismo "
-                    "documento. Es la causa más frecuente de error de parseo: el ATS "
-                    "no puede sumar periodos escritos de formas distintas y subestima "
-                    "tu antigüedad. Unifícalos en «Mes Año», que es el que parsea con "
-                    "más fiabilidad."
+                    "documento. El ATS no puede sumar periodos escritos de formas "
+                    "distintas, así que calcula menos experiencia de la que tienes. "
+                    "Escríbelas todas como «Mes Año», que es el formato que los ATS "
+                    "leen mejor."
                 ),
             )
         )
@@ -533,11 +649,13 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="dos_columnas",
                 severidad="alta",
                 titulo="Tu CV está maquetado a dos columnas",
+                accion="Pásalo a una sola columna",
+                ejemplo=EJEMPLO_DE_UNA_COLUMNA,
                 detalle=(
-                    "El ATS lee línea por línea, de arriba abajo, y no sabe qué columna "
-                    "va primero. El texto sale intercalado: un puesto de trabajo puede "
-                    "quedar separado de su fecha, y una habilidad terminar dentro de la "
-                    "descripción de otro empleo. Pasa el CV a una sola columna."
+                    "El ATS lee cada línea de izquierda a derecha, sin saber que hay dos "
+                    "columnas, y mezcla una con la otra: un puesto queda separado de su "
+                    "fecha y una habilidad termina dentro de otro empleo. Usa una sola "
+                    "columna: tus datos arriba y debajo cada sección, una tras otra."
                 ),
             )
         )
@@ -548,11 +666,13 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="contiene_tablas",
                 severidad="media",
                 titulo=f"Se detectaron {documento.tablas} tabla{'s' if documento.tablas != 1 else ''}",
+                accion="Cambia las tablas por texto",
+                ejemplo=EJEMPLO_SIN_TABLAS,
                 detalle=(
-                    "El orden en que un parser recorre las celdas es impredecible, así "
-                    "que el contenido de una tabla puede salir desordenado. Si usaste "
-                    "una tabla para alinear las habilidades o las fechas, reemplázala "
-                    "por texto corrido."
+                    "El ATS sí lee el texto de una tabla, pero no siempre en el orden de "
+                    "las celdas: una fecha puede quedar pegada al puesto equivocado. Si "
+                    "usaste una tabla para alinear habilidades o fechas, escríbelas "
+                    "como texto normal, una línea por dato."
                 ),
             )
         )
@@ -567,13 +687,16 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="habilidades_en_graficos",
                 severidad="alta",
                 titulo="Tus habilidades podrían estar dentro de gráficos",
+                accion="Escribe tus habilidades como texto",
+                ejemplo=EJEMPLO_DE_HABILIDADES,
                 detalle=(
                     f"El documento tiene {documento.imagenes} "
                     f"imagen{'es' if documento.imagenes != 1 else ''} y no se detectó una "
-                    "sección de habilidades legible. Las barras de nivel y los iconos "
-                    "son invisibles para el ATS: crees haber declarado tus tecnologías "
-                    "y en la base de datos del reclutador no existe ninguna. Escríbelas "
-                    "como una lista de texto."
+                    "sección de habilidades legible. En una barra de nivel o un círculo "
+                    "el ATS no ve el nombre ni el nivel de la habilidad: crees haber "
+                    "puesto tus tecnologías y para el reclutador no existe ninguna. "
+                    "Escríbelas como una lista de texto; si quieres mostrar el nivel, "
+                    "escríbelo entre paréntesis."
                 ),
             )
         )
@@ -583,10 +706,12 @@ def _verificar_geometria(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="contiene_imagenes",
                 severidad="media",
                 titulo=f"El documento tiene {documento.imagenes} imagen{'es' if documento.imagenes != 1 else ''}",
+                accion="Revisa que tus imágenes no tengan información",
                 detalle=(
-                    "El ATS no extrae texto de las imágenes. No es grave si son "
-                    "decorativas, pero revisa que no contengan información que solo "
-                    "esté ahí."
+                    "El ATS no lee el texto que hay dentro de una imagen, como un logo o "
+                    "un ícono con tu teléfono. No es grave si son decorativas, pero si "
+                    "una imagen tiene un dato que no está en el texto, escríbelo también "
+                    "como texto."
                 ),
             )
         )
@@ -602,12 +727,13 @@ def _verificar_texto_oculto(contexto: _Contexto, analisis: Analisis) -> None:
             codigo="texto_oculto",
             severidad="alta",
             titulo="Tu CV tiene texto que no se ve",
+            accion="Elimina el texto que no se ve",
             detalle=(
                 f"Se encontraron {ocultos} caracteres en blanco o en un tamaño menor a "
-                "4 puntos. El ATS los lee igual, y muchos le muestran al reclutador el "
-                "texto extraído: palabras clave escondidas se ven como un intento de "
-                "engañar al filtro y suelen descartar la candidatura. Comprueba si es "
-                "intencional; si no lo es, elimínalo."
+                "4 puntos. El ATS los lee igual y muchos le muestran al reclutador el "
+                "texto que extrajeron: palabras clave escondidas se ven como un intento "
+                "de engañar al filtro y suelen descartar la postulación. Si no lo "
+                "pusiste a propósito, bórralo."
             ),
         )
     )
@@ -627,6 +753,8 @@ def _verificar_siglas(contexto: _Contexto, analisis: Analisis) -> None:
             codigo="solo_sigla_o_solo_nombre",
             severidad="info",
             titulo="Algunos términos aparecen de una sola forma",
+            accion="Escribe cada sigla también con su nombre",
+            ejemplo=EJEMPLO_DE_SIGLA,
             detalle=(
                 "La búsqueda de un ATS es literal: quien busca «Amazon Web Services» "
                 "no encuentra «AWS», y al revés. Escríbelos una vez de las dos formas: "
@@ -645,8 +773,9 @@ def _verificar_formato(contexto: _Contexto, analisis: Analisis) -> None:
                 codigo="demasiadas_paginas",
                 severidad="media",
                 titulo=f"Tu CV tiene {documento.paginas} páginas",
+                accion=f"Resúmelo en {MAXIMO_PAGINAS_RECOMENDADO} página{'s' if MAXIMO_PAGINAS_RECOMENDADO != 1 else ''}",
                 detalle=(
-                    f"No rompe el parseo, pero para un perfil de egresado "
+                    f"El ATS lo lee entero, pero para un perfil de egresado "
                     f"{MAXIMO_PAGINAS_RECOMENDADO} página"
                     f"{'s' if MAXIMO_PAGINAS_RECOMENDADO != 1 else ''} es lo habitual. "
                     "Un reclutador revisa decenas de CV y lo que está en la tercera "

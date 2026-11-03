@@ -70,6 +70,18 @@ _PATRONES: dict[str, tuple[re.Pattern[str], ...]] = {
 }
 
 
+def del_encabezado(encabezado: str, nombre: str) -> list[str]:
+    """La ubicación que el ATS lee del CV: los lugares del encabezado, sin la
+    línea del nombre.
+
+    Solo en el encabezado: "Santa Cruz" en una experiencia puede ser una empresa,
+    y "Lima" o "Pando" son también apellidos. La usan el espejo y el filtro de
+    ubicación de la convocatoria, para que nunca digan dos cosas distintas.
+    """
+    lineas = [linea for linea in encabezado.splitlines() if linea.strip() != nombre]
+    return encontrar("\n".join(lineas))
+
+
 def encontrar(texto: str) -> list[str]:
     """Los lugares que el texto nombra, en el orden en que aparecen.
 

@@ -29,7 +29,7 @@ from dataclasses import asdict
 
 from integrations.documentos.anonimizar import enmascarar
 from integrations.documentos.contacto import detectar_nombre
-from integrations.documentos.brecha import AUSENTE, DECLARADO, NO_ALCANZA, NO_CALCULABLE
+from integrations.documentos.brecha import AUSENTE, DECLARADO, DEMOSTRADO, NO_ALCANZA, NO_CALCULABLE
 from integrations.documentos.extractor import DocumentoExtraido
 from integrations.documentos.secciones import segmentar
 from integrations.ia.exceptions import ErrorProveedorIA
@@ -42,6 +42,10 @@ OK = "ok"
 NO_DISPONIBLE = "no_disponible"
 OMITIDA = "omitida"
 
+#: Versión de lo que devuelve la revisión. La 2 trajo la lectura general y los dos
+#: caminos por requisito ausente; una revisión correcta anterior se vuelve a pedir.
+VERSION_DE_REVISION = 2
+
 #: Topes de lo que se envía: acotan el coste por análisis y lo que sale del sistema.
 MAXIMO_CARACTERES_DE_SECCIONES = 6000
 MAXIMO_CARACTERES_DE_CONVOCATORIA = 3000
@@ -53,12 +57,15 @@ _ESTADOS_A_REVISAR = (DECLARADO, AUSENTE)
 
 
 def necesita_revision(revision_ia: dict | None) -> bool:
-    """Si hay que (re)intentar la revisión: nunca se hizo, o el proveedor falló.
+    """Si hay que (re)intentar la revisión: nunca se hizo, el proveedor falló, o
+    es correcta pero de una versión anterior (sin lectura ni dos caminos).
 
     Una revisión `omitida` no se reintenta: el motivo está en el documento, y
     volver a subir el mismo documento no lo cambia.
     """
-    return revision_ia is None or revision_ia.get("estado") == NO_DISPONIBLE
+    if revision_ia is None or revision_ia.get("estado") == NO_DISPONIBLE:
+        return True
+    return revision_ia.get("estado") == OK and revision_ia.get("version", 1) < VERSION_DE_REVISION
 
 
 def revisar(
@@ -96,6 +103,7 @@ def revisar(
         requisitos=requisitos,
         secciones=enmascarar(_texto_de_secciones(secciones), nombre)[:MAXIMO_CARACTERES_DE_SECCIONES],
         convocatoria=convocatoria.strip()[:MAXIMO_CARACTERES_DE_CONVOCATORIA],
+        demostrados=_demostrados(brecha),
     )
 
     try:
@@ -115,13 +123,21 @@ def revisar(
 
     return {
         "estado": OK,
+        "version": VERSION_DE_REVISION,
         "motivo": "",
+        "lectura": resultado.lectura,
         "vinetas": [
             {"original": original_de.get(v.original, v.original), "sugerida": v.sugerida}
             for v in resultado.vinetas
         ],
         "requisitos": [
-            {"termino": clave_por_termino[r.termino], "sugerencia": r.sugerencia}
+            {
+                "termino": clave_por_termino[r.termino],
+                "sugerencia": r.sugerencia,
+                "muestralo": r.muestralo,
+                "ejemplo": r.ejemplo,
+                "aprendelo": r.aprendelo,
+            }
             for r in resultado.requisitos
         ],
         "preguntas": [asdict(pregunta) for pregunta in resultado.preguntas],
@@ -134,7 +150,9 @@ def _sin_revision(estado: str, motivo: str) -> dict:
     """Misma forma que una revisión completa: la interfaz no depende del estado."""
     return {
         "estado": estado,
+        "version": VERSION_DE_REVISION,
         "motivo": motivo,
+        "lectura": "",
         "vinetas": [],
         "requisitos": [],
         "preguntas": [],
@@ -145,6 +163,19 @@ def _sin_revision(estado: str, motivo: str) -> dict:
 
 def _texto_de_secciones(secciones: dict[str, str]) -> str:
     return "\n\n".join(f"{titulo.capitalize()}:\n{bloque.strip()}" for titulo, bloque in secciones.items())
+
+
+def _demostrados(brecha: dict | None) -> tuple[str, ...]:
+    """Los términos del aviso que el CV demuestra: la lectura general resume las
+    dos columnas, y solo son nombres del diccionario, sin datos personales."""
+    if not brecha:
+        return ()
+    return tuple(
+        requisito["termino"]
+        for grupo in ("obligatorios", "deseables")
+        for requisito in brecha.get(grupo, {}).get("requisitos", [])
+        if requisito["estado"] == DEMOSTRADO
+    )
 
 
 def _requisitos(brecha: dict | None) -> tuple[tuple[RequisitoARevisar, ...], dict[str, str]]:

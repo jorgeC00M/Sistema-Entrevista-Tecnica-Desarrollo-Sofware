@@ -62,6 +62,8 @@ class CampoSerializer(serializers.Serializer):
     detectado = serializers.BooleanField()
     valor = serializers.CharField(allow_blank=True)
     nota = serializers.CharField(allow_blank=True)
+    # Los análisis de reglas < 8 no lo traen: se publican como completos.
+    incompleto = serializers.BooleanField(default=False)
 
 
 class HallazgoSerializer(serializers.Serializer):
@@ -70,6 +72,11 @@ class HallazgoSerializer(serializers.Serializer):
     titulo = serializers.CharField()
     detalle = serializers.CharField()
     favorable = serializers.BooleanField()
+    # Los análisis guardados con reglas < 6 no la tienen: el frontend muestra su
+    # diagnóstico como título hasta que el CV se vuelva a subir.
+    accion = serializers.CharField(default="")
+    # Igual que `accion`: los análisis de reglas < 7 no traen ejemplo.
+    ejemplo = serializers.CharField(default="")
 
 
 class AnalisisATSSerializer(serializers.ModelSerializer):
@@ -122,8 +129,10 @@ class CurriculumListaSerializer(serializers.ModelSerializer):
     # Nulo si el análisis quedó a medias: DRF devuelve `None` cuando la relación
     # inversa no existe.
     parseabilidad = serializers.CharField(source="analisis.parseabilidad", read_only=True, allow_null=True)
+    # El estado del CV en palabras, nunca un número; nulo igual que `parseabilidad`.
+    veredicto = serializers.CharField(source="analisis.veredicto", read_only=True, allow_null=True)
     con_convocatoria = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Curriculum
-        fields = ("id", "nombre_archivo", "fecha", "parseabilidad", "con_convocatoria")
+        fields = ("id", "nombre_archivo", "fecha", "parseabilidad", "veredicto", "con_convocatoria")

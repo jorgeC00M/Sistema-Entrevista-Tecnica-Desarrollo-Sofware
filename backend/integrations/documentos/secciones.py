@@ -60,6 +60,16 @@ TITULOS_POR_SECCION: dict[str, tuple[str, ...]] = {
         "technical skills",
         "core competencies",
     ),
+    # Idiomas no es una sección que el ATS exija, pero reconocerla evita que su
+    # contenido se sume al bloque anterior (casi siempre Habilidades) y permite
+    # buscar ahí el idioma que pide una convocatoria.
+    "idiomas": (
+        "idiomas",
+        "idioma",
+        "lenguas",
+        "languages",
+        "language skills",
+    ),
     "proyectos": (
         "proyectos",
         "proyectos personales",
@@ -139,6 +149,20 @@ def segmentar(texto: str) -> dict[str, str]:
         bloques.setdefault(seccion, []).extend(lineas[indice + 1 : fin])
 
     return {seccion: "\n".join(lineas_del_bloque) for seccion, lineas_del_bloque in bloques.items()}
+
+
+#: Cuántas líneas se miran como encabezado cuando no hay títulos que lo delimiten.
+LINEAS_DE_ENCABEZADO_SIN_TITULOS = 8
+
+
+def encabezado_del_cv(texto: str) -> str:
+    """Dónde el ATS busca los datos personales: el encabezado, o sin títulos que
+    lo delimiten, las primeras líneas, que es donde cualquier plantilla los pone.
+
+    La usan el espejo y el filtro de ubicación: si cada uno decidiera por su
+    cuenta, la ficha podría mostrar una ciudad y el filtro decir que no hay.
+    """
+    return encabezado(texto) or "\n".join(texto.splitlines()[:LINEAS_DE_ENCABEZADO_SIN_TITULOS])
 
 
 def encabezado(texto: str) -> str:

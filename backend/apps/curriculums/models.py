@@ -26,6 +26,8 @@ import hashlib
 from django.conf import settings
 from django.db import models
 
+from integrations.documentos.ats import estado_del_cv
+
 
 def hash_de_texto(texto: str) -> str:
     """Huella del texto, para reconocer un contenido ya analizado.
@@ -163,3 +165,13 @@ class AnalisisATS(models.Model):
         este módulo no calcula porque los ATS reales no puntúan.
         """
         return f"{self.campos_detectados}/{self.campos_intentados}"
+
+    @property
+    def veredicto(self) -> str:
+        """El estado del CV: `perdidas_importantes`, `legible_con_perdidas` o `legible`.
+
+        `ats.estado_del_cv` sobre los campos guardados, la misma regla que
+        `hallazgos.ts::veredictoDeLegibilidad` usa en el Resumen; aquí sirve al
+        historial, cuya lista no trae el detalle.
+        """
+        return estado_del_cv(self.campos)

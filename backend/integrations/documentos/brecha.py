@@ -12,8 +12,9 @@ indexan igual para la máquina y valen muy distinto para la persona que lee. Un
 reclutador hace esa diferencia; el candidato promedio no sabe que existe. Decírselo
 es lo que ninguna comparación binaria da.
 
-Además de las tecnologías se comparan dos requisitos del puesto: los años de
-experiencia —contra lo que el ATS calcula de las fechas— y el cargo.
+Además de las tecnologías se comparan los requisitos del puesto: los años de
+experiencia —contra lo que el ATS calcula de las fechas—, el cargo y las
+preguntas de filtro de `filtros.py` (título, idioma, ubicación).
 
 Como el resto de la capa, aquí no hay IA: todo sale de buscar términos literales en
 bloques de texto delimitados.
@@ -27,6 +28,7 @@ from datetime import date
 from integrations.documentos import fechas, idioma
 from integrations.documentos.convocatoria import partir
 from integrations.documentos.extractor import DocumentoExtraido
+from integrations.documentos.filtros import Filtro, preguntas_de_filtro
 from integrations.documentos.secciones import SECCIONES_DE_EVIDENCIA, segmentar
 from integrations.documentos.terminos import encontrar, menciona_cargo
 
@@ -122,6 +124,9 @@ class Brecha:
     cargo: Requisito | None = None
     #: Si el CV y la convocatoria están, con claridad, en idiomas distintos.
     idioma_distinto: bool = False
+    #: Las preguntas de filtro del bloque obligatorio (título, idioma,
+    #: ubicación). Como la experiencia, no cuentan en la cobertura.
+    filtros: tuple[Filtro, ...] = ()
 
 
 def calcular(texto_convocatoria: str, cv: DocumentoExtraido, hoy: date | None = None) -> Brecha | None:
@@ -200,6 +205,7 @@ def calcular(texto_convocatoria: str, cv: DocumentoExtraido, hoy: date | None = 
         experiencia=_experiencia(convocatoria.anos_requeridos, texto_cv, hoy or date.today()),
         cargo=_cargo(convocatoria.cargo, texto_cv, texto_de_evidencia, con_evidencia),
         idioma_distinto=idioma.son_distintos(texto_cv, texto_convocatoria),
+        filtros=preguntas_de_filtro(convocatoria.texto_obligatorio, texto_cv),
     )
 
 

@@ -144,6 +144,14 @@ TERMINOS: dict[str, tuple[str, ...]] = {
     "Scrum": ("scrum",),
     "Metodologías ágiles": ("metodologias agiles", "agile", "kanban"),
     "Clean Code": ("clean code", "codigo limpio"),
+    # Herramientas de negocio, gestión y diseño: frecuentes en avisos de Bolivia
+    # y antes invisibles para la comparación.
+    "Power BI": ("power bi", "powerbi"),
+    "Tableau": ("tableau",),
+    "Excel": ("excel", "excel avanzado", "microsoft excel"),
+    "SAP": ("sap", "sap erp", "sap hana", "sap s/4hana"),
+    "Jira": ("jira",),
+    "Figma": ("figma",),
 }
 
 

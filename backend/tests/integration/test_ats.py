@@ -13,7 +13,26 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from integrations.documentos.ats import CAMPOS_DE_LA_FICHA, analizar
+from integrations.documentos import fechas, ubicaciones
+from integrations.documentos.ats import (
+    CAMPOS_CLAVE,
+    CAMPOS_DE_LA_FICHA,
+    EJEMPLO_DE_CONTACTO,
+    EJEMPLO_DE_FECHAS,
+    EJEMPLO_DE_HABILIDADES,
+    EJEMPLO_DE_PERIODO,
+    EJEMPLO_DE_SECCIONES,
+    EJEMPLO_DE_SIGLA,
+    EJEMPLO_DE_UNA_COLUMNA,
+    EJEMPLO_SIN_TABLAS,
+    IDIOMA_DISTINTO,
+    Campo,
+    analizar,
+    estado_del_cv,
+)
+from integrations.documentos.contacto import CORREO, detectar_telefono
+from integrations.documentos.secciones import titulo_de
+from integrations.documentos.terminos import encontrar, escritos_de_una_sola_forma
 from integrations.documentos.exceptions import DocumentoCorrupto, FormatoNoSoportado
 from integrations.documentos.extractor import DocumentoExtraido, extraer
 
@@ -360,6 +379,226 @@ class TextoOcultoTest(unittest.TestCase):
 
     def test_unos_pocos_caracteres_sueltos_no_cuentan(self):
         self.assertNotIn("texto_oculto", _codigos(analizar(_documento(CV_CORRECTO, caracteres_ocultos=3))))
+
+
+class IncompletoTest(unittest.TestCase):
+    """Un campo detectado que un hallazgo ya medido daña queda incompleto."""
+
+    def _campo(self, analisis, nombre):
+        return next(c for c in analisis.campos if c.nombre == nombre)
+
+    def test_las_fechas_mezcladas_dejan_incompleta_la_experiencia(self):
+        analisis = analizar(_documento(CV_CORRECTO.replace("Ene 2020 - Mar 2023", "Ene 2020 - 03/2023")), HOY)
+
+        experiencia = self._campo(analisis, "Experiencia")
+        self.assertTrue(experiencia.detectado)
+        self.assertTrue(experiencia.incompleto)
+        self.assertIn("fechas", experiencia.nota)
+        self.assertFalse(self._campo(analisis, "Educación").incompleto)
+
+    def test_un_cv_correcto_no_tiene_campos_incompletos(self):
+        analisis = analizar(_documento(CV_CORRECTO), HOY)
+
+        self.assertFalse(any(c.incompleto for c in analisis.campos))
+
+    def test_un_campo_sin_detectar_nunca_queda_incompleto(self):
+        analisis = analizar(extraer((FIXTURES / "dos_columnas.pdf").read_bytes(), "dos_columnas.pdf"), HOY)
+
+        self.assertIn("dos_columnas", _codigos(analisis))
+        for campo in analisis.campos:
+            if campo.incompleto:
+                self.assertTrue(campo.detectado, campo.nombre)
+            if campo.nombre in {"Experiencia", "Educación", "Habilidades"} and campo.detectado:
+                self.assertTrue(campo.incompleto, campo.nombre)
+
+
+class EstadoDelCvTest(unittest.TestCase):
+    """La regla del estado sobre los datos clave; la misma en `hallazgos.ts`."""
+
+    def _campos(self, sin=(), incompletos=()):
+        return [
+            Campo(nombre=n, detectado=n not in sin, incompleto=n in incompletos) for n in CAMPOS_DE_LA_FICHA
+        ]
+
+    def test_los_datos_clave_son_contacto_experiencia_y_habilidades(self):
+        self.assertEqual(CAMPOS_CLAVE, ("Nombre", "Correo", "Teléfono", "Experiencia", "Habilidades"))
+
+    def test_falta_un_dato_clave(self):
+        self.assertEqual(estado_del_cv(self._campos(sin=("Correo",))), "perdidas_importantes")
+
+    def test_falta_un_dato_que_no_es_clave(self):
+        self.assertEqual(estado_del_cv(self._campos(sin=("Ubicación",))), "legible_con_perdidas")
+
+    def test_un_dato_incompleto(self):
+        self.assertEqual(estado_del_cv(self._campos(incompletos=("Experiencia",))), "legible_con_perdidas")
+
+    def test_todo_completo(self):
+        self.assertEqual(estado_del_cv(self._campos()), "legible")
+
+    def test_acepta_el_json_guardado_sin_incompleto(self):
+        guardados = [{"nombre": n, "detectado": True, "valor": "", "nota": ""} for n in CAMPOS_DE_LA_FICHA]
+
+        self.assertEqual(estado_del_cv(guardados), "legible")
+
+    def test_un_cv_escaneado_pierde_datos_clave(self):
+        analisis = analizar(_documento("", paginas=1))
+
+        self.assertEqual(estado_del_cv(analisis.campos), "perdidas_importantes")
+
+
+class AccionTest(unittest.TestCase):
+    """Cada debilidad dice qué hacer; ninguna fortaleza lo hace.
+
+    Recorre documentos que, juntos, disparan **todas** las debilidades: una regla
+    nueva sin acción, o una que deje de dispararse aquí, rompe el test.
+    """
+
+    TODAS = {
+        "sin_capa_de_texto",
+        "texto_en_cuadros",
+        "texto_en_encabezado",
+        "sin_correo",
+        "sin_telefono",
+        "sin_ubicacion",
+        "secciones_no_reconocidas",
+        "antiguedad_no_calculable",
+        "formatos_de_fecha_mezclados",
+        "dos_columnas",
+        "contiene_tablas",
+        "habilidades_en_graficos",
+        "contiene_imagenes",
+        "texto_oculto",
+        "solo_sigla_o_solo_nombre",
+        "demasiadas_paginas",
+    }
+
+    def _analisis(self):
+        # Sin correo, teléfono, ciudad, títulos reconocibles ni fechas.
+        sin_contacto = (
+            "Jorge Condori Maita\n\nMi trayectoria\n"
+            "Desarrollador Backend en una empresa de software de la ciudad, a cargo de "
+            "las APIs de facturación y de la integración con los bancos del país.\n\n"
+            "Mis superpoderes\nPython, Django y PostgreSQL para servicios web.\n"
+        )
+        mezclado = CV_CORRECTO.replace("Ene 2020 - Mar 2023", "Ene 2020 - 03/2023")
+        return [
+            analizar(_documento("1", paginas=2)),
+            analizar(_documento(sin_contacto, imagenes=2, paginas=3)),
+            analizar(_documento(mezclado.replace("PostgreSQL", "AWS"), tablas=1, imagenes=1, caracteres_ocultos=30)),
+            analizar(
+                _documento(
+                    CV_CORRECTO.replace("jorge.condori@example.com\n", ""),
+                    formato="docx",
+                    texto_en_encabezado="jorge.condori@example.com",
+                    texto_en_cuadros="Python, Django",
+                )
+            ),
+            analizar(extraer((FIXTURES / "dos_columnas.pdf").read_bytes(), "dos_columnas.pdf")),
+        ]
+
+    def test_cada_debilidad_tiene_accion_y_ninguna_fortaleza(self):
+        vistos = set()
+        for analisis in self._analisis():
+            for hallazgo in analisis.debilidades:
+                vistos.add(hallazgo.codigo)
+                self.assertTrue(hallazgo.accion, f"{hallazgo.codigo} sin acción")
+            for hallazgo in analisis.fortalezas:
+                self.assertEqual(hallazgo.accion, "", f"la fortaleza {hallazgo.codigo} tiene acción")
+
+        self.assertEqual(self.TODAS - vistos, set())
+
+    #: Las debilidades que muestran «Así:». Las demás no tienen un texto que
+    #: enseñar (imágenes, texto oculto, páginas, idioma, CV ilegible) o, como la
+    #: parte del CV en una zona oculta, su contenido puede ser cualquier cosa.
+    CON_EJEMPLO = {
+        "sin_correo",
+        "sin_telefono",
+        "sin_ubicacion",
+        "secciones_no_reconocidas",
+        "antiguedad_no_calculable",
+        "formatos_de_fecha_mezclados",
+        "dos_columnas",
+        "contiene_tablas",
+        "habilidades_en_graficos",
+        "solo_sigla_o_solo_nombre",
+    }
+
+    def test_las_debilidades_acordadas_traen_ejemplo_y_ninguna_fortaleza(self):
+        for analisis in self._analisis():
+            for hallazgo in analisis.debilidades:
+                # Un dato de contacto escondido (crítico) sí enseña cómo escribirlo.
+                lleva = hallazgo.codigo in self.CON_EJEMPLO or (
+                    hallazgo.codigo in {"texto_en_cuadros", "texto_en_encabezado"} and hallazgo.severidad == "critica"
+                )
+                self.assertEqual(bool(hallazgo.ejemplo), lleva, hallazgo.codigo)
+            for hallazgo in analisis.fortalezas:
+                self.assertEqual(hallazgo.ejemplo, "", f"la fortaleza {hallazgo.codigo} tiene ejemplo")
+
+    def test_el_dato_escondido_muestra_como_escribirlo(self):
+        analisis = self._analisis()[3]
+
+        self.assertEqual(_hallazgo(analisis, "texto_en_encabezado").ejemplo, EJEMPLO_DE_CONTACTO)
+
+    def test_la_debilidad_de_idioma_tambien_tiene_accion(self):
+        self.assertTrue(IDIOMA_DISTINTO.accion)
+
+    def test_la_accion_nombra_el_dato_escondido(self):
+        analisis = self._analisis()[3]
+
+        self.assertEqual(_hallazgo(analisis, "texto_en_encabezado").accion, "Saca tu correo del encabezado")
+
+    def test_ningun_detalle_usa_jerga(self):
+        for analisis in self._analisis():
+            for hallazgo in analisis.debilidades:
+                self.assertNotIn("parser", hallazgo.detalle.lower(), hallazgo.codigo)
+
+
+class EjemploTest(unittest.TestCase):
+    """Cada ejemplo pasa las reglas del propio módulo.
+
+    Un ejemplo que el módulo marcara como error enseñaría justo lo contrario de lo
+    que pide la corrección.
+    """
+
+    def test_el_cv_a_una_columna_no_tiene_debilidades(self):
+        analisis = analizar(_documento(EJEMPLO_DE_UNA_COLUMNA), hoy=HOY)
+
+        self.assertEqual([h.codigo for h in analisis.debilidades], [])
+        self.assertEqual(analisis.campos_detectados, len(CAMPOS_DE_LA_FICHA))
+
+    def test_el_contacto_se_detecta_entero(self):
+        self.assertTrue(CORREO.search(EJEMPLO_DE_CONTACTO))
+        self.assertTrue(detectar_telefono(EJEMPLO_DE_CONTACTO))
+        self.assertEqual(ubicaciones.del_encabezado(EJEMPLO_DE_CONTACTO, "Ana Quispe"), ["Cochabamba", "Bolivia"])
+
+    def test_los_ejemplos_sueltos_de_contacto_se_detectan(self):
+        analisis = analizar(_documento(CV_CORRECTO), hoy=HOY)
+        for codigo, valor in (("sin_correo", "Correo"), ("sin_telefono", "Teléfono"), ("sin_ubicacion", "Ubicación")):
+            with self.subTest(codigo):
+                cv = CV_CORRECTO.replace(next(c.valor for c in analisis.campos if c.nombre == valor), "")
+                ejemplo = _hallazgo(analizar(_documento(cv), hoy=HOY), codigo).ejemplo
+                arreglado = analizar(_documento(cv.replace("Jorge Condori Maita\n", f"Jorge Condori Maita\n{ejemplo}\n")), hoy=HOY)
+                self.assertNotIn(codigo, _codigos(arreglado))
+
+    def test_cada_titulo_de_seccion_se_reconoce(self):
+        for linea in EJEMPLO_DE_SECCIONES.splitlines():
+            with self.subTest(linea):
+                self.assertIsNotNone(titulo_de(linea))
+
+    def test_las_fechas_se_leen_en_un_solo_formato(self):
+        for ejemplo in (EJEMPLO_DE_FECHAS, EJEMPLO_DE_PERIODO, EJEMPLO_SIN_TABLAS):
+            with self.subTest(ejemplo):
+                self.assertEqual(len(fechas.formatos_presentes(ejemplo)), 1)
+                self.assertTrue(fechas.periodos(ejemplo, HOY))
+
+    def test_las_habilidades_se_leen_como_texto(self):
+        lineas = EJEMPLO_DE_HABILIDADES.splitlines()
+
+        self.assertIsNotNone(titulo_de(lineas[0]))
+        self.assertTrue({"Python", "Django", "PostgreSQL"} <= encontrar(EJEMPLO_DE_HABILIDADES))
+
+    def test_la_sigla_no_dispara_su_propia_correccion(self):
+        self.assertEqual(escritos_de_una_sola_forma(EJEMPLO_DE_SIGLA), [])
 
 
 class ExtractorTest(unittest.TestCase):
