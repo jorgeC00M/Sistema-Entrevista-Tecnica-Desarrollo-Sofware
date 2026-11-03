@@ -21,14 +21,29 @@ export interface Hallazgo {
   titulo: string
   detalle: string
   favorable: boolean
+  /**
+   * Qué hacer, en imperativo («Pásalo a una sola columna»): el título de la
+   * corrección. Vacía en las fortalezas y ausente en análisis de reglas < 6.
+   */
+  accion?: string
+  /**
+   * Cómo debe quedar, en texto fijo que no viene de la IA ni del CV; puede tener
+   * saltos de línea. Vacío donde un ejemplo no ayuda y ausente en reglas < 7.
+   */
+  ejemplo?: string
 }
 
 /** Un dato que el ATS intenta extraer, y si lo consiguió. */
-interface CampoDelEspejo {
+export interface CampoDelEspejo {
   nombre: string
   detectado: boolean
   valor: string
   nota: string
+  /**
+   * Detectado pero dañado por un hallazgo ya medido (fechas mezcladas, dos
+   * columnas); `nota` dice por qué. Ausente en análisis de reglas < 8.
+   */
+  incompleto?: boolean
 }
 
 /**
@@ -69,6 +84,21 @@ export interface RequisitoDeExperiencia {
   posible_subestimacion: boolean
 }
 
+/**
+ * Una pregunta de filtro del aviso (título, idioma, ubicación) comprobada en el
+ * CV. Nunca hay un «no cumples»: `no_aparece` es que el CV no lo dice, y
+ * `no_verificable` que lo dice pero no alcanza para decidir; `nota` explica cuál.
+ */
+export type EstadoDeFiltro = 'cumple' | 'no_aparece' | 'no_verificable'
+
+export interface Filtro {
+  tipo: 'titulo' | 'idioma' | 'ubicacion'
+  /** Lo que pide el aviso, ya redactado: «Inglés intermedio». */
+  pedido: string
+  estado: EstadoDeFiltro
+  nota: string
+}
+
 export interface Brecha {
   obligatorios: GrupoDeRequisitos
   deseables: GrupoDeRequisitos
@@ -85,6 +115,8 @@ export interface Brecha {
   /** Nulo si la convocatoria no nombra un cargo reconocible. */
   cargo?: Requisito | null
   idioma_distinto?: boolean
+  /** Ausente en análisis de reglas anteriores a la 5; se completa al volver a subir el CV. */
+  filtros?: Filtro[]
 }
 
 export interface AnalisisDeVinetas {
@@ -108,13 +140,29 @@ export type TipoDeCorreccion = 'ortografia' | 'persona' | 'tiempo_verbal'
  * estado ni una cobertura. Todo lo que trae está anclado a lo que el usuario ve
  * —el backend descarta lo que la IA devuelva y no se pueda señalar en su CV—.
  */
+/** La sugerencia de IA para un requisito; los dos caminos solo llegan para un `ausente`. */
+export interface SugerenciaDeRequisito {
+  termino: string
+  sugerencia: string
+  /** Si ya lo usó: cómo escribirlo en un logro. Revisiones de la versión 1 no lo traen. */
+  muestralo?: string
+  /** Una viñeta de ejemplo, con [cifra] en lugar de números. */
+  ejemplo?: string
+  /** Si aún no: cómo conseguir la experiencia. */
+  aprendelo?: string
+}
+
 export interface RevisionIA {
   estado: EstadoDeRevision
+  /** Ausente en las revisiones de antes de la versión 2, que se vuelven a pedir. */
+  version?: number
   motivo: string
+  /** Resumen del match sin juzgar la aptitud; vacío sin convocatoria o si se descartó. */
+  lectura?: string
   /** `original` es exactamente una de `vinetas.sin_resultado`. */
   vinetas: { original: string; sugerida: string }[]
   /** `termino` es un requisito o cargo de la brecha, o `"experiencia"` para el de años. */
-  requisitos: { termino: string; sugerencia: string }[]
+  requisitos: SugerenciaDeRequisito[]
   /** `motivo` es el fragmento del CV o de la convocatoria que motiva la pregunta. */
   preguntas: { pregunta: string; motivo: string }[]
   /** Código de un puesto del catálogo, o nulo si ninguno encaja. */
@@ -153,10 +201,15 @@ export interface Curriculum {
 }
 
 /** Fila del historial: lo justo para ver si el CV mejoró con el tiempo. */
+/** El estado del CV por sus datos clave: la regla está en `hallazgos.ts::veredictoDeLegibilidad`. */
+export type NivelDeLegibilidad = 'perdidas_importantes' | 'legible_con_perdidas' | 'legible'
+
 export interface CurriculumEnLista {
   id: number
   nombre_archivo: string
   fecha: string
   parseabilidad: string | null
+  /** Calculado por el backend con la misma regla del Resumen; nulo sin análisis. */
+  veredicto: NivelDeLegibilidad | null
   con_convocatoria: boolean
 }

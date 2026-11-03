@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { ErrorAPI } from '@/api/client'
@@ -14,6 +15,7 @@ import Spinner from '@/components/ui/Spinner'
 import EntradaDelAnalisis from '@/features/curriculum/components/EntradaDelAnalisis'
 import HistorialDeAnalisis from '@/features/curriculum/components/HistorialDeAnalisis'
 import ResultadoDelAnalisis from '@/features/curriculum/components/ResultadoDelAnalisis'
+import type { TipoDeAnalisis } from '@/features/curriculum/hallazgos'
 import { useRevisionDelCv } from '@/features/curriculum/hooks/useRevisionDelCv'
 import { usePeticion } from '@/hooks/usePeticion'
 import type { Curriculum, CurriculumEnLista, RevisionIA } from '@/types/curriculum'
@@ -21,11 +23,11 @@ import type { Curriculum, CurriculumEnLista, RevisionIA } from '@/types/curricul
 /**
  * Diagnóstico de un currículum contra los filtros de un ATS.
  *
- * Dos rutas, y la convocatoria es lo único que las separa. Sin ella se responde
- * "¿puede el ATS leer mi CV?" —parseabilidad, inventario de tecnologías legibles y
- * redacción de las viñetas—. Con ella se responde además "¿mi CV sirve para esta
- * convocatoria?", y solo una de las secciones del resultado cambia: el
- * inventario pasa a ser el mapa de evidencia.
+ * Dos rutas, que el usuario elige en la entrada. El análisis general responde
+ * "¿puede el ATS leer mi CV?" —veredicto, espejo y tecnologías legibles—. El
+ * dirigido responde además "¿mi CV cubre este aviso?": el Resumen empieza por
+ * «Frente a este aviso» y el inventario pasa a ser el mapa de evidencia. La
+ * convocatoria es lo único que las separa, y solo se envía en el dirigido.
  *
  * No se pide un puesto. Lo hubo y no afectaba al análisis: `ats.analizar()` no lo
  * recibía, así que elegir backend, frontend o full-stack daba el mismo resultado.
@@ -34,13 +36,16 @@ import type { Curriculum, CurriculumEnLista, RevisionIA } from '@/types/curricul
  * `/mi-cv/:id` un análisis, así que recargar o compartir el enlace lo conserva.
  * El resultado se guarda en el estado de la página y, si la URL pide otro que
  * no está en memoria, se carga. Las dos rutas usan este mismo componente, de
- * modo que ir y volver no pierde el archivo ni la convocatoria elegidos.
+ * modo que ir y volver no pierde el tipo, el archivo ni la convocatoria elegidos.
  */
 export default function CurriculumPage() {
   const navigate = useNavigate()
   const parametro = useParams().id
   const idEnLaUrl = parametro ? Number(parametro) : null
 
+  // El general viene elegido: las tarjetas de arriba muestran cuál, y el dirigido
+  // está a un cambio de opción.
+  const [tipo, setTipo] = useState<TipoDeAnalisis>('general')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [convocatoria, setConvocatoria] = useState('')
   const [archivoConvocatoria, setArchivoConvocatoria] = useState<File | null>(null)
@@ -54,6 +59,7 @@ export default function CurriculumPage() {
   // igual que en el registro: cada mensaje va junto al control que lo causó.
   const [erroresPorCampo, setErroresPorCampo] = useState<Record<string, string>>({})
   const zonaDelCv = useRef<HTMLDivElement>(null)
+  const zonaDeConvocatoria = useRef<HTMLDivElement>(null)
 
   // Lo que se muestra: solo si la URL lo pide y ya está cargado.
   const visible = idEnLaUrl !== null && resultado?.id === idEnLaUrl ? resultado : null
@@ -97,7 +103,10 @@ export default function CurriculumPage() {
     setErroresPorCampo({})
     setAnalizando(true)
     try {
-      const nuevo = await analizarCurriculum({ archivo, convocatoria, archivoConvocatoria })
+      // En el general la convocatoria se conserva para volver al dirigido, pero no se envía.
+      const nuevo = await analizarCurriculum(
+        tipo === 'dirigido' ? { archivo, convocatoria, archivoConvocatoria } : { archivo },
+      )
       setResultado(nuevo)
       setNoEncontrado(null)
       refrescarHistorial()
@@ -130,67 +139,69 @@ export default function CurriculumPage() {
     })
   }
 
-  const enfocarLaEntrada = () => {
+  // Vuelve a la entrada y lleva el foco al primer control de una de sus
+  // tarjetas. Se lee del DOM al pintar: la entrada recién se monta al navegar.
+  const volverA = (zona: RefObject<HTMLDivElement | null>) => {
+    navigate('/mi-cv')
     window.requestAnimationFrame(() => {
-      const zona = zonaDelCv.current
-      zona?.querySelector<HTMLElement>('button, input:not([type="file"])')?.focus()
-      zona?.scrollIntoView({ block: 'nearest' })
+      zona.current?.querySelector<HTMLElement>('button, textarea, input:not([type="file"])')?.focus()
+      zona.current?.scrollIntoView({ block: 'nearest' })
     })
   }
 
-  // "Analizar otro" conserva el archivo y la convocatoria: lo habitual es
-  // corregir el CV y volver a subirlo contra la misma oferta.
-  const analizarOtro = () => {
-    navigate('/mi-cv')
-    enfocarLaEntrada()
+  // "Analizar otro" conserva el tipo, el archivo y la convocatoria: lo habitual
+  // es corregir el CV y volver a subirlo contra la misma oferta.
+  const analizarOtro = () => volverA(zonaDelCv)
+
+  // Del análisis general al dirigido: el CV sigue elegido y solo falta el aviso,
+  // cuya tarjeta aparece al marcar el dirigido.
+  const compararConConvocatoria = () => {
+    setTipo('dirigido')
+    volverA(zonaDeConvocatoria)
   }
 
   // Un CV ilegible no se arregla reanalizando el mismo archivo: se suelta.
   const subirOtro = () => {
     setArchivo(null)
-    navigate('/mi-cv')
-    enfocarLaEntrada()
+    volverA(zonaDelCv)
   }
 
   const analisis = visible?.analisis ?? null
 
   return (
     <div>
-      <h1 className="mb-1 font-serif text-headline-xl font-semibold text-vidrio-ink">
-        Revisa tu CV contra los filtros ATS
-      </h1>
-      <p className="max-w-prose text-base text-vidrio-texto">
-        Un ATS (el sistema con el que las empresas filtran postulaciones) no te rechaza con una
-        nota: convierte tu CV en campos que el reclutador busca y filtra. Si algo no se lee, no
-        apareces en su búsqueda. Aquí ves exactamente qué lee de tu currículum.
-      </p>
+      {/* Solo para lectores de pantalla: el encabezado fijo ya dice «Revisar mi
+          CV» y su subtítulo, y repetirlo a la vista empujaba las tarjetas hacia
+          abajo. Qué lee un ATS ya lo dice ese subtítulo. */}
+      <h1 className="sr-only">Revisar mi CV</h1>
 
       {cargandoAnalisis ? (
         <Spinner texto="Abriendo el análisis…" />
       ) : visible && analisis ? (
-        <div className="mt-6">
-          <ResultadoDelAnalisis
-            key={`${visible.id}-${analisis.fecha}`}
-            curriculum={visible}
-            analisis={analisis}
-            onAnalizarOtro={analizarOtro}
-            onSubirOtro={subirOtro}
-            estadoDeRevision={revision.estado}
-            onReintentarRevision={revision.reintentar}
-          />
-        </div>
+        <ResultadoDelAnalisis
+          key={`${visible.id}-${analisis.fecha}`}
+          curriculum={visible}
+          analisis={analisis}
+          onAnalizarOtro={analizarOtro}
+          onCompararConConvocatoria={compararConConvocatoria}
+          onSubirOtro={subirOtro}
+          estadoDeRevision={revision.estado}
+          onReintentarRevision={revision.reintentar}
+        />
       ) : (
-        <div className="mt-6 flex max-w-3xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           {idEnLaUrl !== null && noEncontrado === idEnLaUrl && (
             <Alerta>No encontramos ese análisis. Puedes abrir otro de tu historial o analizar tu CV.</Alerta>
           )}
           <EntradaDelAnalisis
+            tipo={tipo}
             archivo={archivo}
             convocatoria={convocatoria}
             archivoConvocatoria={archivoConvocatoria}
             analizando={analizando}
             errores={erroresPorCampo}
             errorGeneral={errorAlAnalizar}
+            onTipo={setTipo}
             onArchivo={(valor) => {
               setArchivo(valor)
               limpiarErrorDeCampo('archivo')
@@ -205,12 +216,9 @@ export default function CurriculumPage() {
             }}
             onAnalizar={() => void analizar()}
             refZonaDelCv={zonaDelCv}
+            refZonaDeConvocatoria={zonaDeConvocatoria}
           />
-          <HistorialDeAnalisis
-            analisis={historial ?? []}
-            cargando={cargandoHistorial}
-            onAbrir={(id) => navigate(`/mi-cv/${id}`)}
-          />
+          <HistorialDeAnalisis analisis={historial ?? []} cargando={cargandoHistorial} />
         </div>
       )}
     </div>

@@ -49,10 +49,6 @@ const EXCEPCIONES: Record<string, { reglas: Regla[]; motivo: string }> = {
     reglas: ['boton-suelto'],
     motivo: 'puntos del carrusel (role="tab"): un indicador de progreso, no una acción ni un icono',
   },
-  'features/curriculum/components/HistorialDeAnalisis.tsx': {
-    reglas: ['boton-suelto'],
-    motivo: 'fila de lista seleccionable a todo el ancho, con varias columnas de contenido',
-  },
 }
 
 const RAIZ = fileURLToPath(new URL('.', import.meta.url))

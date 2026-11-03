@@ -29,19 +29,9 @@ export default function AvisoDeRevision({ revision, estado, onReintentar }: Prop
   }
 
   const fallo = estado === 'fallo'
-  if (!fallo && revision?.estado === 'ok') {
-    // La IA respondió pero sin nada que proponer: se dice, para que el silencio
-    // no se confunda con un fallo.
-    const vacia =
-      revision.vinetas.length + revision.requisitos.length + revision.preguntas.length + revision.correcciones.length ===
-      0
-    return vacia ? (
-      <p className="flex items-start gap-1.5 text-sm text-vidrio-muted">
-        <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>La IA no encontró nada que sugerir para este CV.</span>
-      </p>
-    ) : null
-  }
+  // Con la revisión lista no se dice nada, ni siquiera que vino vacía: ese
+  // aviso se quitó por decisión del usuario (`plan-de-mejora-como-lista-de-arreglos`).
+  if (!fallo && revision?.estado === 'ok') return null
   if (!fallo && !revision) return null
 
   const reintentable = fallo || revision?.estado === 'no_disponible'

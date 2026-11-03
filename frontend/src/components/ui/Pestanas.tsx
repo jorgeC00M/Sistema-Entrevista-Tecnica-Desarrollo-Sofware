@@ -90,7 +90,7 @@ export default function Pestanas({
             tabIndex={activa ? 0 : -1}
             onClick={() => onSeleccionar(valor)}
             onKeyDown={alPulsar}
-            className={`min-h-11 shrink-0 border-b-2 px-0.5 font-medium whitespace-nowrap ${repartir ? 'text-center text-meta sm:text-sm' : 'text-sm'} transition-colors duration-150 foco-anillo ${
+            className={`min-h-11 shrink-0 border-b-2 px-0.5 font-medium ${repartir ? 'text-center text-meta leading-tight sm:text-sm sm:whitespace-nowrap' : 'text-sm whitespace-nowrap'} transition-colors duration-150 foco-anillo ${
               activa
                 ? 'border-vidrio-acento text-vidrio-ink'
                 : 'border-transparent text-vidrio-muted hover:border-vidrio-borde hover:text-vidrio-ink'

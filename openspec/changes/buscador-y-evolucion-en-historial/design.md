@@ -224,6 +224,32 @@ Revisión del 21-10-2026, con las opciones aprobadas por el usuario.
   - en el frontend se eliminan `obtenerEstadisticas`, el tipo `Estadisticas` y la petición `estadisticas` de `useHistorial`, que queda solo con el historial;
   - "Evolución en el tiempo" se muestra si hay alguna entrevista finalizada en el historial.
 
+**D12. Sin filtro de Estado y acción con icono reutilizable.** *(Reemplaza lo que D2, D10 y D11 dicen del filtro de estado.)*
+
+Revisión del 21-10-2026, a pedido del usuario.
+
+- **Sin filtro de Estado:**
+  - el estado ya se ve en su columna (`Badge`), y la tabla va ordenada por fecha, así que el filtro repetía la columna y ocupaba un lugar en la barra;
+  - `filtrarEntrevistas(lista, texto, nivel = 'todos')` pierde el parámetro `estado`;
+  - se borran `FiltroDeEstado`, `ESTADOS` y `estadoDesdeURL`, y sus tests;
+  - `useFiltrosDeHistorial` lee y escribe solo `q` y `nivel`;
+  - `TablaDeEntrevistas` pierde el `CampoSelect` `filtro-estado` y `OPCIONES_DE_ESTADO`;
+  - un `?estado=` heredado se ignora, igual que `?origen=` en D10.
+- **`EnlaceDeAccion` en `components/ui/`:**
+  - `Link` + `Icono` (`h-4 w-4`, decorativo) + texto corto, con las clases que hoy tiene `Accion` (`inline-flex items-center gap-1 rounded-control text-sm font-medium whitespace-nowrap text-vidrio-acento hover:underline foco-anillo`);
+  - el `aria-label` es **obligatorio** en el tipo: con un texto visible de una palabra, diez «Ver» iguales no dicen nada a un lector de pantalla;
+  - es genérico (`icono` y `children`), no un «EnlaceVer» fijo, para que «Continuar» use la misma forma con `play` y la columna quede uniforme;
+  - no es un `<button>` ni lleva colores sueltos, así que `estilos.test.ts` no necesita excepción;
+  - el icono `ojo` ya existe (lo usa `CampoAuth` para mostrar la contraseña). No se crea otro.
+- **Dónde se usa:**
+  - en `TablaDeEntrevistas::Accion`, para la fila y la tarjeta móvil;
+  - en `ListaObservaciones` de Retroalimentación, que lleva al mismo destino: los resultados de una entrevista.
+- **Dónde no se usa:**
+  - «Ver historial» de `ResultadosPage`, que es un botón principal hacia una sección y no un registro;
+  - «Ver todo en Mejorar» de `ResumenDelAnalisis`, que es un `Boton` que cambia de pestaña.
+
+  Ponerles un ojo mezclaría «abrir un registro» con «ir a otra parte».
+
 ## Risks / Trade-offs
 
 - **[Se quita un campo de la API]** → `promedio_por_area` no tiene más consumidores que el gráfico eliminado. Un grep en `frontend/src` lo confirma antes de borrar. No hay clientes externos.

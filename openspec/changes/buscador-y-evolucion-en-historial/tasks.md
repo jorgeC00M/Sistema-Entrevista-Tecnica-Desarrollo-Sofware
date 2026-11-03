@@ -253,3 +253,48 @@
 - **Tests del backend:** las dos clases de `test_evaluaciones.py` pasaron a ser `EndpointDeEstadisticasRetiradoTest` (404 en `/api/estadisticas/`, 200 en `retroalimentacion/`) y `DesglosePorAreaTest`. `test_incluye_entrevistas_no_finalizadas` ya no compara con el endpoint retirado.
 - **CLAUDE.md:** la sección "Statistics are computed in the database" pasó a "Aggregates are computed in the database" y habla de `calcular_retroalimentacion`. Además se corrigió la ruta que decía `services.py`: esa función vive en `selectors.py`.
 - **Totales:** 526 tests en el backend (530 − 5 de estadísticas + 1 de endpoint retirado), 75 en el frontend (70 + 5 de nivel), y el lint con los mismos 5 avisos de la base.
+
+## 9. Revisión: sin filtro de Estado y acción con icono reutilizable (design D12)
+
+- [x] 9.1 **Lógica pura.**
+  - En `historial.ts`, quita `FiltroDeEstado`, `ESTADOS`, `estadoDesdeURL` y el parámetro `estado` de `filtrarEntrevistas`, que queda `(entrevistas, texto, nivel = 'todos')`. Quita también el import de `EstadoEntrevista` si queda sin uso y ajusta el comentario.
+  - En `historial.test.ts`:
+    - borra `describe('estadoDesdeURL')` y el caso «combina texto y estado»;
+    - ajusta las llamadas a la nueva firma;
+    - añade «combina texto y nivel».
+
+  Verifica que `pnpm test` pasa.
+- [x] 9.2 **Filtros.**
+  - En `useFiltrosDeHistorial`, `ClaveDeFiltro = 'q' | 'nivel'`, `SIN_FILTRO = { q: '', nivel: 'todos' }`. Quita el campo `estado` y su lectura de la URL, y actualiza el docstring.
+  - En `TablaDeEntrevistas`, quita el `CampoSelect` `filtro-estado`, `OPCIONES_DE_ESTADO` y el import `FiltroDeEstado`, y actualiza el docstring.
+
+  Verifica:
+  - que `grep -rn "estadoDesdeURL\|FiltroDeEstado\|OPCIONES_DE_ESTADO\|filtro-estado" frontend/src` no da resultados;
+  - que `tsc` pasa.
+- [x] 9.3 **`components/ui/EnlaceDeAccion.tsx`.** Crea un `Link` con estas props: `to`, `icono: NombreDeIcono`, `children` y `'aria-label'` (obligatorio).
+  - Lleva un `Icono` en `h-4 w-4` y las clases actuales de `Accion`.
+  - Un docstring explica por qué el nombre accesible es obligatorio y que es genérico.
+- [x] 9.4 **Uso.**
+  - En `TablaDeEntrevistas::Accion`:
+    - para una entrevista finalizada o abandonada, `ojo` + «Ver», con `aria-label` «Ver resultados: <puesto> del <fecha>»;
+    - para una entrevista en curso, `play` + «Continuar»;
+    - quita la `→`.
+  - En `ListaObservaciones`, `ojo` + «Ver», con `aria-label` «Ver la entrevista completa: pregunta <n> de <área>». Quita las clases escritas a mano.
+- [x] 9.5 **Verificación del frontend:** `tsc`, `pnpm test` (con `estilos.test.ts` en verde), `lint` con los 5 avisos de la base, y `build`.
+- [x] 9.6 **CLAUDE.md:**
+  - la línea del buscador queda «beside a `CampoSelect` of Nivel … `?q=` / `?nivel=`»;
+  - menciona `EnlaceDeAccion` entre los componentes base;
+  - actualiza el número de tests del frontend.
+- [ ] 9.7 **Prueba manual** con `IA_PROVEEDOR=fake`, junto con la 8.8:
+  1. Junto al buscador solo está el selector de Nivel.
+  2. Con `?estado=abandonada` en la URL se ven todas las entrevistas.
+  3. La columna Acción muestra ojo + «Ver» y play + «Continuar», en la tabla y en la tarjeta del móvil.
+  4. En Retroalimentación, ojo + «Ver» abre los resultados.
+  5. El lector de pantalla anuncia «Ver resultados: <puesto> del <fecha>».
+- [ ] 9.8 No hagas commit. El usuario lo hará tras revisar.
+
+## Notas de la aplicación del grupo 9 (21-10-2026)
+
+- **Tests del frontend:** 72, antes 75. Se fueron los 4 casos de `estadoDesdeURL` y «combina texto y estado». Entraron «combina texto y nivel» y «no filtra por estado», y el caso de nivel se partió en dos. El lint sigue con los 5 avisos de la base, y `estilos.test.ts` pasa sin excepción nueva.
+- **`ListaObservaciones`:** el enlace va dentro de un `<div className="mt-3">`, porque `EnlaceDeAccion` no recibe `className`. El margen pertenece a quien lo coloca, no al componente.
+- **CLAUDE.md:** el número de tests del frontend no figura en él, así que no hubo nada que actualizar.

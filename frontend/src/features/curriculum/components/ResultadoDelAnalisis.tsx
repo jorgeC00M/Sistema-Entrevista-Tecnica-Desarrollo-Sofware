@@ -1,35 +1,40 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
 import Boton from '@/components/ui/Boton'
+import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
 import Pestanas from '@/components/ui/Pestanas'
 import Tarjeta from '@/components/ui/Tarjeta'
-import BrechaDeRequisitos from '@/features/curriculum/components/BrechaDeRequisitos'
+import ArreglosDeFormato from '@/features/curriculum/components/ArreglosDeFormato'
 import AvisoDeRevision from '@/features/curriculum/components/AvisoDeRevision'
-import InventarioDeTerminos from '@/features/curriculum/components/InventarioDeTerminos'
-import ListaDeHallazgos from '@/features/curriculum/components/ListaDeHallazgos'
-import PreguntasProbables from '@/features/curriculum/components/PreguntasProbables'
+import ColumnasDeMatch from '@/features/curriculum/components/ColumnasDeMatch'
+import LecturaGeneral from '@/features/curriculum/components/LecturaGeneral'
+import PalabrasClaveNoDetectadas from '@/features/curriculum/components/PalabrasClaveNoDetectadas'
+import RequisitosDelPuesto from '@/features/curriculum/components/RequisitosDelPuesto'
 import ResumenDelAnalisis from '@/features/curriculum/components/ResumenDelAnalisis'
 import RevisionDeRedaccion from '@/features/curriculum/components/RevisionDeRedaccion'
+import SinRequisitosReconocidos from '@/features/curriculum/components/SinRequisitosReconocidos'
 import VinetasDeLogro from '@/features/curriculum/components/VinetasDeLogro'
 import {
   CODIGO_SIN_CAPA_DE_TEXTO,
-  correccionesMedidas,
   esIlegible,
   idDeHallazgo,
-  sugerenciasDeIA,
+  tipoDeRevision,
 } from '@/features/curriculum/hallazgos'
 import type { EstadoDeLaRevision } from '@/features/curriculum/hooks/useRevisionDelCv'
+import { fechaLegible } from '@/lib/fechas'
 import type { AnalisisATS, Curriculum } from '@/types/curriculum'
 
-type Pestana = 'resumen' | 'mejorar' | 'requisitos' | 'entrevista'
+type Pestana = 'resumen' | 'match' | 'mejorar'
 
 interface Props {
   curriculum: Curriculum
   analisis: AnalisisATS
   /** Vuelve a la entrada, con el archivo y la convocatoria aún elegidos. */
   onAnalizarOtro: () => void
+  /** Sin convocatoria: vuelve a la entrada con el foco en la convocatoria. */
+  onCompararConConvocatoria: () => void
   /** Para un CV ilegible: vuelve a la entrada soltando ese archivo. */
   onSubirOtro: () => void
   /** Las sugerencias de IA llegan después del diagnóstico: en qué punto están. */
@@ -44,18 +49,19 @@ const ANUNCIO: Record<EstadoDeLaRevision, string> = {
   fallo: 'No se pudieron obtener las sugerencias de IA.',
 }
 
-function fechaLegible(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
 /**
  * El resultado del análisis: una barra que dice qué se analizó y, debajo, el
  * contenido.
  *
- * Un CV legible se reparte en cuatro pestañas: Resumen (el espejo, lo primero
- * que mejorar y lo que ya funciona), Qué mejorar (todas las correcciones: las
- * del ATS, las viñetas y la redacción), Requisitos o Tecnologías, y Para la
- * entrevista.
+ * Las pestañas de un CV legible dependen del tipo. El general tiene «Resumen y
+ * Formato» (el estado, el espejo, las tecnologías y la práctica) y «Plan de
+ * Mejora» (los arreglos del ATS, las viñetas y la redacción). El dirigido dice
+ * en la barra frente a qué oferta se compara, su «Resumen» pone en el banner los
+ * requisitos no detectados al lado del formato, agrega «Match con la Oferta»
+ * (las dos columnas, la lectura general de la IA y los requisitos del puesto) y
+ * su «Plan de Mejora» suma las palabras clave no detectadas con sus dos caminos.
+ * Los valores internos (`resumen`, `mejorar`) siguen nombrando las mismas
+ * vistas; solo cambian las etiquetas.
  *
  * Un CV ilegible (sin capa de texto) no tiene pestañas: el resto del análisis
  * está vacío por construcción, y mostrarlo culparía a la causa equivocada —"tu
@@ -63,12 +69,13 @@ function fechaLegible(iso: string): string {
  * muestra solo el espejo vacío, la causa y el arreglo.
  *
  * La página monta esto con una `key` por análisis, así que cada resultado
- * nuevo empieza en "Resumen".
+ * nuevo empieza en la primera pestaña.
  */
 export default function ResultadoDelAnalisis({
   curriculum,
   analisis,
   onAnalizarOtro,
+  onCompararConConvocatoria,
   onSubirOtro,
   estadoDeRevision,
   onReintentarRevision,
@@ -96,9 +103,23 @@ export default function ResultadoDelAnalisis({
           {curriculum.nombre_archivo}
           <span className="sr-only">. El ATS lee {analisis.parseabilidad} campos.</span>
         </h2>
-        <EtiquetaMono tono="suelto">
-          {curriculum.con_convocatoria ? 'Con convocatoria' : 'Sin convocatoria'} · {fechaLegible(curriculum.fecha)}
-        </EtiquetaMono>
+        {/* Frente a qué se compara: el cargo que el aviso nombra, o nada inventado.
+            La empresa no se mide, así que no se muestra. */}
+        {curriculum.con_convocatoria && (
+          <p className="mt-0.5 truncate text-sm text-vidrio-texto">
+            frente a {analisis.brecha?.cargo?.termino ?? 'la convocatoria'}
+          </p>
+        )}
+        {/* El tipo con nombre, el mismo que en el historial: qué pregunta responde
+            este análisis. */}
+        <p className="mt-1 flex flex-wrap items-center gap-2">
+          {curriculum.con_convocatoria ? (
+            <EtiquetaConvocatoria>{tipoDeRevision(true)}</EtiquetaConvocatoria>
+          ) : (
+            <EtiquetaMono>{tipoDeRevision(false)}</EtiquetaMono>
+          )}
+          <EtiquetaMono tono="suelto">{fechaLegible(curriculum.fecha)}</EtiquetaMono>
+        </p>
       </div>
       <Boton variante="secundario" tamano="sm" onClick={onAnalizarOtro} className="self-start sm:self-auto">
         Analizar otro
@@ -135,41 +156,41 @@ export default function ResultadoDelAnalisis({
     (revision?.vinetas ?? []).map(({ original, sugerida }) => [original, sugerida]),
   )
   const sugerenciasDeRequisitos = Object.fromEntries(
-    (revision?.requisitos ?? []).map(({ termino, sugerencia }) => [termino, sugerencia]),
+    (revision?.requisitos ?? []).map((sugerencia) => [sugerencia.termino, sugerencia]),
   )
-  // Rótulos cortos: en un celular las cuatro pestañas tienen que caber.
-  const pestanas: { valor: Pestana; etiqueta: string }[] = [
-    { valor: 'resumen', etiqueta: 'Resumen' },
-    // Sin número: lo medido y lo sugerido se cuentan por separado, dentro.
-    { valor: 'mejorar', etiqueta: 'Mejorar' },
-    { valor: 'requisitos', etiqueta: curriculum.con_convocatoria ? 'Requisitos' : 'Tecnologías' },
-    { valor: 'entrevista', etiqueta: 'Entrevista' },
-  ]
+  const pestanas: { valor: Pestana; etiqueta: string }[] = curriculum.con_convocatoria
+    ? [
+        { valor: 'resumen', etiqueta: 'Resumen' },
+        { valor: 'match', etiqueta: 'Match con la Oferta' },
+        { valor: 'mejorar', etiqueta: 'Plan de Mejora' },
+      ]
+    : [
+        { valor: 'resumen', etiqueta: 'Resumen y Formato' },
+        { valor: 'mejorar', etiqueta: 'Plan de Mejora' },
+      ]
 
-  // El mismo aviso en cada pestaña que depende de la IA: quien entra directo a
-  // "Entrevista" tiene que saber que las preguntas todavía vienen.
+  // El mismo aviso en todas las pestañas: todas muestran sugerencias de IA, y
+  // quien pasa a otra tiene que saber que todavía vienen.
   const aviso = (
     <AvisoDeRevision revision={revision} estado={estadoDeRevision} onReintentar={onReintentarRevision} />
   )
 
-  const verTodo = () => {
-    setPestana('mejorar')
-    window.requestAnimationFrame(() => document.getElementById(`${idPestanas}-mejorar`)?.focus())
+  // Abre una pestaña y le da el foco, para que el lector de pantalla anuncie el cambio.
+  const abrir = (destino: Pestana) => {
+    setPestana(destino)
+    window.requestAnimationFrame(() => document.getElementById(`${idPestanas}-${destino}`)?.focus())
   }
 
-  // Desde el Resumen, a una corrección concreta: se abre "Mejorar" y el foco va
+  // Desde el Resumen, a una corrección concreta: se abre «Plan de Mejora» y el foco va
   // a ella (el `scroll-mt` de la fila la deja por debajo de las pestañas fijas).
-  const irA = (codigo: string) => {
+  const irA = (id: string) => {
     setPestana('mejorar')
     window.requestAnimationFrame(() => {
-      const fila = document.getElementById(idDeHallazgo(codigo))
+      const fila = document.getElementById(id)
       fila?.focus({ preventScroll: true })
       fila?.scrollIntoView({ block: 'start' })
     })
   }
-
-  const medidas = correccionesMedidas(analisis)
-  const sugeridas = sugerenciasDeIA(analisis)
 
   return (
     <div className="flex flex-col gap-5">
@@ -203,60 +224,45 @@ export default function ResultadoDelAnalisis({
         className="foco-anillo flex flex-col gap-6 rounded-control"
       >
         {pestana === 'resumen' && (
-          <ResumenDelAnalisis analisis={analisis} onVerTodo={verTodo} onIrA={irA} aviso={aviso} />
+          <ResumenDelAnalisis
+            curriculum={curriculum}
+            analisis={analisis}
+            onVerTodo={() => abrir('mejorar')}
+            onIrA={(codigo) => irA(idDeHallazgo(codigo))}
+            onCompararConConvocatoria={onCompararConConvocatoria}
+            aviso={aviso}
+          />
+        )}
+
+        {/* Lo que coincide y lo que no, su resumen y lo que el aviso exige aparte. */}
+        {pestana === 'match' && (
+          <>
+            {aviso}
+            {analisis.brecha ? (
+              <>
+                <ColumnasDeMatch brecha={analisis.brecha} />
+                <LecturaGeneral revision={revision} estado={estadoDeRevision} />
+                <RequisitosDelPuesto brecha={analisis.brecha} sugerencias={sugerenciasDeRequisitos} />
+              </>
+            ) : (
+              <SinRequisitosReconocidos />
+            )}
+          </>
         )}
 
         {pestana === 'mejorar' && (
           <>
             {aviso}
-            {/* Lo medido y lo sugerido, contados por separado y nunca sumados.
-                El espejo no se repite aquí: vive en el Resumen. */}
-            <p>
-              <EtiquetaMono tono="suelto">
-                {medidas} {medidas === 1 ? 'corrección medida' : 'correcciones medidas'}
-                {sugeridas > 0 && ` · ${sugeridas} ${sugeridas === 1 ? 'sugerencia de IA' : 'sugerencias de IA'}`}
-              </EtiquetaMono>
-            </p>
-            <ListaDeHallazgos
-              titulo="Qué corregir para el ATS"
-              hallazgos={analisis.debilidades}
-              vacio="No se encontró ningún problema de parseo en tu CV."
-            />
+            {/* Primero el formato: si el ATS no lee un dato, tampoco lo compara. */}
+            <ArreglosDeFormato hallazgos={analisis.debilidades} />
+            {/* Después, lo que el aviso pide y el CV no escribe, con dos caminos. */}
+            {curriculum.con_convocatoria && analisis.brecha && (
+              <PalabrasClaveNoDetectadas brecha={analisis.brecha} sugerencias={sugerenciasDeRequisitos} />
+            )}
             {/* Rotulado aparte dentro del propio componente: a un ATS le da
                 igual si las viñetas traen métricas. */}
             {analisis.vinetas && <VinetasDeLogro vinetas={analisis.vinetas} sugerencias={sugerenciasDeVinetas} />}
             <RevisionDeRedaccion revision={revision} />
-          </>
-        )}
-
-        {/* Si se aportó convocatoria pero no tenía términos reconocibles,
-            `brecha` viene nula: se dice, en vez de caer al inventario como si
-            no se hubiera aportado nada. (Un CV ilegible no llega aquí.) */}
-        {pestana === 'requisitos' &&
-          (curriculum.con_convocatoria ? (
-            analisis.brecha ? (
-              <>
-                {aviso}
-                <BrechaDeRequisitos brecha={analisis.brecha} sugerencias={sugerenciasDeRequisitos} />
-              </>
-            ) : (
-              // No es un error: se dice sin interrumpir, como los demás avisos.
-              <p className="flex items-start gap-1.5 text-sm text-vidrio-muted">
-                <Icono nombre="info" className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  No se reconoció ningún requisito técnico en la convocatoria que enviaste, así que no
-                  hay nada que comparar. Revisa que incluya la lista de tecnologías.
-                </span>
-              </p>
-            )
-          ) : (
-            <InventarioDeTerminos terminos={analisis.inventario} />
-          ))}
-
-        {pestana === 'entrevista' && (
-          <>
-            {aviso}
-            <PreguntasProbables revision={revision} />
           </>
         )}
       </div>

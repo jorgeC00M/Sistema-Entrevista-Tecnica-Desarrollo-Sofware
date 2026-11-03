@@ -77,6 +77,18 @@ export default class LimiteDeError extends Component<Props, Estado> {
 }
 
 /**
+ * Secciones cuya lista y cuyo detalle (`/mi-cv` y `/mi-cv/:id`) son el mismo
+ * componente y guardan estado entre las dos: el CV y la convocatoria elegidos
+ * deben sobrevivir a "Analizar otro" y a "Compara con una convocatoria". Para
+ * ellas la `key` es la sección, no la ruta completa.
+ */
+const SECCIONES_CON_ESTADO_COMPARTIDO = ['/mi-cv']
+
+function claveDeLaRuta(pathname: string): string {
+  return SECCIONES_CON_ESTADO_COMPARTIDO.find((s) => pathname === s || pathname.startsWith(`${s}/`)) ?? pathname
+}
+
+/**
  * El mismo límite, pero atado a la ruta actual.
  *
  * La `key` es lo importante: un límite que ya falló se queda en su estado de
@@ -87,7 +99,7 @@ export default class LimiteDeError extends Component<Props, Estado> {
 export function LimiteDeErrorDeRuta({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   return (
-    <LimiteDeError key={pathname} recuperacion="volver">
+    <LimiteDeError key={claveDeLaRuta(pathname)} recuperacion="volver">
       {children}
     </LimiteDeError>
   )

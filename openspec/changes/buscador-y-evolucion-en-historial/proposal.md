@@ -16,10 +16,9 @@ Con eso, el Alcance de la tesis («analizar su progreso a lo largo del tiempo»)
 
 - **Buscador encima de la tabla de "Tus entrevistas":**
   - un campo de texto que busca en puesto, tecnología y nivel, sin distinguir mayúsculas ni tildes;
-  - un selector de Estado: Todos, Finalizada, En curso o Abandonada;
   - un selector de Nivel: Todos los niveles y los del catálogo. Con un nivel elegido, la evolución muestra solo esa tarjeta.
 
-  Filtra al escribir, y la paginación cuenta solo los resultados. Muestra solo sus botones, sin el texto «Mostrando X–Y de N»; el número de página se anuncia solo al lector de pantalla. Los filtros viven en la URL (`?q=`, `?estado=`, `?nivel=`) junto a `?pagina=`, y cambiar un filtro vuelve a la página 1. Si nada coincide, se muestra un mensaje y «Limpiar búsqueda».
+  Filtra al escribir, y la paginación cuenta solo los resultados. Muestra solo sus botones, sin el texto «Mostrando X–Y de N»; el número de página se anuncia solo al lector de pantalla. Los filtros viven en la URL (`?q=`, `?nivel=`) junto a `?pagina=`, y cambiar un filtro vuelve a la página 1. Si nada coincide, se muestra un mensaje y «Limpiar búsqueda».
 - **«Evolución en el tiempo» pasa debajo de la tabla, en tres tarjetas, una por nivel** (Junior, Semi-Senior y Senior). Esto reemplaza la primera versión aplicada, de una sola serie con selector, que se revisó el 21-10-2026:
   - van en una fila desde 1280 px de ventana y apiladas por debajo; siempre las tres, y la vacía con su mensaje;
   - **una línea por puesto, con un color fijo por puesto** (paleta Okabe-Ito, apta para daltonismo, como tokens), una sola leyenda y la misma escala 0–100 en las tres;
@@ -42,7 +41,9 @@ Con eso, el Alcance de la tesis («analizar su progreso a lo largo del tiempo»)
   - `CampoSelect` pasa de `features/seleccion/components/` a `components/ui/`, porque ahora lo usan dos pantallas;
   - vuelve el trazo `buscar` (Tabler `search`), que la limpieza anterior había quitado por no tener uso.
 - **Encabezado:** bajo «Historial y progreso» va solo la descripción «Revisa tus entrevistas anteriores y sigue cómo evoluciona tu puntaje en cada puesto y nivel.», sin «N entrevistas registradas» ni «N completadas · promedio general X» (aprobada por el usuario el 21-10-2026).
-- **Sin cambios:** el texto de la columna Acción y el nombre de la pestaña.
+- **Sin filtro de Estado** (pedido por el usuario el 21-10-2026). El estado se sigue viendo en su columna, y un `?estado=` antiguo se ignora.
+- **Acción con icono:** en la columna Acción, «Ver resultados →» pasa a ser **ojo + «Ver»**, y «Continuar →» pasa a ser **play + «Continuar»**. Para eso se crea el componente reutilizable `components/ui/EnlaceDeAccion.tsx` (un enlace con icono y texto, con nombre accesible obligatorio), que también usa «Ver la entrevista completa» en Retroalimentación. El icono `ojo` ya existía en `trazosDeIconos.ts`.
+- **Sin cambios:** el nombre de la pestaña.
 
 ## Capabilities
 
@@ -52,7 +53,7 @@ Con eso, el Alcance de la tesis («analizar su progreso a lo largo del tiempo»)
 ### Modified Capabilities
 <!-- Ninguna en `openspec/specs/`. Los requisitos se añaden a la capability `historial-de-entrevistas`, que introduce el cambio activo `tabla-de-historial` y que aún no está archivada. Por eso su delta va como ADDED en la misma ruta. -->
 
-- `historial-de-entrevistas`: añade la búsqueda, el filtro de estado, la evolución por puesto y nivel y la ausencia de «Promedio por área». Va como requisitos ADDED, ver la nota anterior.
+- `historial-de-entrevistas`: añade la búsqueda, el filtro de nivel, la acción con icono, la evolución por puesto y nivel y la ausencia de «Promedio por área». Va como requisitos ADDED, ver la nota anterior.
 
 ## Impact
 
@@ -61,7 +62,8 @@ Con eso, el Alcance de la tesis («analizar su progreso a lo largo del tiempo»)
   - `apps/evaluaciones/tests/test_evaluaciones.py`.
 - **Frontend:**
   - `features/historial/`: `HistorialPage`, `TablaDeEntrevistas`, `GraficoProgreso`, el nuevo `historial.ts` con su test, y se borra `ComparativaAreas`;
-  - `components/ui/`: el nuevo `CampoBusqueda`, `CampoSelect` movido aquí y `trazosDeIconos.ts`;
+  - `components/ui/`: los nuevos `CampoBusqueda` y `EnlaceDeAccion`, `CampoSelect` movido aquí y `trazosDeIconos.ts`;
+  - `features/retroalimentacion/components/ListaObservaciones.tsx`, por el enlace «Ver»;
   - `lib/texto.ts`, nuevo;
   - `types/evaluacion.ts`;
   - `estilos.test.ts`;

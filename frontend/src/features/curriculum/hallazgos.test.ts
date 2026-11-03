@@ -1,14 +1,21 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  CAMPOS_CLAVE,
+  CAMPOS_QUE_BUSCA_EL_ATS,
   CODIGO_SIN_CAPA_DE_TEXTO,
   SEVERIDADES,
+  accionDe,
   debilidadesPorGravedad,
-  correccionesMedidas,
+  correccionesPrioritarias,
   esIlegible,
-  sugerenciasDeIA,
+  estadoDelCampo,
+  tipoDeRevision,
+  puedeAnalizar,
+  VEREDICTOS,
+  veredictoDeLegibilidad,
 } from '@/features/curriculum/hallazgos'
-import type { Hallazgo, Severidad } from '@/types/curriculum'
+import type { CampoDelEspejo, Hallazgo, Severidad } from '@/types/curriculum'
 
 function hallazgo(codigo: string, severidad: Severidad): Hallazgo {
   return { codigo, severidad, titulo: codigo, detalle: '', favorable: false }
@@ -62,26 +69,129 @@ describe('SEVERIDADES', () => {
   })
 })
 
-describe('correccionesMedidas y sugerenciasDeIA', () => {
-  const debilidades = [hallazgo('a', 'critica'), hallazgo('b', 'alta')]
-  const vinetas = { total: 5, logros: 2, proporcion: '2/5', sin_resultado: ['x', 'y', 'z'] }
-  const revision_ia = {
-    estado: 'ok' as const,
-    motivo: '',
-    vinetas: [],
-    requisitos: [],
-    preguntas: [],
-    puesto_sugerido: null,
-    correcciones: [{ original: 'a', sugerido: 'b', tipo: 'ortografia' as const }],
+describe('veredictoDeLegibilidad', () => {
+  // Los mismos casos que `EstadoDelCvTest` en el backend.
+  function campos(sin: string[] = [], incompletos: string[] = []): CampoDelEspejo[] {
+    return CAMPOS_QUE_BUSCA_EL_ATS.map((nombre) => ({
+      nombre,
+      detectado: !sin.includes(nombre),
+      valor: '',
+      nota: '',
+      incompleto: incompletos.includes(nombre),
+    }))
   }
 
-  it('cuenta lo medido sin la IA y la IA aparte, sin sumarlas', () => {
-    expect(correccionesMedidas({ debilidades, vinetas })).toBe(5)
-    expect(sugerenciasDeIA({ revision_ia })).toBe(1)
+  it('sin un dato clave son pérdidas importantes', () => {
+    expect(veredictoDeLegibilidad({ campos: campos(['Correo']) })).toBe('perdidas_importantes')
   })
 
-  it('sin viñetas ni revisión', () => {
-    expect(correccionesMedidas({ debilidades: [hallazgo('a', 'media')], vinetas: null })).toBe(1)
-    expect(sugerenciasDeIA({ revision_ia: null })).toBe(0)
+  it('sin un dato que no es clave es legible con pérdidas', () => {
+    expect(veredictoDeLegibilidad({ campos: campos(['Ubicación']) })).toBe('legible_con_perdidas')
+  })
+
+  it('un dato incompleto es legible con pérdidas', () => {
+    expect(veredictoDeLegibilidad({ campos: campos([], ['Experiencia']) })).toBe('legible_con_perdidas')
+  })
+
+  it('todo completo es legible, también sin `incompleto` (reglas anteriores)', () => {
+    expect(veredictoDeLegibilidad({ campos: campos() })).toBe('legible')
+    expect(
+      veredictoDeLegibilidad({ campos: campos().map(({ nombre, detectado, valor, nota }) => ({ nombre, detectado, valor, nota })) }),
+    ).toBe('legible')
+  })
+})
+
+describe('estadoDelCampo', () => {
+  it('distingue extraído, incompleto y no extraído', () => {
+    expect(estadoDelCampo({ detectado: true })).toBe('extraido')
+    expect(estadoDelCampo({ detectado: true, incompleto: true })).toBe('incompleto')
+    expect(estadoDelCampo({ detectado: false, incompleto: true })).toBe('no_extraido')
+  })
+})
+
+describe('CAMPOS_CLAVE', () => {
+  it('son el contacto, la experiencia y las habilidades, como en el backend', () => {
+    expect(CAMPOS_CLAVE).toEqual(['Nombre', 'Correo', 'Teléfono', 'Experiencia', 'Habilidades'])
+  })
+})
+
+describe('correccionesPrioritarias', () => {
+  it('da las tres más graves, en orden de gravedad', () => {
+    const prioritarias = correccionesPrioritarias([
+      hallazgo('formato', 'media'),
+      hallazgo('dos_columnas', 'alta'),
+      hallazgo('texto_en_encabezado', 'critica'),
+      hallazgo('fechas', 'media'),
+    ])
+
+    expect(prioritarias.map((h) => h.codigo)).toEqual(['texto_en_encabezado', 'dos_columnas', 'formato'])
+  })
+})
+
+describe('accionDe', () => {
+  it('usa la acción como título', () => {
+    expect(accionDe({ titulo: 'Tu CV está maquetado a dos columnas', accion: 'Pásalo a una sola columna' })).toBe(
+      'Pásalo a una sola columna',
+    )
+  })
+
+  it('sin acción, en un análisis anterior, usa el diagnóstico', () => {
+    expect(accionDe({ titulo: 'Tu CV está maquetado a dos columnas' })).toBe('Tu CV está maquetado a dos columnas')
+    expect(accionDe({ titulo: 'Tu CV tiene 3 páginas', accion: '' })).toBe('Tu CV tiene 3 páginas')
+  })
+})
+
+describe('tipoDeRevision', () => {
+  it('nombra igual cada tipo de análisis', () => {
+    expect(tipoDeRevision(false)).toBe('Análisis general')
+    expect(tipoDeRevision(true)).toBe('Análisis dirigido')
+  })
+})
+
+describe('puedeAnalizar', () => {
+  const cv = new File(['%PDF'], 'cv.pdf')
+  const aviso = new File(['%PDF'], 'aviso.pdf')
+
+  it('sin CV no se puede, ni en el dirigido sin aviso', () => {
+    expect(puedeAnalizar('general', null, '', null)).toBe(false)
+    expect(puedeAnalizar('dirigido', null, 'Backend Django', aviso)).toBe(false)
+    expect(puedeAnalizar('dirigido', cv, '   ', null)).toBe(false)
+  })
+
+  it('en el general basta el CV, aunque haya un aviso cargado', () => {
+    expect(puedeAnalizar('general', cv, '', null)).toBe(true)
+    expect(puedeAnalizar('general', cv, 'Backend Django', aviso)).toBe(true)
+  })
+
+  it('en el dirigido vale el texto o el archivo del aviso', () => {
+    expect(puedeAnalizar('dirigido', cv, 'Backend Django', null)).toBe(true)
+    expect(puedeAnalizar('dirigido', cv, '', aviso)).toBe(true)
+  })
+})
+
+describe('CAMPOS_QUE_BUSCA_EL_ATS', () => {
+  it('son los 8 campos de la ficha del backend, en su orden', () => {
+    expect(CAMPOS_QUE_BUSCA_EL_ATS).toEqual([
+      'Nombre',
+      'Correo',
+      'Teléfono',
+      'Ubicación',
+      'Experiencia',
+      'Educación',
+      'Habilidades',
+      'Antigüedad',
+    ])
+  })
+})
+
+describe('VEREDICTOS', () => {
+  it('nombra los tres niveles con etiqueta, título, regla e icono', () => {
+    expect(Object.keys(VEREDICTOS)).toEqual(['perdidas_importantes', 'legible_con_perdidas', 'legible'])
+    for (const aspecto of Object.values(VEREDICTOS)) {
+      expect(aspecto.etiqueta).not.toBe('')
+      expect(aspecto.titulo).not.toBe('')
+      expect(aspecto.regla).not.toBe('')
+      expect(aspecto.icono).not.toBe('')
+    }
   })
 })

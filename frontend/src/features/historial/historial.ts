@@ -4,16 +4,7 @@
  * página solo la pinta.
  */
 import { normalizarParaBuscar } from '@/lib/texto'
-import type { Entrevista, EstadoEntrevista } from '@/types/entrevista'
-
-export type FiltroDeEstado = 'todos' | EstadoEntrevista
-
-const ESTADOS: readonly EstadoEntrevista[] = ['finalizada', 'en_progreso', 'abandonada']
-
-/** El estado que llega de `?estado=`; cualquier otra cosa equivale a todos. */
-export function estadoDesdeURL(valor: string | null): FiltroDeEstado {
-  return ESTADOS.find((estado) => estado === valor) ?? 'todos'
-}
+import type { Entrevista } from '@/types/entrevista'
 
 /** `'todos'` o el `codigo` de un nivel del catálogo. */
 export type FiltroDeNivel = 'todos' | string
@@ -28,19 +19,18 @@ export function nivelDesdeURL(valor: string | null, codigos: readonly string[]):
 }
 
 /**
- * Las entrevistas que coinciden con el texto (en puesto, tecnología o nivel),
- * el estado y el nivel. El texto se compara sin mayúsculas ni tildes; vacío, no
- * filtra. Conserva el orden de la lista.
+ * Las entrevistas que coinciden con el texto (en puesto, tecnología o nivel)
+ * y con el nivel. El texto se compara sin mayúsculas ni tildes; vacío, no
+ * filtra. Conserva el orden de la lista. No hay filtro de estado: el estado se
+ * lee en su columna de la tabla.
  */
 export function filtrarEntrevistas(
   entrevistas: Entrevista[],
   texto: string,
-  estado: FiltroDeEstado,
   nivel: FiltroDeNivel = 'todos',
 ): Entrevista[] {
   const buscado = normalizarParaBuscar(texto)
   return entrevistas.filter((entrevista) => {
-    if (estado !== 'todos' && entrevista.estado !== estado) return false
     if (nivel !== 'todos' && entrevista.nivel !== nivel) return false
     if (!buscado) return true
     const buscable = normalizarParaBuscar(

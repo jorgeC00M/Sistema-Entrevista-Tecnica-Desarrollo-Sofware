@@ -25,7 +25,10 @@ function esAceptado(nombre: string): boolean {
   return EXTENSIONES_ACEPTADAS.split(',').some((ext) => nombre.toLowerCase().endsWith(ext))
 }
 
+/** "2 MB" para el máximo y para archivos grandes; KB para los pequeños. */
 function pesoLegible(bytes: number): string {
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1) return `${Number(mb.toFixed(1))} MB`
   return `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 

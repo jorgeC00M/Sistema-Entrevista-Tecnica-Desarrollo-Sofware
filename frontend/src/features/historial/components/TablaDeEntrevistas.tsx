@@ -1,20 +1,18 @@
-import { useLayoutEffect, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useRef } from 'react'
 
 import Badge from '@/components/ui/Badge'
 import Boton from '@/components/ui/Boton'
 import CampoBusqueda from '@/components/ui/CampoBusqueda'
 import CampoSelect from '@/components/ui/CampoSelect'
+import EnlaceDeAccion from '@/components/ui/EnlaceDeAccion'
 import EstadoVacio from '@/components/ui/EstadoVacio'
 import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
 import Paginacion from '@/components/ui/Paginacion'
 import Tabla, { type ColumnaDeTabla } from '@/components/ui/Tabla'
 import Tarjeta from '@/components/ui/Tarjeta'
-import type { FiltroDeEstado } from '@/features/historial/historial'
 import type { FiltrosDeHistorial } from '@/features/historial/hooks/useFiltrosDeHistorial'
+import { usePaginaEnLaUrl } from '@/hooks/usePaginaEnLaUrl'
 import { TONO_POR_ESTADO } from '@/lib/estados'
-import { prefiereMovimientoReducido } from '@/lib/movimiento'
-import { recortar } from '@/lib/paginacion'
 import type { Entrevista } from '@/types/entrevista'
 
 const POR_PAGINA = 10
@@ -62,17 +60,19 @@ function Puntuacion({ entrevista }: { entrevista: Entrevista }) {
 function Accion({ entrevista }: { entrevista: Entrevista }) {
   // Una entrevista a medias se retoma; una terminada lleva a sus resultados.
   const enCurso = entrevista.estado === 'en_progreso'
-  const texto = enCurso ? 'Continuar' : 'Ver resultados'
-  return (
-    <Link
-      to={enCurso ? `/entrevista/${entrevista.id}` : `/entrevista/${entrevista.id}/resultados`}
-      // Siete "Ver resultados" iguales no le dicen nada a un lector de
-      // pantalla: el nombre accesible dice de qué entrevista es.
-      aria-label={`${texto}: ${entrevista.puesto_display} del ${fecha(entrevista)}`}
-      className="inline-flex items-center gap-1 rounded-control text-sm font-medium whitespace-nowrap text-vidrio-acento hover:underline foco-anillo"
+  const deQue = `${entrevista.puesto_display} del ${fecha(entrevista)}`
+  return enCurso ? (
+    <EnlaceDeAccion to={`/entrevista/${entrevista.id}`} icono="play" aria-label={`Continuar: ${deQue}`}>
+      Continuar
+    </EnlaceDeAccion>
+  ) : (
+    <EnlaceDeAccion
+      to={`/entrevista/${entrevista.id}/resultados`}
+      icono="ojo"
+      aria-label={`Ver resultados: ${deQue}`}
     >
-      {texto} <span aria-hidden="true">→</span>
-    </Link>
+      Ver
+    </EnlaceDeAccion>
   )
 }
 
@@ -127,21 +127,13 @@ function TarjetaDeEntrevista({ entrevista }: { entrevista: Entrevista }) {
   )
 }
 
-/** Las opciones del filtro de estado, en el orden en que se piensan. */
-const OPCIONES_DE_ESTADO: { valor: FiltroDeEstado; etiqueta: string }[] = [
-  { valor: 'todos', etiqueta: 'Todos los estados' },
-  { valor: 'finalizada', etiqueta: 'Finalizada' },
-  { valor: 'en_progreso', etiqueta: 'En curso' },
-  { valor: 'abandonada', etiqueta: 'Abandonada' },
-]
-
 /**
- * "Tus entrevistas": buscador, filtros de estado y nivel, y diez filas por página.
+ * "Tus entrevistas": buscador, filtro de nivel y diez filas por página. El
+ * estado no se filtra: se lee en su columna.
  *
  * Recibe la lista **ya filtrada** y los controles de `useFiltrosDeHistorial`,
  * que la página comparte con los gráficos: así lo que se dibuja es exactamente
- * lo que se ve aquí. La página actual vive en `?pagina=`; cambiar de página sí
- * apila una entrada en el historial del navegador, para que "atrás" funcione.
+ * lo que se ve aquí. La página actual vive en `?pagina=` (`usePaginaEnLaUrl`).
  *
  * Filtrar y paginar ocurren en el cliente: la API ya entrega el historial
  * completo, porque el sidebar lo necesita entero para encontrar la entrevista
@@ -149,36 +141,8 @@ const OPCIONES_DE_ESTADO: { valor: FiltroDeEstado; etiqueta: string }[] = [
  */
 export default function TablaDeEntrevistas({ filtros, niveles }: Props) {
   const { filtradas } = filtros
-  const [parametros, setParametros] = useSearchParams()
-  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA))
-  const pagina = recortar(Number(parametros.get('pagina') ?? 1), totalPaginas)
-  const filas = filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
-
-  const inicio = useRef<HTMLDivElement>(null)
+  const { pagina, totalPaginas, filas, refInicio, cambiarPagina } = usePaginaEnLaUrl(filtradas, POR_PAGINA)
   const campoDeBusqueda = useRef<HTMLInputElement>(null)
-  // Solo tras un cambio de página pedido aquí: al llegar a la pantalla el foco
-  // se queda donde lo deja la navegación.
-  const moverFoco = useRef(false)
-
-  useLayoutEffect(() => {
-    if (!moverFoco.current) return
-    moverFoco.current = false
-    inicio.current?.focus({ preventScroll: true })
-    inicio.current?.scrollIntoView({ behavior: prefiereMovimientoReducido() ? 'auto' : 'smooth', block: 'start' })
-  }, [pagina])
-
-  const cambiarPagina = (nueva: number) => {
-    moverFoco.current = true
-    setParametros(
-      (previos) => {
-        const siguientes = new URLSearchParams(previos)
-        if (nueva === 1) siguientes.delete('pagina')
-        else siguientes.set('pagina', String(nueva))
-        return siguientes
-      },
-      { preventScrollReset: true },
-    )
-  }
 
   const limpiar = () => {
     filtros.limpiar()
@@ -195,17 +159,6 @@ export default function TablaDeEntrevistas({ filtros, niveles }: Props) {
             onCambiar={(valor) => filtros.cambiar('q', valor)}
             etiqueta="Buscar en tus entrevistas"
             placeholder="Buscar por puesto, tecnología o nivel"
-          />
-        </div>
-        <div className="sm:w-48">
-          <CampoSelect
-            id="filtro-estado"
-            etiqueta="Estado"
-            ocultarEtiqueta
-            marcador={null}
-            valor={filtros.estado}
-            opciones={OPCIONES_DE_ESTADO}
-            onCambiar={(valor) => filtros.cambiar('estado', valor)}
           />
         </div>
         {niveles && (
@@ -242,7 +195,7 @@ export default function TablaDeEntrevistas({ filtros, niveles }: Props) {
             filas={filas}
             claveDeFila={(e) => e.id}
             tarjeta={(e) => <TarjetaDeEntrevista entrevista={e} />}
-            refInicio={inicio}
+            refInicio={refInicio}
           />
           <Paginacion
             pagina={pagina}

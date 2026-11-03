@@ -50,15 +50,13 @@ Las fortalezas MUST NOT aparecer dentro de la pestaña de correcciones.
 
 ### Requirement: Privacidad y límites visibles al subir el CV
 
-Junto a la zona para elegir el CV, la pantalla SHALL indicar:
-- que el archivo no se guarda, solo el texto extraído;
-- que a la IA solo llegan secciones del CV, con el nombre, el correo y el teléfono tapados.
+La nota de privacidad junto a la zona del CV se retiró por decisión del usuario (ver `entrada-del-cv-que-revisamos`); la garantía sigue siendo cierta en el sistema.
 
 El tamaño máximo (2 MB) MUST verse antes de elegir un archivo.
 
 #### Scenario: Antes de subir
 - **WHEN** el usuario abre "Revisar mi CV"
-- **THEN** ve, junto a la zona del CV, el formato, el máximo de 2 MB y la nota de privacidad
+- **THEN** ve, junto a la zona del CV, el formato y el máximo de 2 MB
 
 ### Requirement: Severidades nombradas por su efecto
 

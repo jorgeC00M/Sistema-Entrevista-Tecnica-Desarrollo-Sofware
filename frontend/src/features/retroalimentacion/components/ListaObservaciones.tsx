@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import ChipPuntaje from '@/components/ui/ChipPuntaje'
 import ControlSegmentado from '@/components/ui/ControlSegmentado'
+import EnlaceDeAccion from '@/components/ui/EnlaceDeAccion'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
 import Tarjeta from '@/components/ui/Tarjeta'
@@ -119,12 +119,15 @@ export default function ListaObservaciones({ observaciones }: Props) {
                       <ListaRetroalimentacion variante="sugerencias" texto={o.sugerencias} />
                     </dl>
 
-                    <Link
-                      to={`/entrevista/${o.entrevista_id}/resultados`}
-                      className="foco-anillo mt-3 inline-block rounded-chip text-xs font-medium text-vidrio-acento underline-offset-4 hover:underline"
-                    >
-                      Ver la entrevista completa
-                    </Link>
+                    <div className="mt-3">
+                      <EnlaceDeAccion
+                        to={`/entrevista/${o.entrevista_id}/resultados`}
+                        icono="ojo"
+                        aria-label={`Ver la entrevista completa: pregunta ${o.numero} de ${grupo.areaDisplay}`}
+                      >
+                        Ver
+                      </EnlaceDeAccion>
+                    </div>
                   </Tarjeta>
                 ))}
               </ul>

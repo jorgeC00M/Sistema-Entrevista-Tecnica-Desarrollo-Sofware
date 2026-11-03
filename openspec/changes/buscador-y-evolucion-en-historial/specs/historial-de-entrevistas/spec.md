@@ -21,20 +21,18 @@ El campo SHALL tener un nombre accesible y un botón para borrarlo cuando tenga 
 - **WHEN** el usuario pulsa el botón de borrar del campo
 - **THEN** el campo queda vacío y la tabla vuelve a mostrar todas las entrevistas
 
-### Requirement: Filtros por estado y nivel
-Junto al buscador, el sistema SHALL ofrecer dos selectores:
-- **Estado:** Todos, Finalizada, En curso y Abandonada.
-- **Nivel:** Todos los niveles y los niveles del catálogo, en su orden (Junior, Semi-Senior, Senior).
+### Requirement: Filtro por nivel
+Junto al buscador, el sistema SHALL ofrecer un único selector, **Nivel**: Todos los niveles y los niveles del catálogo, en su orden (Junior, Semi-Senior, Senior). No SHALL ofrecer un filtro por estado: el estado se lee en su columna de la tabla.
 
-Los filtros SHALL combinarse con la búsqueda por texto: solo se muestran las entrevistas que cumplen todos.
+El filtro SHALL combinarse con la búsqueda por texto: solo se muestran las entrevistas que cumplen ambos.
 
-#### Scenario: Solo abandonadas
-- **WHEN** el usuario elige «Abandonada»
-- **THEN** la tabla muestra solo las entrevistas abandonadas
+#### Scenario: Texto y nivel a la vez
+- **WHEN** el usuario escribe «backend» y elige «Junior»
+- **THEN** la tabla muestra solo las entrevistas Junior de Desarrollador Backend
 
-#### Scenario: Texto y estado a la vez
-- **WHEN** el usuario escribe «backend» y elige «Finalizada»
-- **THEN** la tabla muestra solo las entrevistas finalizadas de Desarrollador Backend
+#### Scenario: Sin filtro de estado
+- **WHEN** el usuario abre "Historial y progreso"
+- **THEN** junto al buscador ve solo el selector de Nivel, y la tabla sigue mostrando la columna Estado
 
 #### Scenario: Solo un nivel
 - **WHEN** el usuario elige «Senior»
@@ -56,20 +54,24 @@ Cambiar un filtro SHALL devolver la tabla a la página 1. Con una sola página, 
 - **THEN** la tabla vuelve a la página 1 de los resultados
 
 ### Requirement: Búsqueda sin resultados
-Cuando ninguna entrevista coincide, el sistema SHALL reemplazar la tabla por el mensaje «Ninguna entrevista coincide con tu búsqueda.» y un botón «Limpiar búsqueda». Ese botón SHALL vaciar el texto y poner el estado en Todos.
+Cuando ninguna entrevista coincide, el sistema SHALL reemplazar la tabla por el mensaje «Ninguna entrevista coincide con tu búsqueda.» y un botón «Limpiar búsqueda». Ese botón SHALL vaciar el texto y poner el nivel en Todos los niveles.
 
 #### Scenario: Sin coincidencias
 - **WHEN** el usuario busca «kotlin» y no tiene entrevistas con esa tecnología
 - **THEN** ve el mensaje y el botón, y al pulsar «Limpiar búsqueda» vuelven todas sus entrevistas
 
 ### Requirement: Los filtros se conservan en la dirección
-El texto de búsqueda, el estado y el nivel SHALL reflejarse en la URL (`?q=`, `?estado=` y `?nivel=`), junto a `?pagina=`. Así, volver desde unos resultados o recargar mantiene la misma vista filtrada.
+El texto de búsqueda y el nivel SHALL reflejarse en la URL (`?q=` y `?nivel=`), junto a `?pagina=`. Así, volver desde unos resultados o recargar mantiene la misma vista filtrada.
 
-Un estado o un nivel desconocidos en la URL SHALL tratarse como «Todos».
+Un nivel desconocido en la URL SHALL tratarse como «Todos los niveles». Un `?estado=` heredado de una dirección antigua SHALL ignorarse.
 
 #### Scenario: Volver desde unos resultados
-- **WHEN** el usuario filtra por «django» y «Finalizada», abre unos resultados y vuelve atrás
-- **THEN** el campo dice «django», el estado es «Finalizada» y la tabla muestra los mismos resultados
+- **WHEN** el usuario filtra por «django» y «Junior», abre unos resultados y vuelve atrás
+- **THEN** el campo dice «django», el nivel es «Junior» y la tabla muestra los mismos resultados
+
+#### Scenario: Dirección con estado
+- **WHEN** el usuario entra con `?estado=abandonada` en la URL
+- **THEN** la tabla y los gráficos muestran todas las entrevistas, como sin ese parámetro
 
 ### Requirement: Evolución en tres tarjetas por nivel
 "Evolución en el tiempo" SHALL mostrarse debajo de la tabla, en tres tarjetas: una por nivel (Junior, Semi-Senior y Senior), en el orden del catálogo.
@@ -156,20 +158,20 @@ Todos los puntos SHALL dibujarse igual, rellenos con el color de su puesto, sin 
 - **THEN** su punto se ve igual que el de una personalizada, y la leyenda no menciona el origen
 
 ### Requirement: Los gráficos siguen a la tabla
-Los gráficos SHALL dibujarse con las mismas entrevistas que muestra la tabla después de aplicar la búsqueda y el estado. Cambiar un filtro SHALL actualizar a la vez la tabla y los gráficos.
+Los gráficos SHALL dibujarse con las mismas entrevistas que muestra la tabla después de aplicar la búsqueda y el nivel. Cambiar un filtro SHALL actualizar a la vez la tabla y los gráficos.
 
 #### Scenario: Filtrar por puesto
 - **WHEN** el usuario escribe «backend» en el buscador
 - **THEN** cada tarjeta muestra solo la línea de Backend, y las tarjetas sin entrevistas Backend muestran su mensaje
 
 ### Requirement: Sin filtro por origen
-La búsqueda SHALL ofrecer solo el texto y el filtro de Estado. No SHALL ofrecer un filtro de origen (personalizada o con convocatoria). Un `?origen=` en la URL SHALL ignorarse.
+La búsqueda SHALL ofrecer solo el texto y el filtro de Nivel. No SHALL ofrecer un filtro de origen (personalizada o con convocatoria). Un `?origen=` en la URL SHALL ignorarse.
 
 La tabla SHALL seguir mostrando la etiqueta «Convocatoria» junto al puesto de las entrevistas iniciadas desde una convocatoria.
 
 #### Scenario: Barra de búsqueda
 - **WHEN** el usuario abre "Historial y progreso"
-- **THEN** ve el campo de búsqueda y el selector de Estado, y ningún selector de Origen
+- **THEN** ve el campo de búsqueda y el selector de Nivel, y ningún selector de Origen ni de Estado
 
 #### Scenario: Dirección antigua
 - **WHEN** el usuario entra con `?origen=convocatoria` en la URL
@@ -197,3 +199,24 @@ La API SHALL no ofrecer `GET /api/estadisticas/`, que se usaba solo para las cif
 #### Scenario: Página de historial
 - **WHEN** el usuario abre "Historial y progreso"
 - **THEN** ve el título con su descripción, el buscador con la tabla y "Evolución en el tiempo" con sus tarjetas por nivel, y ningún «Promedio por área»
+
+### Requirement: Acción con icono
+La columna Acción de la tabla, y la tarjeta de cada entrevista en pantallas angostas, SHALL mostrar un enlace con icono y un verbo corto:
+- **ojo + «Ver»** para una entrevista finalizada o abandonada, que lleva a sus resultados;
+- **play + «Continuar»** para una entrevista en curso, que la retoma.
+
+El nombre accesible de cada enlace SHALL decir de qué entrevista se trata: «Ver resultados: <Puesto> del <fecha>» o «Continuar: <Puesto> del <fecha>». El icono SHALL ser decorativo.
+
+El mismo enlace (ojo + «Ver») SHALL usarse en Retroalimentación para abrir la entrevista de una observación, con el nombre accesible «Ver la entrevista completa: pregunta <n> de <área>».
+
+#### Scenario: Entrevista finalizada
+- **WHEN** el usuario mira la fila de una entrevista de Desarrollador Backend finalizada el 21/10/2026
+- **THEN** la columna Acción muestra el icono de ojo y «Ver», y un lector de pantalla anuncia «Ver resultados: Desarrollador Backend del 21/10/2026»
+
+#### Scenario: Entrevista en curso
+- **WHEN** el usuario mira la fila de una entrevista en curso
+- **THEN** la columna Acción muestra el icono de play y «Continuar», y al pulsarlo retoma la entrevista
+
+#### Scenario: Observación en Retroalimentación
+- **WHEN** el usuario pulsa el ojo + «Ver» de una observación
+- **THEN** se abren los resultados de esa entrevista

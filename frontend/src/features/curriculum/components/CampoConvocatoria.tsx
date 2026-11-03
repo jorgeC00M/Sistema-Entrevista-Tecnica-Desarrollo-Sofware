@@ -30,7 +30,7 @@ interface Props {
 }
 
 /**
- * La convocatoria contra la que medir el CV. Opcional.
+ * La convocatoria contra la que medir el CV, en el análisis dirigido.
  *
  * Pegar es la vía principal y archivo la secundaria, no al revés: una convocatoria
  * vive en una página web —LinkedIn, Computrabajo, el sitio de la empresa— así que
@@ -59,16 +59,9 @@ export default function CampoConvocatoria({
   }
 
   return (
-    // Sin tarjeta ni título propios: vive dentro de la entrada del análisis, bajo
-    // el botón "Comparar con una convocatoria (opcional)", que ya dice qué es.
+    // Sin título propio: vive en la tarjeta «Convocatoria» de la entrada, que
+    // ya dice qué es y qué se gana con ella.
     <div>
-      {/* Se dice antes de elegir, no después: así el usuario ve qué gana en vez
-          de descubrir lo que se perdió al final. */}
-      <p className="text-sm text-vidrio-texto">
-        Si la pegas, además te decimos qué requisitos concretos de esa oferta evidencia tu CV y
-        cuáles no. Sin ella revisamos que el ATS pueda leerlo y qué tecnologías extrae.
-      </p>
-
       <ControlSegmentado
         etiqueta="Cómo compartes la convocatoria"
         ocultarEtiqueta
@@ -76,7 +69,6 @@ export default function CampoConvocatoria({
         seleccionado={via}
         onSeleccionar={(valor) => cambiarVia(valor as Via)}
         deshabilitado={deshabilitado}
-        className="mt-4"
       />
 
       {via === 'pegar' ? (
@@ -91,16 +83,13 @@ export default function CampoConvocatoria({
             disabled={deshabilitado}
             rows={6}
             maxLength={MAXIMO_CARACTERES}
-            placeholder="Pega aquí la descripción del puesto, con sus requisitos."
+            // El consejo va aquí y no en un párrafo debajo: sirve antes de pegar,
+            // que es justo cuando se ve. Sin esos títulos, los deseables se
+            // medirían como obligatorios.
+            placeholder="Pega aquí el aviso completo, con sus títulos de requisitos y deseables."
             aria-invalid={Boolean(error)}
-            aria-describedby="convocatoria-instruccion"
             className="campo w-full resize-y px-3 py-2.5 text-sm text-vidrio-ink"
           />
-          {/* Visible y no solo en el placeholder, que desaparece al pegar. */}
-          <p id="convocatoria-instruccion" className="mt-1.5 text-meta text-vidrio-muted">
-            Si la oferta separa requisitos de deseables, conserva esos títulos: así no se le da la
-            misma gravedad a un deseable que a un obligatorio.
-          </p>
           {error && (
             <p className="mt-1.5 text-sm text-error-texto" role="alert">
               {error}

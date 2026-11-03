@@ -117,8 +117,8 @@ $RECYCLE.BIN/
 # Claude Code — configuración local del equipo
 # ==========================================================
 .claude/
-.claude/settings.local.json
 .agents/
+.impeccable/
 CLAUDE.md
 skills-lock.json
 
@@ -131,6 +131,17 @@ skills-lock.json
 *.rej
 tmp/
 temp/
+# Volcados de fallos de la terminal y bloqueos de Office abiertos
+*.stackdump
+~$*
+
+# ==========================================================
+# Documentos de la tesis — solo el perfil y la arquitectura
+# ==========================================================
+# `docs/*` y no `docs/`: Git no reincluye un archivo si su carpeta está ignorada.
+docs/*
+!docs/arquitectura.md
+!docs/Copia de Copia de PerfilJorgeV3.docx.md
 
 # ==========================================================
 # Volcados de base de datos — contienen correos y hashes

@@ -143,25 +143,116 @@ CARRERA DE INGENIERÍA DE SISTEMAS
 
 **ÍNDICE DE FIGURAS**
 
-[Figura 1\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)	15](#figura-1.-cuadro-comparativo-entre-metodologías-ágiles-\(elaboración-propia\))
+Figura 1\. Árbol de problemas (Elaboración Propia)
 
-[Figura 2\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)	15](#figura-2.-cuadro-comparativo-entre-metodologías-ágiles-\(elaboración-propia\))
+Figura 2\. Incrementos del desarrollo del sistema (Elaboración Propia)
+
+Figura 3\. Logotipo de React (Meta Open Source)
+
+Figura 4\. Logotipo de Django (Django Software Foundation)
+
+Figura 5\. Arquitectura cliente-servidor del sistema (Elaboración Propia)
+
+Figura 6\. Diagrama de flujo del proceso general del sistema (Elaboración Propia)
+
+Figura 7\. Diagrama de secuencia de una entrevista completa (Elaboración Propia)
+
+Figura 8\. Diagrama de flujo del análisis de currículum (Elaboración Propia)
+
+Figura 9\. Diagrama entidad-relación del sistema (Elaboración Propia)
+
+Figura 10\. Formulario de Registro de Usuario (Elaboración Propia)
+
+Figura 11\. Formulario de Inicio de Sesión (Elaboración Propia)
+
+Figura 12\. Formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
+
+Figura 13\. Formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+
+Figura 14\. Formulario de Respuesta en Entrevista (chat) (Elaboración Propia)
+
+Figura 15\. Panel de Resultados (Elaboración Propia)
+
+Figura 16\. Panel de Historial y Progreso (Elaboración Propia)
+
+Figura 17\. Panel de Retroalimentación (Elaboración Propia)
+
+Figura 18\. Formulario de Análisis de CV (Mi CV) (Elaboración Propia)
+
+Figura 19\. Formulario de Cambio de Contraseña (Mi perfil) (Elaboración Propia)
 
 **ÍNDICE DE TABLAS**
 
-[Tabla 1\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)	13](#tabla-1.-cuadro-comparativo-entre-metodologías-ágiles-\(elaboración-propia\))
+Tabla 1\. Comparación de plataformas de preparación para entrevistas técnicas (Elaboración Propia) [VERIFICAR la oferta de cada plataforma a la fecha de entrega]
+
+Tabla 2\. Costos de operación del sistema durante el piloto (Elaboración Propia)
+
+Tabla 3\. Rúbrica analítica de evaluación de respuestas (Elaboración Propia)
+
+Tabla 4\. Cuadro comparativo de metodologías de desarrollo (Elaboración Propia)
+
+Tabla 5\. Comparación entre PostgreSQL y MongoDB (Elaboración Propia)
+
+Tabla 6\. Estructura de la tabla Usuario (Elaboración Propia)
+
+Tabla 7\. Estructura de la tabla Entrevista (Elaboración Propia)
+
+Tabla 8\. Estructura de la tabla Intercambio (Elaboración Propia)
+
+Tabla 9\. Estructura de la tabla Evaluación (Elaboración Propia)
+
+Tabla 10\. Estructura de las tablas Puesto, Nivel y Área (Elaboración Propia)
+
+Tabla 11\. Estructura de la tabla Tecnología (Elaboración Propia)
+
+Tabla 12\. Estructura de la tabla Convocatoria (Elaboración Propia)
+
+Tabla 13\. Estructura de la tabla Currículum (Elaboración Propia)
+
+Tabla 14\. Estructura de la tabla Análisis ATS (Elaboración Propia)
+
+Tabla 15\. Campos del formulario de Registro de Usuario (Elaboración Propia)
+
+Tabla 16\. Campos del formulario de Inicio de Sesión (Elaboración Propia)
+
+Tabla 17\. Campos del formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
+
+Tabla 18\. Campos del formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+
+Tabla 19\. Campos del formulario de Respuesta en Entrevista (chat) (Elaboración Propia)
+
+Tabla 20\. Campos del panel de Resultados (Elaboración Propia)
+
+Tabla 21\. Campos del panel de Historial y Progreso (Elaboración Propia)
+
+Tabla 22\. Campos del panel de Retroalimentación (Elaboración Propia)
+
+Tabla 23\. Campos del formulario de Análisis de CV (Mi CV) (Elaboración Propia)
+
+Tabla 24\. Campos del formulario de Cambio de Contraseña (Mi perfil) (Elaboración Propia)
 
 # **CAPÍTULO I \- INTRODUCCIÓN** {#capítulo-i---introducción}
 
 ## **1.1 Antecedentes** {#1.1-antecedentes}
 
-En la última década, la inteligencia artificial ha transformado profundamente los procesos de selección y contratación de talento tecnológico a nivel mundial. Según el informe de LinkedIn sobre el futuro del trabajo 2024, más del 62% de los reclutadores de empresas tecnológicas ya utilizan herramientas basadas en IA para evaluar competencias técnicas de los candidatos antes de una entrevista presencial, convirtiendo la preparación digital en un requisito indispensable para acceder al mercado laboral del sector.
+En la última década, la inteligencia artificial ha transformado profundamente los procesos de selección y contratación de talento tecnológico a nivel mundial. Según el informe de LinkedIn sobre el futuro del trabajo 2024 [VERIFICAR cifra y referencia], más del 62% de los reclutadores de empresas tecnológicas ya utilizan herramientas basadas en IA para evaluar competencias técnicas de los candidatos antes de una entrevista presencial, convirtiendo la preparación digital en un requisito indispensable para acceder al mercado laboral del sector.
 
-El mercado laboral tecnológico global experimenta una demanda sin precedentes de profesionales con habilidades en programación, bases de datos, redes, inteligencia artificial y desarrollo de software. De acuerdo con el Foro Económico Mundial 2024, se estima que para el año 2027 se crearán 97 millones de nuevos empleos relacionados con tecnología a nivel mundial, mientras que simultáneamente el 44% de las habilidades laborales actuales quedará obsoleto, generando una presión creciente sobre los egresados universitarios para demostrar competencias actualizadas y alineadas con las exigencias reales del mercado.
+El mercado laboral tecnológico global experimenta una demanda sin precedentes de profesionales con habilidades en programación, bases de datos, redes, inteligencia artificial y desarrollo de software. De acuerdo con el Foro Económico Mundial (2020), hacia el año 2025 surgirían 97 millones de nuevos empleos ligados a la nueva división del trabajo entre personas y máquinas, y según su informe de 2023 el 44% de las habilidades centrales de los trabajadores cambiará en los próximos cinco años [VERIFICAR ambas referencias], generando una presión creciente sobre los egresados universitarios para demostrar competencias actualizadas y alineadas con las exigencias reales del mercado.
 
 Ante este escenario, la preparación para entrevistas técnicas se ha convertido en una disciplina específica dentro de la formación profesional en tecnología. Las entrevistas técnicas en empresas del sector exigen no solo conocimiento teórico, sino la capacidad de resolver problemas algorítmicos en tiempo real, diseñar arquitecturas de sistemas, explicar conceptos de bases de datos y demostrar habilidades de comunicación bajo presión, competencias que difícilmente se desarrollan únicamente dentro del aula universitaria.
 
-A nivel mundial han surgido diversas plataformas especializadas en la simulación de entrevistas técnicas mediante inteligencia artificial, evidenciando la magnitud del problema que buscan resolver. Interviewing.io, una de las plataformas más reconocidas del sector, ofrece entrevistas simuladas de voz a voz en tiempo real con IA para perfiles tecnológicos, conectando a los usuarios con ingenieros de empresas FAANG y utilizando algoritmos de aprendizaje automático para evaluar habilidades de codificación, resolución de problemas y comunicación.
+A nivel mundial han surgido diversas plataformas especializadas en la simulación de entrevistas técnicas mediante inteligencia artificial, evidenciando la magnitud del problema que buscan resolver. Interviewing.io, una de las plataformas más reconocidas del sector, ofrece entrevistas simuladas anónimas con ingenieros de grandes empresas tecnológicas, que al terminar entregan retroalimentación al candidato; el servicio es en inglés y de pago [VERIFICAR oferta vigente]. La Tabla 1 resume las plataformas más utilizadas frente a las necesidades del egresado boliviano.
+
+| Plataforma | En español | Gratuita | Entrevista conversacional | Retroalimentación por criterio | Análisis de CV |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+| LeetCode | No | Parcial (plan gratuito y de pago) | No | No | No |
+| HackerRank | No | Parcial (práctica gratuita) | No | No | No |
+| Interviewing.io | No | No | Sí (entrevistador humano) | Parcial (comentarios del entrevistador) | No |
+| Pramp | No | Sí | Sí (entre pares) | Parcial (formulario del par) | No |
+| Sistema propuesto | Sí | Sí | Sí (agente de IA) | Sí (rúbrica de tres criterios) | Sí (frente a filtros ATS) |
+
+###### *Tabla 1\. Comparación de plataformas de preparación para entrevistas técnicas (Elaboración Propia) [VERIFICAR la oferta de cada plataforma a la fecha de entrega]*
+
 
 En el ámbito académico, la Universidad Atlántida Argentina implementó en 2024 un recurso pedagógico mediado por inteligencia artificial para simular entrevistas laborales en sus cátedras de orientación profesional, demostrando que la simulación de entrevistas con IA no solo es aplicable en el mundo empresarial sino también como herramienta formativa dentro de las universidades para desarrollar habilidades blandas y técnicas en los estudiantes.
 
@@ -175,9 +266,15 @@ La situación se complejiza debido a la inexistencia de herramientas accesibles,
 
 Esta carencia genera una brecha significativa entre las competencias adquiridas en la universidad y las exigencias reales del mercado laboral, que cada vez demanda profesionales con habilidades técnicas y comunicativas más afinadas. Como consecuencia, muchos egresados experimentan ansiedad y bajo rendimiento durante sus primeras entrevistas reales, afectando negativamente sus oportunidades de inserción profesional, a pesar de poseer el conocimiento necesario para desempeñarse exitosamente en el campo del desarrollo de software (Gomez et al., 2025).
 
+La Figura 1 organiza las causas y los efectos descritos en un árbol de problemas.
+
+[INSERTAR IMAGEN: árbol de problemas, exportado de docs/diagramas/arbol-de-problemas.mmd]
+
+##### Figura 1\. Árbol de problemas (Elaboración Propia)
+
 ### **1.2.1 Definición del Problema** {#1.2.1-definición-del-problema}
 
-La ausencia de una sistema web que simula entrevistas técnicas mediante inteligencia artificial limita la preparación profesional de los egresados de Ingeniería de Sistemas de la UMSS, quienes enfrentan dificultades para acceder al mercado laboral en desarrollo de software al carecer de oportunidades de práctica en un entorno realista y accesible que evalúe sus competencias técnicas y comunicativas (Behroozi et al., 2019; Gomez et al., 2025).
+La ausencia de un sistema web que simule entrevistas técnicas mediante inteligencia artificial limita la preparación profesional de los egresados de Ingeniería de Sistemas de la UMSS, quienes enfrentan dificultades para acceder al mercado laboral en desarrollo de software al carecer de oportunidades de práctica en un entorno realista y accesible que evalúe sus competencias técnicas y comunicativas (Behroozi et al., 2019; Gomez et al., 2025).
 
 ## **1.3. Objetivos** {#1.3.-objetivos}
 
@@ -189,7 +286,7 @@ Desarrollar un sistema web de simulación de entrevistas técnicas que permita e
 
 1. Analizar los requerimientos necesarios para la simulación de entrevista técnica, identificando las variables de entrada, proceso y salida del sistema.
 
-2. Desarrollar un módulo de selección de diferentes áreas  para realizar la simulación de entrevistas técnicas.
+2. Desarrollar un módulo de selección de diferentes áreas para realizar la simulación de entrevistas técnicas.
 
 3. Implementar entrevistas técnicas simuladas mediante preguntas estructuradas según el área seleccionada.
 
@@ -207,27 +304,35 @@ Desarrollar un sistema web de simulación de entrevistas técnicas que permita e
 
 ## **1.5 Alcance** {#1.5-alcance}
 
-- La  plataforma web estará disponible solamente para el departamento de Cochabamba.
+- El sistema está orientado a egresados de la carrera de Ingeniería de Sistemas de la Universidad Mayor de San Simón (Cochabamba), que son el público objetivo del piloto.
 
 - La plataforma web será desarrollada con un diseño responsivo.
 
-- El sistema integrará un módulo de selección de áreas técnicas, tales como programación, bases de datos, estructuras de datos y desarrollo web, permitiendo personalizar la entrevista.
+- El sistema será desarrollado como una aplicación web bajo arquitectura cliente-servidor.
+
+- El usuario podrá registrarse e iniciar sesión con correo electrónico y contraseña o con su cuenta de Google.
+
+- El sistema integrará un módulo de selección en el que el usuario elige el puesto al que se prepara (Desarrollador Frontend, Backend, Full Stack, Móvil, de Escritorio, QA o de Videojuegos), una tecnología de ese puesto y el nivel. Cada puesto abarca varias áreas técnicas —fundamentos de programación, bases de datos o estructuras de datos, desarrollo web, APIs y servicios web, pruebas de software, entre otras—, y cada pregunta de la entrevista corresponde a una de ellas.
+
+- El sistema permitirá la ejecución de entrevistas técnicas en tres niveles: Junior (inicial), Semi-Senior (intermedio) y Senior (avanzado).
+
+- Cada entrevista constará de cinco preguntas generadas por inteligencia artificial: las dos primeras se generan al inicio y las siguientes se adaptan al desempeño mostrado en las respuestas anteriores.
+
+- El usuario podrá iniciar una entrevista a partir de una convocatoria laboral, pegando su texto o subiendo el archivo en formato PDF o DOCX; el sistema identifica el puesto, la tecnología y el nivel, y orienta las preguntas a los requisitos de la convocatoria.
 
 - Para el proceso de interacción se permitirá al usuario ingresar respuestas en formato de texto en la plataforma.
 
 - El sistema registrará cada una de las respuestas proporcionadas por el usuario durante la simulación de la entrevista para su posterior análisis.
 
-- El sistema procesa las respuestas utilizando técnicas de inteligencia artificial para generar una evaluación automatizada del desempeño del usuario.
+- El sistema evaluará cada respuesta con una rúbrica de tres criterios (corrección, completitud y claridad): la inteligencia artificial asigna a cada criterio un nivel de 0 a 4 y el sistema calcula la puntuación de 0 a 100 con una fórmula fija. La puntuación se muestra al finalizar la entrevista.
 
-- El sistema generará retroalimentación personalizada basada en el análisis de las respuestas, indicando fortalezas y debilidades del usuario..
+- El sistema generará retroalimentación personalizada basada en el análisis de las respuestas, indicando fortalezas, debilidades, sugerencias de mejora y los puntos clave que una respuesta completa debía cubrir, además de una retroalimentación acumulada de todas las entrevistas del usuario.
 
-- El sistema permitirá almacenar el historial de entrevistas realizadas por cada usuario para analizar su progreso a lo largo del tiempo.
+- El usuario podrá abandonar una entrevista en curso; en ese caso obtendrá una puntuación parcial calculada sobre las respuestas evaluadas.
 
-- El sistema será desarrollado como una aplicación web bajo arquitectura cliente-servidor.
+- El sistema permitirá almacenar el historial de entrevistas realizadas por cada usuario y mostrará la evolución de su puntuación por puesto y nivel, para analizar su progreso a lo largo del tiempo.
 
-- El sistema estará orientado exclusivamente a egresados de la carrera de Ingeniería de Sistemas de la Universidad Mayor de San Simón.
-
-- El sistema permitirá la ejecución de entrevistas técnicas de nivel básico e intermedio en el área de desarrollo de software.
+- El sistema incluirá un módulo de análisis de currículum (CV) en formato PDF o DOCX, que muestra qué datos logra leer un sistema de seguimiento de candidatos (ATS) y qué corregir para que el CV sea legible, y opcionalmente lo compara con los requisitos de una convocatoria. La medición la realiza el sistema con reglas verificables; la inteligencia artificial solo sugiere mejoras de redacción.
 
 - No se implementará reconocimiento de voz para el ingreso de respuestas.
 
@@ -237,7 +342,11 @@ Desarrollar un sistema web de simulación de entrevistas técnicas que permita e
 
 - No se garantizará la precisión absoluta en la evaluación de respuestas, debido a las limitaciones de los modelos de inteligencia artificial.
 
-- No se incluirán entrevistas de nivel avanzado utilizadas en grandes empresas tecnológicas.
+- No se incluirán ejercicios de codificación en vivo ni de pizarra; las preguntas, incluidas las de nivel Senior, se responden en forma conversacional.
+
+- El análisis de CV no asigna un puntaje ATS ni garantiza que el CV supere el filtro de una empresa concreta.
+
+- El sistema no almacenará los archivos de CV ni de convocatorias que suba el usuario; solo conserva el texto extraído y el resultado del análisis.
 
 - No se desarrollará una aplicación móvil en esta etapa del proyecto, limitándose a su uso en navegadores web.
 
@@ -263,6 +372,10 @@ Desarrollar un sistema web de simulación de entrevistas técnicas que permita e
 
 - Optimiza el proceso de simulación de entrevistas mediante automatización, evitando la necesidad de intervención humana en la evaluación inicial.
 
+- Aplica una rúbrica analítica en la que la inteligencia artificial elige niveles descritos y el sistema calcula la nota con una fórmula, de modo que cada puntuación es reproducible y explicable.
+
+- Incorpora un análisis de CV basado en reglas medibles sobre el documento, sin depender de la inteligencia artificial para el diagnóstico, protegiendo además los datos personales del usuario antes de cualquier consulta al modelo.
+
 ### **1.6.2 Justificación Económica** {#1.6.2-justificación-económica}
 
 - Reduce los costos asociados a la preparación profesional mediante la eliminación de la necesidad de cursos privados, asesorías personalizadas o simulaciones pagadas de entrevistas técnicas.
@@ -270,6 +383,18 @@ Desarrollar un sistema web de simulación de entrevistas técnicas que permita e
 - Disminuye el tiempo requerido para la preparación de entrevistas al ofrecer una herramienta accesible que permite practicar de manera continua y autónoma.
 
 - Evita gastos adicionales en plataformas externas de simulación de entrevistas que requieren suscripciones o pagos recurrentes.
+
+- El costo de operación del sistema durante el piloto es mínimo, como resume la Tabla 2.
+
+| Recurso | Servicio | Costo |
+| :---- | :---- | :---- |
+| Servidor de la aplicación (backend) | Render, plan gratuito | USD 0 [CONFIRMAR] |
+| Base de datos PostgreSQL | Neon, plan gratuito | USD 0 [CONFIRMAR] |
+| Publicación de la interfaz web (frontend) | Plan gratuito de hosting estático | USD 0 [CONFIRMAR] |
+| Modelo de lenguaje | API de Claude (Anthropic), Claude Haiku 4.5 | Carga única de USD 5 a 10 para el piloto [CONFIRMAR] |
+| Herramientas de desarrollo | Visual Studio Code, Git y GitHub | USD 0 |
+
+###### *Tabla 2\. Costos de operación del sistema durante el piloto (Elaboración Propia)*
 
 ### **1.6.3 Justificación Social y Académica** {#1.6.3-justificación-social-y-académica}
 
@@ -302,6 +427,11 @@ En el contexto de este proyecto, el PLN es fundamental porque permite al agente 
 
 Un agente conversacional es un sistema de software diseñado para interactuar con usuarios mediante lenguaje natural, simulando una conversación humana (Jurafsky & Martin, 2023). A diferencia de los chatbots basados en reglas, los agentes conversacionales modernos utilizan Modelos de Lenguaje de Gran Escala (LLM) para:
 
+* Generar preguntas y respuestas en lenguaje natural ajustadas al contexto de la conversación.  
+* Mantener el hilo de un diálogo de varios turnos, recordando lo que se trató antes.  
+* Interpretar respuestas abiertas del usuario, aunque no sigan una forma predefinida.  
+* Adaptar su comportamiento a un rol definido mediante instrucciones (prompts), como el de entrevistador técnico.
+
 ### **2.1.3 Prompt Engineering (Ingeniería de Instrucciones)** {#2.1.3-prompt-engineering-(ingeniería-de-instrucciones)}
 
 El Prompt Engineering es la técnica de diseñar y optimizar instrucciones textuales (prompts) para guiar el comportamiento de los modelos de lenguaje de gran escala (LLM). Un prompt bien diseñado es fundamental para obtener respuestas precisas, relevantes y alineadas con los objetivos del sistema (Liu et al., 2023).
@@ -312,14 +442,12 @@ Una entrevista técnica es un proceso de evaluación estructurada utilizado en l
 
 ### **2.1.5 Inteligencia Artificial** {#2.1.5-inteligencia-artificial}
 
-Dentro de la Ingeniería de Software, la Inteligencia Artificial (IA) constituye la sub-área principal del proyecto. La IA es la rama de la informática que estudia y desarrolla sistemas capaces de realizar tareas que normalmente requieren inteligencia humana, tales como el razonamiento, el aprendizaje, la comprensión del lenguaje natural y la toma de decisiones. En el presente sistema, la IA es el componente central que permite generar preguntas dinámicas, analizar respuestas textuales y producir retroalimentación personalizada para el usuario. 
-
-La Inteligencia Artificial se define como el campo de la ciencia de la computación dedicado a la creación de sistemas capaces de realizar tareas que, de ser ejecutadas por seres humanos, requerirían de inteligencia, tales como el razonamiento, el aprendizaje y la comprensión del lenguaje (Russell & Norvig, 2022). Dentro de esta área, el Procesamiento de Lenguaje Natural enfoca sus esfuerzos en hacer que las máquinas interpreten y generen texto o voz humana de manera coherente y contextual (Manning et al., 2023).
+La Inteligencia Artificial (IA) es el campo de la ciencia de la computación dedicado a la creación de sistemas capaces de realizar tareas que, de ser ejecutadas por seres humanos, requerirían de inteligencia, tales como el razonamiento, el aprendizaje, la comprensión del lenguaje y la toma de decisiones (Russell & Norvig, 2022). Dentro de la Ingeniería de Software, constituye la sub-área principal del proyecto: en el presente sistema, la IA es el componente que genera las preguntas de la entrevista, analiza las respuestas textuales del usuario y produce la retroalimentación personalizada.
 
 ### **2.1.6 Características** {#2.1.6-características}
 
 * **Adaptabilidad:** Capacidad de los modelos para ajustarse a diferentes contextos lingüísticos de entrada.  
-* **Aprendizaje Continuo:** Habilidad de los sistemas basados en redes neuronales para mejorar su precisión a través del entrenamiento con nuevos conjuntos de datos masivos.  
+* **Aprendizaje Continuo:** Habilidad de los sistemas basados en redes neuronales para mejorar su precisión a través del entrenamiento con nuevos conjuntos de datos masivos. Este entrenamiento lo realiza el fabricante del modelo: el presente sistema no entrena ni ajusta ningún modelo, sino que utiliza uno ya entrenado a través de su API.  
 * **Procesamiento en Tiempo Real:** Aptitud técnica para recibir entradas conversacionales texturizadas y devolver respuestas con una latencia mínima para simular un diálogo fluido.
 
 ### **2.1.7 Elementos principales** {#2.1.7-elementos-principales}
@@ -327,6 +455,34 @@ La Inteligencia Artificial se define como el campo de la ciencia de la computaci
 * **Modelos de Lenguaje de Gran Escala (LLMs):** Redes transformadoras entrenadas para predecir y generar secuencias de texto lógicas.  
 * **Agentes Conversacionales:** Interfaces de software programadas para mantener conversaciones estructuradas o libres interactuando con un usuario.  
 * **Prompt Engineering (Ingeniería de Prompts):** Técnica de diseño y optimización de instrucciones textuales para guiar las respuestas de los modelos de IA de forma precisa.
+
+### **2.1.8 Evaluación con rúbrica analítica y modelos de lenguaje como evaluadores** {#2.1.8-evaluación-con-rúbrica-analítica}
+
+Una rúbrica analítica descompone la calidad de una respuesta en criterios independientes y describe, para cada uno, varios niveles de desempeño. Cuando el evaluador es un modelo de lenguaje, diversos estudios muestran que su juicio es más consistente y más cercano al de evaluadores humanos si elige entre niveles descritos que si escribe una calificación numérica libre (Liu, Y. et al., 2023; Kim et al., 2024; Zheng et al., 2023) [VERIFICAR las tres referencias]. Este enfoque se conoce como «LLM como evaluador» (LLM-as-a-judge).
+
+El sistema aplica este principio: el modelo no escribe la nota, sino que elige un nivel de 0 a 4 en cada uno de tres criterios de igual peso, descritos en la Tabla 3, y el sistema calcula la puntuación con la fórmula:
+
+P = 100 · (n₁ + n₂ + n₃) / 12
+
+donde n₁, n₂ y n₃ son los niveles elegidos para corrección, completitud y claridad. Así, cada nota se puede recalcular a mano y explicar criterio por criterio.
+
+| Nivel | Corrección | Completitud | Claridad |
+| :---- | :---- | :---- | :---- |
+| 0 | Incorrecta, vacía o fuera de tema. | No cubre lo que se esperaba. | Incomprensible o sin estructura. |
+| 1 | Contiene errores conceptuales importantes. | Cubre una parte mínima de lo esperado. | Difícil de seguir; las ideas están desordenadas. |
+| 2 | La idea central es correcta, con errores menores. | Cubre lo esencial pero deja vacíos importantes. | Se entiende, aunque con saltos o ambigüedades. |
+| 3 | Correcta, sin errores relevantes. | Cubre casi todo lo esperado para el nivel. | Ordenada y fácil de seguir. |
+| 4 | Correcta y precisa, con la terminología adecuada. | Cubre todo lo esperado para el nivel. | Ordenada, con el razonamiento explícito paso a paso. |
+
+###### *Tabla 3\. Rúbrica analítica de evaluación de respuestas (Elaboración Propia)*
+
+La puntuación resultante se ubica en una de cuatro bandas: Insuficiente (0 a 40), En desarrollo (41 a 60), Aceptable (61 a 80) y Sólido (81 a 100).
+
+### **2.1.9 Sistemas de seguimiento de candidatos (ATS)** {#2.1.9-sistemas-de-seguimiento-de-candidatos-(ats)}
+
+Un sistema de seguimiento de candidatos (Applicant Tracking System, ATS) es el software con el que las empresas reciben y gestionan las postulaciones. Al recibir un currículum, el ATS extrae su texto y lo distribuye en campos (nombre, contacto, experiencia, formación, habilidades), sobre los que el reclutador busca y filtra a los candidatos por palabras clave [VERIFICAR con la documentación de Workday, Oracle Taleo o Greenhouse].
+
+En general, estos sistemas no rechazan currículums por un puntaje automático: el candidato queda fuera cuando sus datos no llegan a los campos y, por tanto, no aparece en las búsquedas del reclutador. Las causas más frecuentes son formatos difíciles de leer, como documentos escaneados sin capa de texto, diseños a dos columnas, cuadros de texto o datos ubicados en el encabezado de la página. Por ello, el módulo de análisis de CV del sistema mide qué datos logra extraer un ATS del documento, en lugar de asignarle una calificación.
 
 ## **2.2 Metodología de Desarrollo** {#2.2-metodología-de-desarrollo}
 
@@ -339,7 +495,7 @@ La Inteligencia Artificial se define como el campo de la ciencia de la computaci
 | **Entregas verificables** | Un módulo funcional completo por incremento | Un incremento de producto por sprint | Código funcional constante |
 | **Estructura el desarrollo en módulos de producto documentales por fases** | Si | Parcial | No |
 
-###### *Tabla 1\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)*  {#tabla-1.-cuadro-comparativo-entre-metodologías-ágiles-(elaboración-propia)}
+###### *Tabla 4\. Cuadro comparativo de metodologías de desarrollo (Elaboración Propia)*  {#tabla-4.-cuadro-comparativo-de-metodologías-de-desarrollo-(elaboración-propia)}
 
 Para la gestión y construcción del software se utilizará el Modelo Incremental, ya que, a diferencia de Scrum y XP, estructura el desarrollo en módulos de producto entregables y documentales por fases, lo que facilita incorporar y calibrar progresivamente el componente de inteligencia artificial del sistema.
 
@@ -359,11 +515,15 @@ El ciclo de vida del desarrollo incremental divide el producto de software en m�
 
 **Diseño de la Arquitectura e Interfaz:** Modelado de la base de datos y prototipos de alta fidelidad.  
 
-**Implementación de Incrementos:** Codificación consecutiva de los módulos (Selección de áreas, Simulación, Registro y Evaluación).  
+**Implementación de Incrementos:** Codificación consecutiva de los módulos: selección de puesto, tecnología y nivel; simulación de la entrevista; registro de respuestas; evaluación con rúbrica; resultados, historial y retroalimentación; entrevista desde convocatoria; y análisis de CV.  
 
 **Validación e Integración:** Pruebas del sistema y corrección de bugs o latencias de comunicación con la IA.  
 
 **Entrega:** presentación del incremento funcional como resultado del ciclo de desarrollo correspondiente.
+
+[INSERTAR IMAGEN: exportada de docs/diagramas/ciclo-incremental.mmd]
+
+##### Figura 2\. Incrementos del desarrollo del sistema (Elaboración Propia)
 
 ### **2.2.4 Ventajas** {#2.2.4-ventajas}
 
@@ -376,13 +536,13 @@ El ciclo de vida del desarrollo incremental divide el producto de software en m�
 
 ### **2.3.1 Definición** {#2.3.1-definición}
 
-* React es una biblioteca de JavaScript de código abierto desarrollada por Meta para la construcción de interfaces de usuario interactivas y dinámicas. Se basa en el concepto de componentes reutilizables, lo que permite construir interfaces complejas a partir de piezas independientes y aisladas. En el presente proyecto, React es utilizado como tecnología principal del frontend para desarrollar la interfaz web de la plataforma de simulación de entrevistas. 
+* React es una biblioteca de JavaScript de código abierto desarrollada por Meta para la construcción de interfaces de usuario interactivas y dinámicas. Se basa en el concepto de componentes reutilizables, lo que permite construir interfaces complejas a partir de piezas independientes y aisladas. En el presente proyecto, React es utilizado como tecnología principal del frontend para desarrollar la interfaz web de la plataforma de simulación de entrevistas, escrito en TypeScript (JavaScript con tipos estáticos), construido con Vite y estilizado con Tailwind CSS. 
 
-##### Figura 1\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)  {#figura-1.-cuadro-comparativo-entre-metodologías-ágiles-(elaboración-propia)}
+##### Figura 3\. Logotipo de React (Meta Open Source)  {#figura-3.-logotipo-de-react}
 
-* Django es un framework de desarrollo web de alto nivel escrito en Python que sigue el patrón arquitectónico Modelo-Vista-Template (MVT). Fue diseñado para facilitar el desarrollo rápido de aplicaciones web seguras y mantenibles. En este proyecto, Django se utiliza para desarrollar el backend del sistema, gestionando la lógica de negocio, la autenticación de usuarios, el almacenamiento de datos y la integración con la API de Claude.
+* Django es un framework de desarrollo web de alto nivel escrito en Python que sigue el patrón arquitectónico Modelo-Vista-Template (MVT). Fue diseñado para facilitar el desarrollo rápido de aplicaciones web seguras y mantenibles. En este proyecto, Django se utiliza para desarrollar el backend del sistema, gestionando la lógica de negocio, la autenticación de usuarios, el almacenamiento de datos y la integración con la API de Claude. Junto con Django REST Framework expone una API REST que consume el frontend, y la autenticación se realiza con tokens JWT.
 
-##### Figura 2\. Cuadro comparativo entre metodologías ágiles (Elaboración Propia)  {#figura-2.-cuadro-comparativo-entre-metodologías-ágiles-(elaboración-propia)}
+##### Figura 4\. Logotipo de Django (Django Software Foundation)  {#figura-4.-logotipo-de-django}
 
 ### **2.3.2 Características** {#2.3.2-características}
 
@@ -407,13 +567,29 @@ El ciclo de vida del desarrollo incremental divide el producto de software en m�
 * React permite construir la interfaz de chat interactiva del agente conversacional con actualizaciones en tiempo real sin recargar la página.  
 * Ambas tecnologías cuentan con documentación extensa, comunidades activas y amplio soporte, lo que reduce la curva de aprendizaje y los riesgos técnicos del proyecto.
 
+La Figura 5 muestra cómo se relacionan estas tecnologías en la arquitectura del sistema.
+
+[INSERTAR IMAGEN: exportada de docs/diagramas/arquitectura.mmd]
+
+##### Figura 5\. Arquitectura cliente-servidor del sistema (Elaboración Propia)
+
 ## **2.4 Gestión de Datos** {#2.4-gestión-de-datos}
 
 ### **2.4.1 Definición** {#2.4.1-definición}
 
-MongoDB es un sistema de gestión de bases de datos no relacional (NoSQL) orientado a documentos, que almacena los datos en formato BSON, ofreciendo flexibilidad en la estructura de los datos. 
+PostgreSQL es un sistema de gestión de bases de datos relacional de código abierto que organiza la información en tablas relacionadas mediante claves, garantiza transacciones ACID y admite además datos semiestructurados en formato JSON mediante su tipo `jsonb`.
+
+Como alternativa se consideró MongoDB, un sistema de gestión de bases de datos no relacional (NoSQL) orientado a documentos, que almacena los datos en formato BSON, ofreciendo flexibilidad en la estructura de los datos. 
 
 ### **2.4.2 Características** {#2.4.2-características}
+
+**PostgreSQL:**
+
+* Modelo relacional con integridad referencial: cada respuesta pertenece a una entrevista y cada entrevista a un usuario.  
+* Transacciones ACID, que permiten guardar varios cambios relacionados como una sola operación.  
+* Restricciones de unicidad que impiden registrar dos veces la misma pregunta o la misma evaluación.  
+* Tipo `jsonb` para almacenar el detalle de cada evaluación sin perder las ventajas del modelo relacional.  
+* Integración nativa con el ORM de Django.
 
 **MongoDB:**
 
@@ -424,11 +600,22 @@ MongoDB es un sistema de gestión de bases de datos no relacional (NoSQL) orient
 
 ### **2.4.3 Comparación** {#2.4.3-comparación}
 
+| Criterio | PostgreSQL | MongoDB |
+| :---- | :---- | :---- |
+| Modelo de datos | Relacional (tablas y relaciones) | Documentos (BSON) |
+| Integridad referencial | Sí, con claves foráneas | No nativa; se controla en la aplicación |
+| Transacciones ACID | Sí | Sí, con limitaciones entre documentos |
+| Integración con Django | Nativa (ORM oficial) | Mediante bibliotecas externas (Djongo, MongoEngine) |
+| Datos semiestructurados | Sí, tipo `jsonb` | Sí, es su modelo natural |
+| Adecuación a los datos del sistema | Alta: usuarios, entrevistas, respuestas y evaluaciones relacionados | Media: la estructura del sistema es fija y relacionada |
+
+###### *Tabla 5\. Comparación entre PostgreSQL y MongoDB (Elaboración Propia)*
+
 Para el presente proyecto, PostgreSQL resulta más adecuado por las siguientes razones: los datos principales del sistema (usuarios, entrevistas, respuestas, resultados) tienen una estructura definida y relaciones claras entre entidades, lo que se adapta mejor al modelo relacional. Además, Django tiene integración nativa y optimizada con PostgreSQL, y la consistencia de los datos es un requisito importante para garantizar la integridad del historial de entrevistas de cada usuario. MongoDB sería más conveniente si el proyecto manejara grandes volúmenes de conversaciones no estructuradas o si los esquemas de datos cambiarán frecuentemente, situación que no corresponde al alcance actual del proyecto.
 
 ### **2.4.4 Ventajas de PostgreSQL** {#2.4.4-ventajas-de-postgresql}
 
- Basado en el análisis comparativo, el presente proyecto define a PostgreSQL como el sistema de gestión de base de datos para la implementación del sistema. La elección de una base de datos relacional se justifica por la naturaleza estructural y relacional de los datos que el sistema debe gestionar (usuarios, entrevistas, respuestas y evaluaciones). Esta decisión asegura la integridad referencial de los datos, soporte para transacciones ACID y una integración nativa y robusta con el ORM de Django, lo que permite un desarrollo más ágil y un mantenimiento eficiente . Aunque MongoDB ofrece flexibilidad para esquemas dinámicos, en este proyecto su uso implicaría sacrificar las herramientas y la filosofía de desarrollo de Django sin ofrecer beneficios sustanciales para el tipo de datos manejados .
+ Basado en el análisis comparativo, el presente proyecto define a PostgreSQL como el sistema de gestión de base de datos para la implementación del sistema. La elección de una base de datos relacional se justifica por la naturaleza estructural y relacional de los datos que el sistema debe gestionar (usuarios, entrevistas, respuestas y evaluaciones). Esta decisión asegura la integridad referencial de los datos, soporte para transacciones ACID y una integración nativa y robusta con el ORM de Django, lo que permite un desarrollo más ágil y un mantenimiento eficiente. Además, el tipo `jsonb` de PostgreSQL permite guardar el detalle completo de cada evaluación (niveles por criterio, puntos clave) sin renunciar al modelo relacional. Aunque MongoDB ofrece flexibilidad para esquemas dinámicos, en este proyecto su uso implicaría sacrificar las herramientas y la filosofía de desarrollo de Django sin ofrecer beneficios sustanciales para el tipo de datos manejados .
 
 ## **2.5 Herramientas** {#2.5-herramientas}
 
@@ -470,13 +657,18 @@ Visual Studio Code (VS Code) es un editor de código fuente gratuito y de códig
 
 ### **2.5.4 Herramientas de Inteligencia Artificial: API de Claude** {#2.5.4-herramientas-de-inteligencia-artificial:-api-de-claude}
 
-La API de Claude, desarrollada por Anthropic, es el servicio de inteligencia artificial que se utilizará como motor del agente conversacional en el presente proyecto. (Anthropic ,023) Claude es un modelo de lenguaje de gran escala (LLM) diseñado con énfasis en la seguridad, la utilidad y la precisión. A través de su API, el sistema puede enviar prompts estructurados y recibir respuestas generadas por el modelo en formato de texto.
+La API de Claude, desarrollada por Anthropic, es el servicio de inteligencia artificial que se utilizará como motor del agente conversacional en el presente proyecto (Anthropic, 2025) [VERIFICAR año de la referencia]. Claude es un modelo de lenguaje de gran escala (LLM) diseñado con énfasis en la seguridad, la utilidad y la precisión. A través de su API, el sistema puede enviar prompts estructurados y recibir respuestas generadas por el modelo en formato de texto.
 
-En el contexto del proyecto, la API de Claude cumple tres funciones principales: generar preguntas técnicas dinámicas según el área seleccionada por el usuario, mantener el contexto de la conversación a lo largo de la entrevista simulada, y analizar las respuestas del usuario para producir una evaluación personalizada con métricas de desempeño, fortalezas y sugerencias de mejora.
+El sistema utiliza el modelo Claude Haiku 4.5. En el contexto del proyecto, la API de Claude cumple las siguientes funciones:
+
+* **Generar las preguntas** de la entrevista según el puesto, la tecnología y el nivel elegidos. Para mantener el hilo de la entrevista no se le envía el historial completo de la conversación, sino un resumen comprimido con el tema y la puntuación de cada pregunta anterior, lo que mantiene acotado el tamaño de cada consulta.
+* **Evaluar cada respuesta** con la rúbrica analítica descrita en la sección 2.1.8: elige un nivel por criterio y redacta las fortalezas, debilidades, sugerencias y puntos clave; la puntuación la calcula el sistema. El evaluador recibe solo la pregunta y la respuesta, nunca el historial, para que una misma respuesta reciba siempre el mismo trato.
+* **Analizar convocatorias laborales** para identificar el puesto, la tecnología, el nivel y los requisitos.
+* **Sugerir mejoras al currículum** después de que el sistema lo haya analizado, recibiendo únicamente secciones del CV con el nombre, correo, teléfono y enlaces del usuario enmascarados.
 
 **Características:**
 
-* Soporte para conversaciones multi-turno que permite mantener el contexto de la entrevista de forma coherente durante toda la simulación.
+* Capacidad de mantener la coherencia de la entrevista a partir de un resumen de lo ya preguntado, sin necesidad de reenviar toda la conversación.
 
 * SDK oficial disponible para Python, compatible con Django, lo que facilita su integración en el backend del sistema.
 
@@ -484,7 +676,13 @@ En el contexto del proyecto, la API de Claude cumple tres funciones principales:
 
 * Modelos disponibles con diferentes niveles de capacidad, permitiendo seleccionar el más adecuado según los requerimientos del proyecto.
 
-* Respuestas en formato de texto estructurado que pueden procesarse para extraer métricas y generar reportes de desempeño del usuario.
+* Respuestas en formato JSON estructurado, que el sistema valida antes de guardarlas y a partir de las cuales calcula las puntuaciones y genera los reportes de desempeño del usuario.
+
+* Su política de uso de la API no emplea los datos enviados para entrenar sus modelos, lo que resulta adecuado para procesar respuestas de egresados reales [VERIFICAR con la política vigente de Anthropic].
+
+### **2.5.5 Despliegue** {#2.5.5-despliegue}
+
+Para el piloto, el backend en Django se publica en Render, un servicio de alojamiento en la nube con plan gratuito, y la base de datos PostgreSQL se aloja en Neon, un servicio de PostgreSQL gestionado y sin servidor. La interfaz web se publica en [CONFIRMAR servicio]. Esta combinación permite que los egresados accedan al sistema desde sus propios dispositivos sin costo de infraestructura.
 
 # **CAPÍTULO III \- ÁREA DE APLICACIÓN** {#capítulo-iii---área-de-aplicación}
 
@@ -492,9 +690,9 @@ En el contexto del proyecto, la API de Claude cumple tres funciones principales:
 
 La Universidad Mayor de San Simón de Cochabamba, a través de su Carrera de Ingeniería de Sistemas, forma cada año a profesionales en áreas de programación, bases de datos, redes y desarrollo de software. Sin embargo, estudios sobre formación universitaria en tecnología señalan que los planes de estudio tradicionales priorizan la adquisición de conocimientos teóricos sobre la preparación práctica para los procesos de selección laboral, generando una brecha entre lo que el estudiante aprende en el aula y lo que las empresas evalúan en sus procesos de contratación (Behroozi et al., 2019).
 
-El mercado laboral tecnológico de América Latina experimenta un crecimiento sostenido en la demanda de profesionales con habilidades en desarrollo de software. De acuerdo con el Foro Económico Mundial (2025), la región necesitará incorporar más de 1,2 millones de profesionales tecnológicos para 2030, mientras que la tasa de desempleo juvenil profesional en el sector supera el 18% en países de la región, evidenciando una paradoja entre la alta demanda del mercado y la dificultad de los egresados para acceder a esos empleos (Organización Internacional del Trabajo \[OIT\], 2023).
+El mercado laboral tecnológico de América Latina experimenta un crecimiento sostenido en la demanda de profesionales con habilidades en desarrollo de software. De acuerdo con el Foro Económico Mundial (2025) [VERIFICAR], la región necesitará incorporar más de 1,2 millones de profesionales tecnológicos para 2030, mientras que la tasa de desempleo juvenil profesional en el sector supera el 18% en países de la región, evidenciando una paradoja entre la alta demanda del mercado y la dificultad de los egresados para acceder a esos empleos (Organización Internacional del Trabajo \[OIT\], 2023) [VERIFICAR].
 
-En Bolivia, el sector tecnológico ha experimentado un crecimiento significativo en los últimos años. Según datos del Instituto Nacional de Estadística de Bolivia (INE, 2023), el sector de tecnologías de la información y comunicación registró un crecimiento del 7,3% en 2022, consolidándose como uno de los sectores de mayor dinamismo económico del país. En Cochabamba específicamente, el ecosistema tecnológico cuenta con empresas de desarrollo de software, consultoras digitales y startups que aplican procesos de selección con entrevistas técnicas estructuradas como mecanismo principal de evaluación de candidatos, exigiendo que los postulantes demuestren competencias en programación, algoritmos, bases de datos y diseño de sistemas en tiempo real y bajo presión (Halukha & Bychkouski, 2024).
+En Bolivia, el sector tecnológico ha experimentado un crecimiento significativo en los últimos años. Según datos del Instituto Nacional de Estadística de Bolivia (INE, 2023) [VERIFICAR], el sector de tecnologías de la información y comunicación registró un crecimiento del 7,3% en 2022, consolidándose como uno de los sectores de mayor dinamismo económico del país. En Cochabamba específicamente, el ecosistema tecnológico cuenta con empresas de desarrollo de software, consultoras digitales y startups que aplican procesos de selección con entrevistas técnicas estructuradas como mecanismo principal de evaluación de candidatos, exigiendo que los postulantes demuestren competencias en programación, algoritmos, bases de datos y diseño de sistemas en tiempo real y bajo presión (Halukha & Bychkouski, 2024).
 
 A pesar de este crecimiento del mercado tecnológico local, los egresados de la Carrera de Ingeniería de Sistemas de la UMSS enfrentan dificultades concretas en sus primeras experiencias de selección laboral. Gomez et al. (2025) identificaron que sentirse poco preparado para el formato específico de la entrevista técnica es una de las experiencias negativas más comunes entre candidatos a puestos tecnológicos, independientemente de su nivel de conocimiento técnico real. Esta situación se agrava en el contexto boliviano por la inexistencia de herramientas digitales accesibles, gratuitas y en español adaptadas al mercado local, ya que las plataformas internacionales disponibles como LeetCode y HackerRank no ofrecen componentes conversacionales ni retroalimentación personalizada en el idioma nativo del candidato (Halukha & Bychkouski, 2024).
 
@@ -526,136 +724,383 @@ Técnica de diseño y optimización de instrucciones textuales (prompts) para gu
 
 ### **3.2.6 Entrevista Técnica** {#3.2.6-entrevista-técnica}
 
-Proceso de evaluación estructurada utilizado en la industria tecnológica para medir las competencias de un candidato en áreas como programación, algoritmos, estructuras de datos, bases de datos y diseño de sistemas. Una entrevista técnica típica incluye preguntas teóricas, problemas de codificación y ejercicios de diseño, evaluando no solo el conocimiento técnico, sino también la capacidad de razonamiento, comunicación y resolución de problemas bajo presión (Behroozi et al., 2019). En este proyecto, la entrevista técnica se simula mediante un agente conversacional que realiza preguntas dinámicas y evalúa las respuestas del usuario.
+Proceso de evaluación estructurada utilizado en la industria tecnológica para medir las competencias de un candidato en áreas como programación, algoritmos, estructuras de datos, bases de datos y diseño de sistemas. Una entrevista técnica típica incluye preguntas teóricas, problemas de codificación y ejercicios de diseño, evaluando no solo el conocimiento técnico, sino también la capacidad de razonamiento, comunicación y resolución de problemas bajo presión (Behroozi et al., 2019). En este proyecto, la entrevista técnica se simula mediante un agente conversacional que realiza cinco preguntas dinámicas, respondidas por escrito, y evalúa las respuestas del usuario; no incluye ejercicios de codificación ejecutados.
 
 ### **3.2.7 Simulación de Entrevista** {#3.2.7-simulación-de-entrevista}
 
-Entorno controlado que replica las condiciones de una entrevista real para permitir la práctica y la retroalimentación sin riesgos. Una simulación efectiva incluye preguntas realistas, restricciones de tiempo y un mecanismo de evaluación que proporciona retroalimentación constructiva (Gomez et al., 2025). En este proyecto, la simulación se realiza a través de una plataforma web donde el usuario interactúa con un agente conversacional basado en IA.
+Entorno controlado que replica las condiciones de una entrevista real para permitir la práctica y la retroalimentación sin riesgos. Una simulación efectiva incluye preguntas realistas, restricciones de tiempo y un mecanismo de evaluación que proporciona retroalimentación constructiva (Gomez et al., 2025). En este proyecto, la simulación se realiza a través de una plataforma web donde el usuario interactúa con un agente conversacional basado en IA; el sistema muestra un cronómetro informativo y registra el tiempo de cada respuesta, sin imponer un límite.
 
 ### **3.2.8 Retroalimentación Personalizada** {#3.2.8-retroalimentación-personalizada}
 
-Conjunto de sugerencias, observaciones y recomendaciones generadas automáticamente por el sistema, basadas en el análisis de las respuestas del usuario. La retroalimentación personalizada indica las fortalezas, debilidades y áreas de mejora específicas del candidato, permitiendo un aprendizaje dirigido y efectivo (Daryanto et al., 2025). En el sistema propuesto, la retroalimentación es generada por la IA después de cada respuesta y se consolida en un reporte final.
+Conjunto de sugerencias, observaciones y recomendaciones generadas automáticamente por el sistema, basadas en el análisis de las respuestas del usuario. La retroalimentación personalizada indica las fortalezas, debilidades y áreas de mejora específicas del candidato, permitiendo un aprendizaje dirigido y efectivo (Daryanto et al., 2025). En el sistema propuesto, la retroalimentación se genera después de cada respuesta, pero se muestra al usuario recién al finalizar la entrevista, consolidada en un reporte de resultados; además, el sistema acumula la retroalimentación de todas sus entrevistas.
 
 ### **3.2.9 Competencias de Desarrollo de Software** {#3.2.9-competencias-de-desarrollo-de-software}
 
-Conjunto integrado de conocimientos, habilidades y actitudes que un profesional debe poseer para desempeñarse efectivamente en el desarrollo de software. Incluye competencias técnicas (programación, bases de datos, arquitectura de software) y competencias blandas (comunicación, trabajo en equipo, resolución de problemas) (Pressman, 2010). En este proyecto, las competencias evaluadas son específicamente técnicas, enfocadas en áreas como programación, bases de datos, estructuras de datos y desarrollo web.
+Conjunto integrado de conocimientos, habilidades y actitudes que un profesional debe poseer para desempeñarse efectivamente en el desarrollo de software. Incluye competencias técnicas (programación, bases de datos, arquitectura de software) y competencias blandas (comunicación, trabajo en equipo, resolución de problemas) (Pressman & Maxim, 2020). En este proyecto, las competencias evaluadas son específicamente técnicas: el usuario elige un puesto, y cada puesto abarca varias áreas, como fundamentos de programación, bases de datos, estructuras de datos, desarrollo web, APIs y servicios web, y pruebas de software.
 
 ### **3.2.10 Sistema Web** {#3.2.10-sistema-web}
 
-Aplicación informática accesible a través de un navegador web, que funciona bajo una arquitectura cliente-servidor. El cliente (frontend) se encarga de la interfaz de usuario y la interacción, mientras que el servidor (backend) procesa la lógica de negocio, gestiona la base de datos y se comunica con servicios externos (Pressman, 2010). En este proyecto, la plataforma web está desarrollada con React (frontend) y Django (backend), permitiendo a los egresados acceder a las simulaciones desde cualquier dispositivo con conexión a Internet. 
+Aplicación informática accesible a través de un navegador web, que funciona bajo una arquitectura cliente-servidor. El cliente (frontend) se encarga de la interfaz de usuario y la interacción, mientras que el servidor (backend) procesa la lógica de negocio, gestiona la base de datos y se comunica con servicios externos (Pressman & Maxim, 2020). En este proyecto, la plataforma web está desarrollada con React (frontend) y Django (backend), permitiendo a los egresados acceder a las simulaciones desde cualquier dispositivo con conexión a Internet. 
 
 ### **3.2.11 Arquitectura Cliente-Servidor** {#3.2.11-arquitectura-cliente-servidor}
 
-Modelo de comunicación en red donde un componente (cliente) solicita servicios o recursos y otro componente (servidor) proporciona dichos servicios. En el contexto de sistemas web, el navegador del usuario actúa como cliente y el servidor remoto aloja la lógica de negocio, la base de datos y la integración con servicios externos (Sommerville, 2011). En este proyecto, el frontend (React) se comunica con el backend (Django) mediante una API REST, y el backend se comunica con la API de Claude para el procesamiento de IA.
+Modelo de comunicación en red donde un componente (cliente) solicita servicios o recursos y otro componente (servidor) proporciona dichos servicios. En el contexto de sistemas web, el navegador del usuario actúa como cliente y el servidor remoto aloja la lógica de negocio, la base de datos y la integración con servicios externos (Sommerville, 2019). En este proyecto, el frontend (React) se comunica con el backend (Django) mediante una API REST, y el backend se comunica con la API de Claude para el procesamiento de IA.
 
 ### **3.2.12 Evaluación Automatizada** {#3.2.12-evaluación-automatizada}
 
-Proceso mediante el cual un sistema informático analiza y califica el desempeño de un usuario sin intervención humana. En el contexto educativo y de selección, la evaluación automatizada permite una retroalimentación inmediata, consistente y escalable (Frankford et al., 2025). En este proyecto, la evaluación automatizada es realizada por la API de Claude, que analiza las respuestas textuales del usuario y asigna una puntuación basada en criterios técnicos predefinidos.
+Proceso mediante el cual un sistema informático analiza y califica el desempeño de un usuario sin intervención humana. En el contexto educativo y de selección, la evaluación automatizada permite una retroalimentación inmediata, consistente y escalable (Frankford et al., 2025). En este proyecto, la API de Claude analiza las respuestas textuales del usuario y elige un nivel de 0 a 4 en cada criterio de la rúbrica; la puntuación de 0 a 100 la calcula el sistema con una fórmula fija (sección 2.1.8).
+
+### **3.2.13 Puesto** {#3.2.13-puesto}
+
+Cargo al que se prepara el usuario, tal como aparece en una convocatoria laboral: Desarrollador Frontend, Backend, Full Stack, Móvil, de Escritorio, QA o de Videojuegos. En este proyecto, el puesto determina las áreas técnicas que recorren las cinco preguntas de la entrevista y las tecnologías que el usuario puede elegir.
+
+### **3.2.14 Nivel** {#3.2.14-nivel}
+
+Grado de experiencia para el que se calibran las preguntas y la exigencia de la evaluación. El sistema ofrece tres niveles: Junior (inicial), Semi-Senior (intermedio) y Senior (avanzado).
+
+### **3.2.15 Rúbrica analítica** {#3.2.15-rúbrica-analítica}
+
+Instrumento de evaluación que descompone la calidad de una respuesta en criterios independientes, cada uno con niveles de desempeño descritos. En este proyecto, la rúbrica tiene tres criterios de igual peso —corrección, completitud y claridad— con cinco niveles cada uno (Tabla 3).
+
+### **3.2.16 Convocatoria** {#3.2.16-convocatoria}
+
+Anuncio con el que una empresa ofrece un puesto de trabajo y detalla sus requisitos. En este proyecto, el usuario puede iniciar una entrevista a partir de una convocatoria, y también comparar su currículum con ella.
+
+### **3.2.17 Sistema de seguimiento de candidatos (ATS)** {#3.2.17-sistema-de-seguimiento-de-candidatos-(ats)}
+
+Software con el que las empresas reciben las postulaciones, extraen los datos de cada currículum en campos y permiten al reclutador buscar y filtrar candidatos (sección 2.1.9). En este proyecto, el módulo de análisis de CV muestra qué datos del currículum logra leer un ATS y qué corregir.
 
 ## **3.3 Procesos** {#3.3-procesos}
 
-A continuación, se presenta el diagrama de flujo que describe el comportamiento general del sistema desde que el usuario ingresa hasta que finaliza una entrevista y visualiza sus resultados. 
+A continuación, se presentan los diagramas que describen el comportamiento del sistema: el flujo general desde que el usuario ingresa hasta que revisa su progreso, la secuencia de una entrevista completa y el flujo del análisis de currículum.
 
 ### **3.3.1 Diagrama de Flujo del Proceso General del Sistema** {#3.3.1-diagrama-de-flujo-del-proceso-general-del-sistema}
 
+[REEMPLAZAR IMAGEN: exportada de docs/diagramas/flujo-general.mmd]
+
 ![][image1]
+
+##### Figura 6\. Diagrama de flujo del proceso general del sistema (Elaboración Propia)
 
 ### **3.3.2 Diagrama de Secuencia de una Entrevista Completa** {#3.3.2-diagrama-de-secuencia-de-una-entrevista-completa}
 
+El diagrama muestra que las dos primeras preguntas se generan en una sola consulta a la IA al iniciar la entrevista, que cada respuesta se evalúa en el momento, y que la puntuación no se envía a la interfaz hasta que la entrevista termina.
+
+[REEMPLAZAR IMAGEN: exportada de docs/diagramas/secuencia-entrevista.mmd]
+
 ![][image2]
+
+##### Figura 7\. Diagrama de secuencia de una entrevista completa (Elaboración Propia)
+
+### **3.3.3 Diagrama de Flujo del Análisis de Currículum** {#3.3.3-diagrama-de-flujo-del-análisis-de-currículum}
+
+El diagnóstico del currículum lo realiza el sistema con reglas medibles, sin inteligencia artificial; solo después, y con los datos personales enmascarados, se piden sugerencias de redacción a la IA.
+
+[INSERTAR IMAGEN: exportada de docs/diagramas/flujo-analisis-cv.mmd]
+
+##### Figura 8\. Diagrama de flujo del análisis de currículum (Elaboración Propia)
 
 ## **3.4 Documentación / Información** {#3.4-documentación-/-información}
 
-En esta sección se describen los formatos, estructuras y tipos de información que el sistema gestiona, almacena y presenta a los usuarios. Esta documentación sirve como base para el diseño de la base de datos, los formularios de la interfaz y los reportes generados por el sistema.    El sistema mantiene un registro histórico de cada entrevista realizada por cada usuario, similar a un kardex académico pero enfocado en competencias de desarrollo de software. 
+En esta sección se describen los formatos, estructuras y tipos de información que el sistema gestiona, almacena y presenta a los usuarios. Esta documentación sirve como base para el diseño de la base de datos, los formularios de la interfaz y los reportes generados por el sistema.
 
 ### **3.4.1 Estructura de datos** {#3.4.1-estructura-de-datos}
 
-El sistema mantiene un registro histórico de cada entrevista realizada por cada usuario, similar a un kardex académico pero enfocado en competencias de desarrollo de software. 
+El sistema mantiene un registro histórico de cada entrevista realizada por cada usuario, similar a un kardex académico pero enfocado en competencias de desarrollo de software. La Figura 9 muestra las entidades y sus relaciones; las tablas siguientes detallan sus campos.
+
+[INSERTAR IMAGEN: exportada de docs/diagramas/entidad-relacion.mmd]
+
+##### Figura 9\. Diagrama entidad-relación del sistema (Elaboración Propia)
 
 * **Estructura del Usuario (Perfil del Egresado)**
 
-
 | Campo | Tipo | Longitud | Descripción |
-| :---- | :---- | ----- | :---- |
-| id\_usuario | INTEGER(PK) | – | Identificador único del usuario |
-| nombre\_completo | VARCHAR | 100 | Nombre completo del egresado |
-| email | VARCHAR | 100 | Correo electronico (unico) |
-| contraseña | VARCHAR | 255 | Hash de la contraseña |
-| carnet | VARCHAR | 15 | Número de carnet de identidad (opcional) |
-| fecha\_registro | TIMESTAMP | – | Fecha y hora de registro |
-| ultimo\_acceso | TIMESTAMP | – | Última vez que ingreso al sistema |
+| :---- | :---- | :---- | :---- |
+| id\_usuario | INTEGER (PK) | – | Identificador único del usuario. |
+| nombre\_completo | VARCHAR | 100 | Nombre completo del egresado. |
+| email | VARCHAR | 254 | Correo electrónico (único); se usa para iniciar sesión. |
+| contraseña | VARCHAR | 128 | Hash de la contraseña. Las cuentas creadas con Google no tienen contraseña utilizable. |
+| carnet | VARCHAR | 15 | Número de carnet de identidad (opcional). |
+| fecha\_registro | TIMESTAMP | – | Fecha y hora de registro. |
+| ultimo\_acceso | TIMESTAMP | – | Última vez que ingresó al sistema. |
+
+###### *Tabla 6\. Estructura de la tabla Usuario (Elaboración Propia)*
 
 * **Estructura de Entrevista (Cabecera)**
 
-
 | Campo | Tipo | Longitud | Descripción |
-| :---- | :---- | ----- | :---- |
-| id\_ entrevista | INTEGER (PK) | – | Identificador único del usuario de la entrevista. |
-| id\_usuario | INTEGER (FK) | – | Referencia al usuario que realiza la entrevista. |
-| area\_tecnica | VARCHAR | 30 | Área de evaluación. |
-| nivel | VARCHAR | 20 | Nivel de dificultad |
+| :---- | :---- | :---- | :---- |
+| id\_entrevista | INTEGER (PK) | – | Identificador único de la entrevista. |
+| id\_usuario | INTEGER (FK) | – | Usuario que realiza la entrevista. |
+| id\_puesto | INTEGER (FK) | – | Puesto al que se prepara el usuario. |
+| id\_nivel | INTEGER (FK) | – | Nivel de la entrevista (Junior, Semi-Senior o Senior). |
+| id\_tecnologia | INTEGER (FK) | – | Tecnología elegida; en Full Stack, la de frontend. |
+| id\_segunda\_tecnologia | INTEGER (FK) | – | Solo en Full Stack: la tecnología de backend (opcional). |
+| id\_convocatoria | INTEGER (FK) | – | Convocatoria de la que partió la entrevista (opcional). |
+| estado | VARCHAR | 20 | Estado de la entrevista (en progreso, finalizada o abandonada). |
 | fecha\_inicio | TIMESTAMP | – | Momento en que inició la entrevista. |
-| fecha\_fin | TIMESTAMP | – | Momento en que finalizó la entrevista. |
-| estado | VARCHAR | – | Estado de la entrevista ( En progreso, Finalizado, Abandonada). |
-| puntuacion\_promedio | DECIMAL | – | Promedio de las preguntas. |
+| fecha\_fin | TIMESTAMP | – | Momento en que finalizó o se abandonó la entrevista. |
+| puntuacion\_promedio | DECIMAL(5,2) | – | Promedio de las cinco preguntas; vacío si la entrevista se abandonó. |
+
+###### *Tabla 7\. Estructura de la tabla Entrevista (Elaboración Propia)*
 
 * **Estructura de Intercambio (Pregunta – Respuesta)**
 
-
 | Campo | Tipo | Longitud | Descripción |
-| :---- | :---- | ----- | :---- |
+| :---- | :---- | :---- | :---- |
 | id\_intercambio | INTEGER (PK) | – | Identificador único del intercambio. |
-| id\_entrevista | INTEGER (FK) | – | Referencia a la entrevista. |
+| id\_entrevista | INTEGER (FK) | – | Entrevista a la que pertenece. |
+| numero | SMALLINT | – | Número de la pregunta dentro de la entrevista (1 a 5); único por entrevista. |
+| id\_area | INTEGER (FK) | – | Área técnica de la pregunta, según el puesto. |
 | pregunta | TEXT | – | Pregunta generada por la IA. |
-| respuesta\_usuario | TEXT | – | Respuesta escrita por el usuario. |
-| tiempo\_respuesta | INTEGER | – | Tiempo que se tardó en responder. |
-| timestamp | TIMESTAMP | – | Momento de la respuesta. |
+| respuesta | TEXT | – | Respuesta escrita por el usuario (vacía mientras no responde). |
+| creado\_en | TIMESTAMP | – | Momento en que se generó la pregunta. |
+| respondido\_en | TIMESTAMP | – | Momento en que se recibió la respuesta. |
+| tiempo\_respuesta | INTEGER | – | Segundos entre mostrar la pregunta y recibir la respuesta. |
+
+###### *Tabla 8\. Estructura de la tabla Intercambio (Elaboración Propia)*
 
 * **Estructura de Evaluación (Resultados por Pregunta)**
 
+| Campo | Tipo | Longitud | Descripción |
+| :---- | :---- | :---- | :---- |
+| id\_evaluacion | INTEGER (PK) | – | Identificador único de la evaluación. |
+| id\_intercambio | INTEGER (FK, único) | – | Intercambio evaluado; cada intercambio tiene a lo sumo una evaluación. |
+| puntuacion | SMALLINT | – | Puntuación de 0 a 100, calculada por el sistema a partir de los niveles. |
+| fortalezas | TEXT | – | Aspectos positivos detectados. |
+| debilidades | TEXT | – | Aspectos a mejorar. |
+| sugerencias | TEXT | – | Recomendaciones de mejora. |
+| evaluacion\_json | JSONB | – | Niveles por criterio, pesos, versión de la rúbrica y puntos clave. |
+| proveedor\_ia | VARCHAR | 30 | Servicio de IA que realizó la evaluación. |
+| modelo\_ia | VARCHAR | 50 | Modelo de lenguaje utilizado. |
+| creado\_en | TIMESTAMP | – | Momento de la evaluación. |
+
+###### *Tabla 9\. Estructura de la tabla Evaluación (Elaboración Propia)*
+
+* **Estructura de los catálogos (Puesto, Nivel y Área)**
+
+Los puestos, niveles y áreas son tablas de referencia que comparten la misma estructura; el puesto agrega además el nombre de su icono.
 
 | Campo | Tipo | Longitud | Descripción |
-| :---- | :---- | ----- | :---- |
-| id\_evaluacion | INTEGER (PK) | – | Identificador único de la evaluación. |
-| id\_intercambio | INTEGER (FK) | – | Referencia al intercambio evaluado. |
-| puntuacion | INTEGER | – | Puntuación del 0 al 100\. |
-| fortalezas | TEXT | – | Aspectos positivos detectados. |
-| debilidades | TEXT | – | Aspecto a mejorar. |
-| sugerencias | TEXT | – | Recomendación de mejora. |
-| evaluacion\_json | JSON | – | Datos completos en formato JSON. |
+| :---- | :---- | :---- | :---- |
+| id | INTEGER (PK) | – | Identificador único. |
+| codigo | VARCHAR | 30 | Clave estable (única) que usan la API y la IA, por ejemplo «backend» o «semi\_senior». |
+| nombre | VARCHAR | 60 | Nombre visible, por ejemplo «Desarrollador Backend». |
+| descripcion | TEXT | – | Descripción breve. |
+| orden | SMALLINT | – | Orden de presentación. |
+| activo | BOOLEAN | – | Si se ofrece al usuario; los retirados se conservan por el historial. |
+| icono | VARCHAR | 30 | Solo en Puesto: icono que lo representa en pantalla. |
+| creado\_en / actualizado\_en | TIMESTAMP | – | Fechas de creación y última modificación. |
+
+###### *Tabla 10\. Estructura de las tablas Puesto, Nivel y Área (Elaboración Propia)*
+
+* **Estructura de Tecnología**
+
+| Campo | Tipo | Longitud | Descripción |
+| :---- | :---- | :---- | :---- |
+| id, codigo, nombre, descripcion, orden, activo | – | – | Los mismos campos de los catálogos (Tabla 10). |
+| id\_puesto | INTEGER (FK) | – | Puesto al que pertenece la tecnología. |
+| capa | VARCHAR | 10 | En Full Stack, «frontend» o «backend»; vacío en los demás puestos. |
+| grupo | VARCHAR | 40 | Agrupación para mostrarla en pantalla (lenguaje, tipo de prueba o de motor). |
+
+###### *Tabla 11\. Estructura de la tabla Tecnología (Elaboración Propia)*
+
+* **Estructura de Convocatoria**
+
+| Campo | Tipo | Longitud | Descripción |
+| :---- | :---- | :---- | :---- |
+| id\_convocatoria | INTEGER (PK) | – | Identificador único. |
+| id\_usuario | INTEGER (FK) | – | Usuario que la analizó. |
+| texto | TEXT | – | Texto de la convocatoria, con correos, teléfonos y enlaces enmascarados. |
+| hash | VARCHAR | 64 | Huella del texto; evita analizar dos veces la misma convocatoria. |
+| perfil | JSONB | – | Puesto, tecnologías, nivel y requisitos detectados. |
+| creado\_en | TIMESTAMP | – | Momento del análisis. |
+
+###### *Tabla 12\. Estructura de la tabla Convocatoria (Elaboración Propia)*
+
+* **Estructura de Currículum**
+
+El archivo del currículum no se almacena: solo su texto extraído y su análisis.
+
+| Campo | Tipo | Longitud | Descripción |
+| :---- | :---- | :---- | :---- |
+| id\_curriculum | INTEGER (PK) | – | Identificador único. |
+| id\_usuario | INTEGER (FK) | – | Usuario que lo subió. |
+| nombre\_archivo | VARCHAR | 255 | Nombre del archivo subido. |
+| formato | VARCHAR | 10 | PDF o DOCX. |
+| paginas | SMALLINT | – | Número de páginas. |
+| texto | TEXT | – | Texto extraído del documento. |
+| hash\_texto | VARCHAR | 64 | Huella del texto extraído. |
+| convocatoria | TEXT | – | Convocatoria con la que se comparó (opcional). |
+| hash\_convocatoria | VARCHAR | 64 | Huella de la convocatoria. |
+| fecha | TIMESTAMP | – | Momento del análisis. |
+
+###### *Tabla 13\. Estructura de la tabla Currículum (Elaboración Propia)*
+
+* **Estructura de Análisis ATS**
+
+| Campo | Tipo | Longitud | Descripción |
+| :---- | :---- | :---- | :---- |
+| id\_analisis | INTEGER (PK) | – | Identificador único. |
+| id\_curriculum | INTEGER (FK, único) | – | Currículum analizado (uno a uno). |
+| campos | JSONB | – | Los ocho campos que lee un ATS y si se detectaron. |
+| hallazgos | JSONB | – | Fortalezas y debilidades encontradas, con su severidad. |
+| campos\_detectados | SMALLINT | – | Cuántos campos se detectaron. |
+| campos\_intentados | SMALLINT | – | Cuántos campos se buscaron. |
+| brecha | JSONB | – | Requisitos de la convocatoria y su evidencia en el CV (opcional). |
+| inventario | JSONB | – | Términos técnicos legibles del CV. |
+| vinetas | JSONB | – | Análisis de las viñetas de logro. |
+| version\_reglas | SMALLINT | – | Versión de las reglas con que se analizó. |
+| revision\_ia | JSONB | – | Sugerencias de mejora de la IA (opcional). |
+| fecha | TIMESTAMP | – | Momento del análisis. |
+
+###### *Tabla 14\. Estructura de la tabla Análisis ATS (Elaboración Propia)*
 
 ### **3.4.2 Formulario del sistema** {#3.4.2-formulario-del-sistema}
 
-A continuación, se presentan los formularios principales que el usuario visualiza y completa durante la interacción con el sistema.
+A continuación, se presentan los formularios y paneles principales que el usuario visualiza y completa durante la interacción con el sistema. Cada uno se acompaña de una captura de pantalla y de una tabla con sus campos y validaciones.
 
 * **Formulario de Registro de Usuario**
 
+[INSERTAR CAPTURA DE PANTALLA]
 
-  
+##### Figura 10\. Formulario de Registro de Usuario (Elaboración Propia)
 
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Nombre completo | Texto | Sí | Máximo 100 caracteres. |
+| Correo electrónico | Correo | Sí | Formato válido; no puede estar registrado. |
+| Contraseña | Contraseña | Sí | Mínimo 8 caracteres; no puede ser común, solo numérica ni parecida a los datos del usuario. |
+| Confirmar contraseña | Contraseña | Sí | Debe coincidir con la contraseña. |
+| Aceptación de términos | Casilla | Sí | Debe estar marcada. |
+| Registrarse con Google | Botón | No | Alternativa al formulario; crea la cuenta con el correo de Google. |
 
-  
+###### *Tabla 15\. Campos del formulario de Registro de Usuario (Elaboración Propia)*
 
+* **Formulario de Inicio de Sesión**
 
-  
+[INSERTAR CAPTURA DE PANTALLA]
 
+##### Figura 11\. Formulario de Inicio de Sesión (Elaboración Propia)
 
-  
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Correo electrónico | Correo | Sí | Formato válido. |
+| Contraseña | Contraseña | Sí | Debe corresponder al correo. |
+| Continuar con Google | Botón | No | Alternativa al formulario. |
 
+###### *Tabla 16\. Campos del formulario de Inicio de Sesión (Elaboración Propia)*
 
-  
+* **Formulario de Nueva Entrevista (pestaña Personalizada)**
 
+[INSERTAR CAPTURA DE PANTALLA]
 
-  
+##### Figura 12\. Formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
 
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Puesto | Lista de selección | Sí | Uno de los puestos activos del catálogo. |
+| Nivel | Lista de selección | Sí | Junior, Semi-Senior o Senior. |
+| Tecnología | Lista de selección | Sí | Debe pertenecer al puesto; en Full Stack se elige una de frontend y una de backend. |
 
+###### *Tabla 17\. Campos del formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)*
 
+* **Formulario de Nueva Entrevista (pestaña Con convocatoria)**
 
+[INSERTAR CAPTURA DE PANTALLA]
 
-* **Formulario de inicio de session**  
-* **Formulario de selección de Área**  
-* **Formulario de Respuesta en Entrevista (chat)**  
-* **Formulario del panel de resultados**
+##### Figura 13\. Formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Texto de la convocatoria | Área de texto | Uno de los dos | Entre 30 y 5000 caracteres. |
+| Archivo de la convocatoria | Archivo | Uno de los dos | PDF o DOCX, máximo 2 MB. |
+
+###### *Tabla 18\. Campos del formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)*
+
+* **Formulario de Respuesta en Entrevista (chat)**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 14\. Formulario de Respuesta en Entrevista (chat) (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Respuesta | Área de texto | Sí | No puede estar vacía; máximo 2000 caracteres. |
+| Abandonar | Botón | No | Pide confirmación; la entrevista termina con nota parcial. |
+
+###### *Tabla 19\. Campos del formulario de Respuesta en Entrevista (chat) (Elaboración Propia)*
+
+* **Panel de Resultados**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 15\. Panel de Resultados (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Puntuación y banda | Dato | – | Promedio de la entrevista y su banda (Insuficiente a Sólido). |
+| Detalle por pregunta | Dato | – | Nota, niveles por criterio, fortalezas, debilidades, sugerencias y puntos clave. |
+| ¿Cómo se calcula? | Dato | – | La fórmula con los niveles de la respuesta sustituidos. |
+| Comparación | Dato | – | Diferencia con la entrevista anterior del mismo puesto y nivel. |
+| Practicar de nuevo este puesto | Botón | – | Abre una nueva entrevista con el mismo puesto y nivel preseleccionados. |
+
+###### *Tabla 20\. Campos del panel de Resultados (Elaboración Propia)*
+
+* **Panel de Historial y Progreso**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 16\. Panel de Historial y Progreso (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Buscar | Texto | No | Filtra por puesto, tecnología o nivel, sin distinguir mayúsculas ni tildes. |
+| Nivel | Lista de selección | No | Todos los niveles o uno del catálogo. |
+| Tabla de entrevistas | Dato | – | Fecha, puesto, tecnología, nivel, puntuación, estado y acción (Ver o Continuar), diez por página. |
+| Evolución en el tiempo | Gráfico | – | Una tarjeta por nivel, con una línea por puesto. |
+
+###### *Tabla 21\. Campos del panel de Historial y Progreso (Elaboración Propia)*
+
+* **Panel de Retroalimentación**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 17\. Panel de Retroalimentación (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Filtro | Selector | No | Todas, Por mejorar o Sólidas. |
+| Observaciones por área | Dato | – | Pregunta, puntuación, debilidades, sugerencias y enlace a la entrevista. |
+
+###### *Tabla 22\. Campos del panel de Retroalimentación (Elaboración Propia)*
+
+* **Formulario de Análisis de CV (Mi CV)**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 18\. Formulario de Análisis de CV (Mi CV) (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Currículum | Archivo | Sí | PDF o DOCX, máximo 2 MB. |
+| Convocatoria pegada | Área de texto | No | Máximo 5000 caracteres; excluye al archivo de convocatoria. |
+| Archivo de convocatoria | Archivo | No | PDF o DOCX, máximo 2 MB; excluye al texto pegado. |
+
+###### *Tabla 23\. Campos del formulario de Análisis de CV (Mi CV) (Elaboración Propia)*
+
+* **Formulario de Cambio de Contraseña (Mi perfil)**
+
+[INSERTAR CAPTURA DE PANTALLA]
+
+##### Figura 19\. Formulario de Cambio de Contraseña (Mi perfil) (Elaboración Propia)
+
+| Campo | Tipo | Obligatorio | Validación o contenido |
+| :---- | :---- | :---- | :---- |
+| Contraseña actual | Contraseña | Sí | Debe ser la contraseña vigente; no disponible en cuentas de Google. |
+| Nueva contraseña | Contraseña | Sí | Distinta de la actual; mismas reglas que en el registro. |
+
+###### *Tabla 24\. Campos del formulario de Cambio de Contraseña (Mi perfil) (Elaboración Propia)*
 
 [image1]: <data:image/png;base64,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>
 

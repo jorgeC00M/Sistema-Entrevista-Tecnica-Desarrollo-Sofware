@@ -10,13 +10,22 @@ import type { Curriculum, RevisionIA } from '@/types/curriculum'
  */
 export type EstadoDeLaRevision = 'pidiendo' | 'lista' | 'fallo'
 
+/** La del backend (`revision.VERSION_DE_REVISION`): la 2 trajo la lectura y los dos caminos. */
+const VERSION_DE_REVISION = 2
+
+/** Si falta la revisión, o es correcta pero de una versión anterior. */
+function porPedir(revision: RevisionIA | null | undefined): boolean {
+  return revision === null || (revision?.estado === 'ok' && (revision.version ?? 1) < VERSION_DE_REVISION)
+}
+
 /**
  * Pide las sugerencias de IA de un análisis cuando aún no las tiene.
  *
  * El diagnóstico llega sin ellas (`revision_ia === null`) para no esperar a la
  * IA. Este hook las pide en una segunda petición, tanto tras analizar como al
- * abrir desde el historial un análisis cuyas sugerencias nunca se pidieron, y
- * las fusiona en el resultado con `alLlegar`.
+ * abrir desde el historial un análisis cuyas sugerencias nunca se pidieron (o
+ * son de una versión anterior, como hace el servidor), y las fusiona en el
+ * resultado con `alLlegar`.
  *
  * Es un efecto porque sincroniza con la red al cambiar de análisis. "Pidiendo"
  * no se guarda: se deriva de que falten las sugerencias y no haya fallado.
@@ -30,7 +39,7 @@ export function useRevisionDelCv(
 
   const id = curriculum?.id ?? null
   const revision = curriculum?.analisis?.revision_ia
-  const sinRevision = curriculum?.analisis != null && revision === null
+  const sinRevision = curriculum?.analisis != null && porPedir(revision)
 
   useEffect(() => {
     if (id === null || !sinRevision || falloEn === id) return
@@ -46,7 +55,7 @@ export function useRevisionDelCv(
   const reintentar = () => {
     if (id === null) return
     if (sinRevision) {
-      // Sin revisión guardada: basta con quitar el fallo y el efecto la pide.
+      // Sin revisión vigente: basta con quitar el fallo y el efecto la pide.
       setFalloEn(null)
       return
     }
