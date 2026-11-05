@@ -74,6 +74,7 @@ Un nivel desconocido en la URL SHALL tratarse como «Todos los niveles». Un `?e
 - **THEN** la tabla y los gráficos muestran todas las entrevistas, como sin ese parámetro
 
 ### Requirement: Evolución en tres tarjetas por nivel
+> `inicio-con-resumen` mudó la evolución al Inicio («Tu evolución»): ya no está en el historial ni sigue sus filtros. Este requisito queda como registro.
 "Evolución en el tiempo" SHALL mostrarse debajo de la tabla, en tres tarjetas: una por nivel (Junior, Semi-Senior y Senior), en el orden del catálogo.
 
 Sin filtro de nivel, las tres tarjetas SHALL mostrarse siempre. Con un nivel elegido, SHALL mostrarse solo la de ese nivel. Si un nivel no tiene entrevistas finalizadas en lo que muestra la tabla, su tarjeta SHALL decir «Aún sin entrevistas <Nivel> finalizadas».
@@ -158,6 +159,7 @@ Todos los puntos SHALL dibujarse igual, rellenos con el color de su puesto, sin 
 - **THEN** su punto se ve igual que el de una personalizada, y la leyenda no menciona el origen
 
 ### Requirement: Los gráficos siguen a la tabla
+> Reemplazado por `inicio-con-resumen`: los gráficos viven en el Inicio, sin filtros, con todas las finalizadas. Este requisito queda como registro.
 Los gráficos SHALL dibujarse con las mismas entrevistas que muestra la tabla después de aplicar la búsqueda y el nivel. Cambiar un filtro SHALL actualizar a la vez la tabla y los gráficos.
 
 #### Scenario: Filtrar por puesto
@@ -178,6 +180,7 @@ La tabla SHALL seguir mostrando la etiqueta «Convocatoria» junto al puesto de 
 - **THEN** la tabla y los gráficos muestran todas las entrevistas, como sin ese parámetro
 
 ### Requirement: Encabezado con descripción
+> `inicio-con-resumen` renombró la página a «Historial» y su descripción a «Busca tus entrevistas anteriores y abre el reporte de cada una. Tu evolución está en Inicio.». Este requisito queda como registro.
 Bajo el título «Historial y progreso», la página SHALL mostrar solo esta descripción: «Revisa tus entrevistas anteriores y sigue cómo evoluciona tu puntaje en cada puesto y nivel.».
 
 No SHALL mostrar el número de entrevistas registradas, el de completadas ni el promedio general.

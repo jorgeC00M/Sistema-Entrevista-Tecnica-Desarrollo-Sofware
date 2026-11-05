@@ -46,8 +46,13 @@ const TITULOS: TituloDeRuta[] = [
   },
   {
     patron: '/historial',
-    titulo: 'Historial y progreso',
-    subtitulo: 'Tus entrevistas anteriores y tu evolución en el tiempo',
+    titulo: 'Historial',
+    subtitulo: 'Tus entrevistas anteriores y sus reportes',
+  },
+  {
+    patron: '/inicio',
+    titulo: 'Inicio',
+    subtitulo: 'Tu resumen y lo que te conviene hacer ahora',
   },
   {
     patron: '/perfil',

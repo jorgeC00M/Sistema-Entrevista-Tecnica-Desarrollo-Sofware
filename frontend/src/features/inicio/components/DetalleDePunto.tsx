@@ -1,4 +1,4 @@
-import { fechaDelPunto } from '@/features/historial/historial'
+import { fechaDelPunto } from '@/features/inicio/evolucion'
 
 interface Props {
   /** Posición del punto dentro del gráfico, en porcentaje del ancho y del alto. */

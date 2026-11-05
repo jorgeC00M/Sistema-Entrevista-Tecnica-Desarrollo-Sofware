@@ -11,17 +11,16 @@ const SIN_FILTRO: Record<ClaveDeFiltro, string> = { q: '', nivel: 'todos' }
 export interface FiltrosDeHistorial {
   texto: string
   nivel: FiltroDeNivel
-  /** Las entrevistas que pasan los filtros: las que pintan la tabla y los gráficos. */
+  /** Las entrevistas que pasan los filtros: las que pinta la tabla. */
   filtradas: Entrevista[]
   cambiar: (clave: ClaveDeFiltro, valor: string) => void
   limpiar: () => void
 }
 
 /**
- * Los filtros del historial, leídos de la URL (`?q=` y `?nivel=`)
- * y aplicados una sola vez: la tabla y los gráficos reciben la misma lista,
- * así que lo que se dibuja es exactamente lo que se ve en la tabla. Los
- * niveles válidos vienen del catálogo (`codigosDeNivel`). Un `?estado=` de
+ * Los filtros del historial, leídos de la URL (`?q=` y `?nivel=`) y aplicados
+ * una sola vez para la tabla. (Las gráficas, que antes recibían la misma lista,
+ * se mudaron al Inicio y no se filtran.) Los niveles válidos vienen del catálogo (`codigosDeNivel`). Un `?estado=` de
  * una dirección antigua se ignora: ya no hay filtro de estado.
  *
  * Cambiar un filtro reemplaza la entrada del historial del navegador (no se

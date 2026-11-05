@@ -6,6 +6,7 @@ import { mensajeDeError } from '@/api/errores'
 import { obtenerEstado, obtenerResultados, responder } from '@/api/entrevistas'
 import type { AutorDeMensaje } from '@/features/entrevista/components/BurbujaPregunta'
 import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
+import { invalidarCache } from '@/hooks/usePeticion'
 
 export interface MensajeDeChat {
   autor: AutorDeMensaje
@@ -32,7 +33,12 @@ export function useEntrevista(id: string) {
   const [segundos, setSegundos] = useState<number | null>(null)
   const [minutosDeEntrevista, setMinutosDeEntrevista] = useState(0)
 
-  const alReporte = useCallback(() => navigate(`/entrevista/${id}/resultados`, { replace: true }), [id, navigate])
+  // Toda salida del chat hacia el reporte (finalizar, vencer, 409) cierra la
+  // entrevista: el sidebar deja de ofrecer «Continuar».
+  const alReporte = useCallback(() => {
+    invalidarCache('historial')
+    navigate(`/entrevista/${id}/resultados`, { replace: true })
+  }, [id, navigate])
 
   // Reconstruye el chat desde el servidor al montar: si el usuario recarga la
   // página a mitad de la entrevista, se retoma en la pregunta pendiente en
@@ -45,6 +51,8 @@ export function useEntrevista(id: string) {
         const estado = await obtenerEstado(id)
 
         if (estado.entrevista.estado !== 'en_progreso') {
+          // Pudo cerrarse al abrirla (venció): que el sidebar no la ofrezca más.
+          invalidarCache('historial')
           navigate(`/entrevista/${id}/resultados`, { replace: true })
           return
         }

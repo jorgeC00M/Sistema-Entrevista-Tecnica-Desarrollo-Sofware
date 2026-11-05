@@ -18,6 +18,13 @@ interface GrupoDeDestinos {
 }
 
 /**
+ * El Inicio: el resumen y el siguiente paso. Va solo, arriba de «Continuar» y
+ * «Simular entrevista», porque no pertenece a una etapa: es el punto de partida
+ * de todas (`inicio-con-resumen`).
+ */
+export const DESTINO_INICIO: Destino = { ruta: '/inicio', etiqueta: 'Inicio', icono: 'casa' }
+
+/**
  * Los destinos del estudiante, agrupados por la etapa en que los usa:
  * prepararse antes de practicar, revisar su progreso después y, aparte, su
  * cuenta. Practicar es el botón principal del sidebar, no un destino de esta
@@ -41,7 +48,8 @@ export const GRUPOS_DE_DESTINOS: GrupoDeDestinos[] = [
   },
   {
     titulo: 'Tu progreso',
-    destinos: [{ ruta: '/historial', etiqueta: 'Historial y progreso', icono: 'historial' }],
+    // La evolución se mudó al Inicio: aquí queda la lista de entrevistas.
+    destinos: [{ ruta: '/historial', etiqueta: 'Historial', icono: 'historial' }],
   },
   {
     titulo: 'Tu cuenta',

@@ -40,3 +40,11 @@ export function tramoDelReloj(segundos: number): TramoDelReloj {
 export function minutosRestantes(segundos: number): number {
   return Math.ceil(segundos / 60)
 }
+
+/**
+ * El texto del botón del sidebar: solo los minutos, que es lo que decide si
+ * volver ahora. El número de pregunta se ve al entrar al chat.
+ */
+export function etiquetaDeContinuar(segundos: number): string {
+  return `Continuar · ${minutosRestantes(segundos)} min`
+}

@@ -7,6 +7,8 @@
 export const TRAZOS = {
   // Navegación y chrome
   mas: 'M12 5l0 14M5 12l14 0',
+  /** El destino «Inicio» del sidebar (Tabler `home`). */
+  casa: 'M5 12l-2 0l9 -9l9 9l-2 0M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6',
   play: 'M7 4v16l13 -8l-13 -8',
   historial: 'M12 8l0 4l2 2M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5',
   usuario: 'M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2',

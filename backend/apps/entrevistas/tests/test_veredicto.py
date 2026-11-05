@@ -83,10 +83,11 @@ class VeredictoTest(APITestCase):
         self.assertEqual(entrevista.veredicto_ia["estado"], "no_disponible")
 
     def test_resultados_lo_publica_al_terminar_y_lo_oculta_en_progreso(self):
+        # Primero la terminada: un usuario solo puede tener una en curso.
+        terminada = self._completa(Redactor())
         proveedor = Redactor()
         en_curso = self._iniciar(proveedor)
         servicio.responder(en_curso, "Una", proveedor=proveedor)
-        terminada = self._completa(Redactor())
 
         en_progreso = self.client.get(f"/api/entrevistas/{en_curso.pk}/resultados/").data
         final = self.client.get(f"/api/entrevistas/{terminada.pk}/resultados/").data

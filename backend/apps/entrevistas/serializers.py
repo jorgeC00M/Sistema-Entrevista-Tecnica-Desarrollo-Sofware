@@ -46,6 +46,9 @@ class IniciarEntrevistaSerializer(serializers.Serializer):
     # La convocatoria analizada con que se configuró, si hubo una. Debe ser del
     # usuario (llega en `context["request"]`): una ajena da 404, como el resto.
     convocatoria = serializers.IntegerField(required=False, allow_null=True)
+    # Abandonar la entrevista en curso, si hay una, y empezar esta en el mismo
+    # paso. Sin él, iniciar con otra en curso responde 409.
+    abandonar_en_curso = serializers.BooleanField(required=False, default=False)
 
     def validate_convocatoria(self, valor):
         if valor is None:

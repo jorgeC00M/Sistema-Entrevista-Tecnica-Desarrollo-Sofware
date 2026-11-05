@@ -96,23 +96,24 @@ class CerrarVencidasTest(TestCase):
         ajena.refresh_from_db()
         self.assertEqual(ajena.estado, Entrevista.Estado.EN_PROGRESO)
 
-    def test_el_coste_no_crece_con_el_numero_de_entrevistas(self):
+    def test_el_coste_no_crece_con_el_historial(self):
         """Candado contra el N+1: corre en cada consulta del historial, así que
-        son dos sentencias (una por estado) sea cual sea el número."""
-        self._vencidas(1)
+        son dos sentencias (una por estado) sea cual sea el número de
+        entrevistas terminadas. En curso hay a lo sumo una (el índice)."""
+        self._vencida()
         with self.assertNumQueries(2):
             servicio.cerrar_vencidas(self.usuario)
 
-        self._vencidas(5)
+        for _ in range(5):
+            crear_entrevista(self.usuario, estado=Entrevista.Estado.FINALIZADA)
+        self._vencida()
         with self.assertNumQueries(2):
             servicio.cerrar_vencidas(self.usuario)
 
-    def _vencidas(self, cuantas: int) -> None:
-        for i in range(cuantas):
-            entrevista = crear_entrevista(self.usuario)
-            if i % 2:
-                crear_intercambio(entrevista, respuesta="r", respondido_en=timezone.now())
-            _iniciada_hace(entrevista, PASADO_EL_LIMITE)
+    def _vencida(self) -> None:
+        entrevista = crear_entrevista(self.usuario)
+        crear_intercambio(entrevista, respuesta="r", respondido_en=timezone.now())
+        _iniciada_hace(entrevista, PASADO_EL_LIMITE)
 
 
 class LimiteEnLaAPITest(APITestCase):

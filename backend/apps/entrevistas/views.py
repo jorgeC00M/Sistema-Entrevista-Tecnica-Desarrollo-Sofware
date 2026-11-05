@@ -59,14 +59,26 @@ class EntrevistaListCreateView(APIView):
         entrada = IniciarEntrevistaSerializer(data=request.data, context={"request": request})
         entrada.is_valid(raise_exception=True)
 
-        entrevista = services.iniciar(
-            request.user,
-            entrada.validated_data["puesto"],
-            entrada.validated_data["nivel"],
-            entrada.validated_data["tecnologia"],
-            segunda_tecnologia=entrada.validated_data.get("segunda_tecnologia"),
-            convocatoria=entrada.validated_data.get("convocatoria"),
-        )
+        try:
+            entrevista = services.iniciar(
+                request.user,
+                entrada.validated_data["puesto"],
+                entrada.validated_data["nivel"],
+                entrada.validated_data["tecnologia"],
+                segunda_tecnologia=entrada.validated_data.get("segunda_tecnologia"),
+                convocatoria=entrada.validated_data.get("convocatoria"),
+                abandonar_en_curso=entrada.validated_data["abandonar_en_curso"],
+            )
+        except services.HayEntrevistaEnCurso as exc:
+            # Con la entrevista en curso: la interfaz arma el aviso con datos
+            # del servidor aunque su caché no supiera de ella.
+            return Response(
+                {
+                    "detail": str(exc),
+                    "entrevista_en_curso": EntrevistaSerializer(exc.entrevista).data if exc.entrevista else None,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
 
         return Response(
             {

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
+from apps.entrevistas.models import Entrevista
 from apps.evaluaciones.models import Evaluacion
 from tests.conftest import crear_entrevista, crear_intercambio
 
@@ -28,7 +29,8 @@ class RestriccionesDeIntegridadTest(TestCase):
                 crear_intercambio(self.entrevista, pregunta="Otra pregunta")
 
     def test_permite_el_mismo_numero_en_entrevistas_distintas(self):
-        otra_entrevista = crear_entrevista(self.usuario, puesto="frontend")
+        # Terminada: un usuario solo puede tener una en curso.
+        otra_entrevista = crear_entrevista(self.usuario, puesto="frontend", estado=Entrevista.Estado.FINALIZADA)
         crear_intercambio(self.entrevista, pregunta="Pregunta A")
         # No debe lanzar: el número 1 es único por entrevista, no globalmente.
         crear_intercambio(otra_entrevista, pregunta="Pregunta B")

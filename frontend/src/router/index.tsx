@@ -6,6 +6,7 @@ import RegistroPage from '@/features/auth/pages/RegistroPage'
 import CurriculumPage from '@/features/curriculum/pages/CurriculumPage'
 import EntrevistaPage from '@/features/entrevista/pages/EntrevistaPage'
 import HistorialPage from '@/features/historial/pages/HistorialPage'
+import InicioPage from '@/features/inicio/pages/InicioPage'
 import EntradaRaiz from '@/features/landing/pages/EntradaRaiz'
 import PerfilPage from '@/features/perfil/pages/PerfilPage'
 import ResultadosPage from '@/features/resultados/pages/ResultadosPage'
@@ -27,6 +28,7 @@ export default function Rutas() {
         <Route path="/registro" element={<RegistroPage />} />
 
         <Route element={<RutaProtegida />}>
+          <Route path="/inicio" element={<InicioPage />} />
           <Route path="/simular-entrevista" element={<SeleccionPuestoPage />} />
           <Route path="/entrevista/:id" element={<EntrevistaPage />} />
           <Route path="/entrevista/:id/resultados" element={<ResultadosPage />} />

@@ -2,11 +2,15 @@ import { useId, useReducer, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { VIGENCIA_DEL_CATALOGO_MS, obtenerPuestos } from '@/api/catalogos'
+import { ErrorAPI } from '@/api/client'
 import { mensajeDeError } from '@/api/errores'
 import { iniciarEntrevista, obtenerUltimaConfiguracion } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
 import Pestanas from '@/components/ui/Pestanas'
 import Spinner from '@/components/ui/Spinner'
+import { type EntrevistaEnCurso, useEntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
+import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
+import AvisoDeEntrevistaEnCurso from '@/features/seleccion/components/AvisoDeEntrevistaEnCurso'
 import FormularioDeEntrevista from '@/features/seleccion/components/FormularioDeEntrevista'
 import ModalDeInicio from '@/features/seleccion/components/ModalDeInicio'
 import PanelDeConvocatoria from '@/features/seleccion/components/PanelDeConvocatoria'
@@ -25,10 +29,11 @@ import {
   reducirSeleccion,
   tecnologiasElegidas,
 } from '@/features/seleccion/seleccion'
-import { usePeticion } from '@/hooks/usePeticion'
+import { invalidarCache, usePeticion } from '@/hooks/usePeticion'
 import { nombresDeAreas } from '@/lib/catalogos'
 import { prefiereMovimientoReducido } from '@/lib/movimiento'
 import type { CatalogoDePuestos, ConvocatoriaAnalizada, UltimaConfiguracion } from '@/types/catalogos'
+import type { Entrevista } from '@/types/entrevista'
 
 /** Lo que falta, en la barra y en el anuncio. */
 const FALTA: Record<Campo, string> = {
@@ -43,6 +48,19 @@ const MODOS = [
   { valor: 'manual', etiqueta: 'Personalizada' },
   { valor: 'convocatoria', etiqueta: 'Con convocatoria' },
 ]
+
+/** La entrevista en curso que informa un 409 al iniciar, en la forma del sidebar. */
+function enCursoDelConflicto(err: unknown): EntrevistaEnCurso | null {
+  if (!(err instanceof ErrorAPI) || err.status !== 409) return null
+  const entrevista = (err.datos as { entrevista_en_curso?: Entrevista | null } | null)?.entrevista_en_curso
+  if (!entrevista) return null
+  const desfase = desfaseDelReloj(entrevista.ahora, Date.now())
+  return {
+    id: entrevista.id,
+    puestoDisplay: entrevista.puesto_display,
+    segundosRestantes: segundosRestantes(entrevista.fecha_limite, desfase, Date.now()),
+  }
+}
 
 function desplazarSuave(elemento: HTMLElement | null) {
   elemento?.scrollIntoView({ behavior: prefiereMovimientoReducido() ? 'auto' : 'smooth', block: 'nearest' })
@@ -99,6 +117,11 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
   )
   const [modo, setModo] = useState<Modo>('manual')
   const [confirmando, setConfirmando] = useState(false)
+  // Solo puede haber una en curso: el aviso de arriba y el modal la nombran.
+  // `conflicto` es la que el modal debe tratar: la que sabía la interfaz al
+  // abrirlo, o la que informó el servidor con un 409.
+  const enCurso = useEntrevistaEnCurso()
+  const [conflicto, setConflicto] = useState<EntrevistaEnCurso | null>(null)
   const [error, setError] = useState('')
   const [iniciando, setIniciando] = useState(false)
   const [anuncio, setAnuncio] = useState('')
@@ -204,10 +227,11 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
 
   const abrirInicio = () => {
     setError('')
+    setConflicto(enCurso)
     setConfirmando(true)
   }
 
-  const iniciar = async () => {
+  const iniciar = async (abandonar = false) => {
     const [primera, segunda] = tecnologias
     if (!puesto || !nivel || !primera || falta !== null) return
     setError('')
@@ -219,10 +243,17 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
         segunda_tecnologia: segunda?.codigo ?? null,
         nivel: nivel.codigo,
         convocatoria: convocatoriaId,
+        abandonar_en_curso: abandonar,
       })
+      // El sidebar y el historial se enteran de la nueva (y de la abandonada).
+      invalidarCache('historial')
       navigate(`/entrevista/${datos.entrevista.id}`)
     } catch (err) {
-      setError(mensajeDeError(err, 'No se pudo iniciar la entrevista.'))
+      // Otra en curso que la interfaz no conocía (otra pestaña, caché vieja):
+      // el modal pasa a preguntar qué hacer con ella, con datos del servidor.
+      const otra = enCursoDelConflicto(err)
+      if (otra) setConflicto(otra)
+      else setError(mensajeDeError(err, 'No se pudo iniciar la entrevista.'))
       setIniciando(false)
     }
   }
@@ -242,6 +273,8 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
           <RepetirConfiguracion configuracion={ultima} onConfirmar={repetir} focoTrasConfirmar={focoTrasAplicar} />
         )}
       </div>
+
+      {enCurso && <AvisoDeEntrevistaEnCurso entrevista={enCurso} />}
 
       {/* Un contenedor y no un <form>: un <form> haría que cualquier botón interno
           sin `type` (como "Analizar convocatoria") lo enviara. */}
@@ -318,7 +351,10 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
           totalPreguntas={catalogo.preguntas_por_entrevista}
           cargando={iniciando}
           error={error}
-          onComenzar={iniciar}
+          enCurso={conflicto}
+          onComenzar={() => void iniciar()}
+          onContinuarEnCurso={() => conflicto && navigate(`/entrevista/${conflicto.id}`)}
+          onAbandonarYEmpezar={() => void iniciar(true)}
           onCancelar={() => setConfirmando(false)}
         />
       )}

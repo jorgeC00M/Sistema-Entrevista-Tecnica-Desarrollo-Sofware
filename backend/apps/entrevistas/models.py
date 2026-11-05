@@ -132,6 +132,16 @@ class Entrevista(models.Model):
             # usuario + fecha.
             models.Index(fields=["usuario", "estado"]),
         ]
+        constraints = [
+            # Una sola entrevista en curso por usuario, como en la vida real.
+            # Lo garantiza la base de datos y no solo `services.iniciar`: dos
+            # pestañas pulsando «Comenzar» a la vez tampoco lo logran.
+            models.UniqueConstraint(
+                fields=["usuario"],
+                condition=models.Q(estado="en_progreso"),
+                name="una_entrevista_en_curso_por_usuario",
+            ),
+        ]
         verbose_name = "entrevista"
         verbose_name_plural = "entrevistas"
 

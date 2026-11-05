@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Q
 from django.utils import timezone
 
@@ -36,6 +36,19 @@ from .selectors import entrevista_del_usuario, intercambio_pendiente, promedio_d
 
 #: Sube si cambia lo que recibe o lo que devuelve el redactor del veredicto.
 VERSION_DEL_VEREDICTO = 1
+
+
+class HayEntrevistaEnCurso(ValueError):
+    """Se pidió iniciar una entrevista con otra en curso.
+
+    Lleva esa entrevista: la vista la devuelve con el 409 para que la interfaz
+    ofrezca continuarla o abandonarla con datos del servidor. Puede ser `None`
+    solo si la que causó el choque terminó justo después.
+    """
+
+    def __init__(self, entrevista):
+        super().__init__("Ya tienes una entrevista en curso.")
+        self.entrevista = entrevista
 
 
 class TiempoAgotado(ValueError):
@@ -96,6 +109,7 @@ def iniciar(
     proveedor: ProveedorIA | None = None,
     convocatoria=None,
     segunda_tecnologia=None,
+    abandonar_en_curso: bool = False,
 ):
     """Crea la entrevista y sus preguntas de calentamiento.
 
@@ -109,18 +123,47 @@ def iniciar(
     ninguna puede ser adaptativa todavía — no hay respuestas de las que
     adaptarse. De la siguiente en adelante se generan de a una, ya con el
     desempeño previo como guía.
+
+    Un usuario tiene a lo sumo una entrevista en curso. Si ya hay una (y no
+    venció), se lanza `HayEntrevistaEnCurso` sin crear nada ni llamar a la IA;
+    con `abandonar_en_curso`, se abandona en la misma transacción que crea la
+    nueva, así que si la IA falla la anterior queda intacta. El índice
+    `una_entrevista_en_curso_por_usuario` cubre la carrera entre dos pestañas.
     """
-    proveedor = proveedor or get_proveedor()
+    # Una vencida no debe bloquear: se cierra antes de mirar.
+    cerrar_vencidas(usuario)
 
     with transaction.atomic():
-        entrevista = Entrevista.objects.create(
-            usuario=usuario,
-            puesto=puesto,
-            nivel=nivel,
-            tecnologia=tecnologia,
-            segunda_tecnologia=segunda_tecnologia,
-            convocatoria=convocatoria,
+        en_curso = (
+            Entrevista.objects.select_for_update()
+            .filter(usuario=usuario, estado=Entrevista.Estado.EN_PROGRESO)
+            .first()
         )
+        if en_curso is not None:
+            if not abandonar_en_curso:
+                raise HayEntrevistaEnCurso(en_curso)
+            try:
+                abandonar(en_curso)
+            except EntrevistaNoEnCurso:
+                pass  # terminó en otra petición: ya no hay nada que abandonar
+
+        try:
+            # Punto de guardado propio: un choque con el índice no puede
+            # romper la transacción exterior antes de leer la que ganó.
+            with transaction.atomic():
+                entrevista = Entrevista.objects.create(
+                    usuario=usuario,
+                    puesto=puesto,
+                    nivel=nivel,
+                    tecnologia=tecnologia,
+                    segunda_tecnologia=segunda_tecnologia,
+                    convocatoria=convocatoria,
+                )
+        except IntegrityError:
+            ganadora = Entrevista.objects.filter(usuario=usuario, estado=Entrevista.Estado.EN_PROGRESO).first()
+            raise HayEntrevistaEnCurso(ganadora) from None
+        # El proveedor se resuelve recién aquí: un 409 no lo construye.
+        proveedor = proveedor or get_proveedor()
         contexto = _contexto(entrevista)
         areas = [
             area_de_la_pregunta(contexto.puesto, numero)

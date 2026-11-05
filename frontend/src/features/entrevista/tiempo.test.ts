@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   desfaseDelReloj,
+  etiquetaDeContinuar,
   formatoReloj,
   minutosRestantes,
   segundosRestantes,
@@ -53,6 +54,11 @@ describe('formato', () => {
     expect(formatoReloj(30 * 60)).toBe('30:00')
     expect(formatoReloj(65)).toBe('01:05')
     expect(formatoReloj(0)).toBe('00:00')
+  })
+
+  it('el botón del sidebar dice solo los minutos', () => {
+    expect(etiquetaDeContinuar(18 * 60)).toBe('Continuar · 18 min')
+    expect(etiquetaDeContinuar(20)).toBe('Continuar · 1 min')
   })
 
   it('los minutos del sidebar van hacia arriba', () => {

@@ -20,18 +20,22 @@ export function iniciarEntrevista({
   tecnologia,
   segunda_tecnologia,
   convocatoria,
+  abandonar_en_curso,
 }: DatosIniciarEntrevista): Promise<RespuestaIniciarEntrevista> {
   return peticion<RespuestaIniciarEntrevista>('/api/entrevistas/', {
     method: 'POST',
     // Puesto, nivel y tecnología son obligatorios; el servidor valida además que
     // las tecnologías sean del puesto y, en Full Stack, una por capa. La segunda
-    // y la convocatoria solo viajan si las hay.
+    // y la convocatoria solo viajan si las hay. Con otra entrevista en curso
+    // responde 409 (`entrevista_en_curso` en el cuerpo), salvo que se pida
+    // abandonarla en el mismo paso.
     body: {
       puesto,
       nivel,
       tecnologia,
       ...(segunda_tecnologia ? { segunda_tecnologia } : {}),
       ...(convocatoria ? { convocatoria } : {}),
+      ...(abandonar_en_curso ? { abandonar_en_curso } : {}),
     },
   })
 }

@@ -13,6 +13,7 @@ import CampoRespuesta from '@/features/entrevista/components/CampoRespuesta'
 import ChatEntrevista from '@/features/entrevista/components/ChatEntrevista'
 import RelojDeEntrevista from '@/features/entrevista/components/RelojDeEntrevista'
 import { useEntrevista } from '@/features/entrevista/hooks/useEntrevista'
+import { invalidarCache } from '@/hooks/usePeticion'
 
 export default function EntrevistaPage() {
   const { id } = useParams<{ id: string }>()
@@ -47,6 +48,8 @@ export default function EntrevistaPage() {
     setAbandonando(true)
     try {
       await abandonarEntrevista(id ?? '')
+      // Ya no hay nada que continuar: el sidebar se entera.
+      invalidarCache('historial')
       // `replace`: "atrás" no debe volver a una entrevista que ya no sigue.
       navigate(`/entrevista/${id}/resultados`, { replace: true })
     } catch (err) {

@@ -163,4 +163,6 @@ export interface DatosIniciarEntrevista {
   segunda_tecnologia?: string | null
   /** Id de la convocatoria analizada con que se configuró, si hubo una. */
   convocatoria?: number | null
+  /** Abandonar la entrevista en curso, si hay una, y empezar esta en el mismo paso. */
+  abandonar_en_curso?: boolean
 }

@@ -20,6 +20,12 @@ interface Props {
    * devuelve `null`, el foco vuelve a quien abrió el modal.
    */
   focoAlCerrar?: () => HTMLElement | null
+  /**
+   * Qué enfocar al abrirse, si no debe ser lo primero enfocable (la X). Sirve
+   * para dejar el foco en la opción segura cuando la otra destruye algo.
+   * Función por lo mismo que `focoAlCerrar`: se evalúa ya montado.
+   */
+  focoAlAbrir?: () => HTMLElement | null
 }
 
 /**
@@ -36,7 +42,7 @@ interface Props {
  * desaparece en el acto, porque quien lo usa lo desmonta: animar la salida
  * exigiría retrasar el desmontaje, y con él el `focoAlCerrar`.
  */
-export default function Modal({ titulo, children, acciones, onCerrar, focoAlCerrar }: Props) {
+export default function Modal({ titulo, children, acciones, onCerrar, focoAlCerrar, focoAlAbrir }: Props) {
   const idTitulo = useId()
   const dialogo = useRef<HTMLDialogElement>(null)
 
@@ -44,6 +50,8 @@ export default function Modal({ titulo, children, acciones, onCerrar, focoAlCerr
     const elemento = dialogo.current
     const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null
     elemento?.showModal()
+    // `showModal()` enfoca lo primero enfocable; esto lo corrige si se pidió.
+    focoAlAbrir?.()?.focus()
     return () => {
       elemento?.close()
       ;(focoAlCerrar?.() ?? anterior)?.focus()

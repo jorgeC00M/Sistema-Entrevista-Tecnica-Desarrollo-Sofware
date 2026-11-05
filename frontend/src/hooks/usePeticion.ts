@@ -29,10 +29,25 @@ const cache = new Map<string, Entrada>()
 
 const VIGENCIA_POR_DEFECTO_MS = 30_000
 
-/** Invalida una clave concreta, o toda la caché si no se pasa ninguna. */
+/**
+ * Las instancias montadas de cada clave, para avisarles cuando su dato cambió.
+ * Sin esto, borrar la caché no le llegaba a quien ya tenía el dato en su
+ * estado: el sidebar se quedaba con el historial de cuando se cargó la sesión.
+ */
+const oyentes = new Map<string, Set<() => void>>()
+
+/**
+ * Invalida una clave concreta y avisa a las pantallas montadas con ella, que
+ * vuelven a pedirla. Sin clave (al cerrar sesión) borra toda la caché sin
+ * avisar: no tiene sentido pedir nada mientras la sesión se cierra.
+ */
 export function invalidarCache(clave?: string): void {
-  if (clave === undefined) cache.clear()
-  else cache.delete(clave)
+  if (clave === undefined) {
+    cache.clear()
+    return
+  }
+  cache.delete(clave)
+  oyentes.get(clave)?.forEach((avisar) => avisar())
 }
 
 /**
@@ -70,9 +85,18 @@ export function usePeticion<T>(
 
   const [intento, setIntento] = useState(0)
 
-  const recargar = useCallback(() => {
-    invalidarCache(clave)
-    setIntento((n) => n + 1)
+  // Esta instancia también se suscribe: recargar es invalidar su clave.
+  const recargar = useCallback(() => invalidarCache(clave), [clave])
+
+  useEffect(() => {
+    const avisar = () => setIntento((n) => n + 1)
+    const deLaClave = oyentes.get(clave) ?? new Set()
+    deLaClave.add(avisar)
+    oyentes.set(clave, deLaClave)
+    return () => {
+      deLaClave.delete(avisar)
+      if (deLaClave.size === 0) oyentes.delete(clave)
+    }
   }, [clave])
 
   useEffect(() => {

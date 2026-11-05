@@ -1,14 +1,14 @@
-import GraficoDeNivel from '@/features/historial/components/GraficoDeNivel'
-import type { EvolucionDeNivel } from '@/features/historial/historial'
+import GraficoDeNivel from '@/features/inicio/components/GraficoDeNivel'
+import type { EvolucionDeNivel } from '@/features/inicio/evolucion'
 import { colorDePuesto } from '@/lib/puestos'
 
 interface Props {
-  /** Los tres niveles en el orden del catálogo (aunque alguno esté vacío), o solo el filtrado. */
+  /** Los tres niveles en el orden del catálogo, aunque alguno esté vacío: en el Inicio no hay filtros. */
   niveles: EvolucionDeNivel[]
 }
 
 /**
- * "Evolución en el tiempo": una tarjeta por nivel, en una fila desde 1280 px y
+ * «Tu evolución», en el Inicio: una tarjeta por nivel, en una fila desde 1280 px y
  * apiladas por debajo (con el sidebar, a menos ancho no caben tres gráficos
  * legibles). Una sola leyenda para la fila, solo con los puestos: cada uno
  * tiene el mismo color en las tres tarjetas, así la asociación se lee una vez.
@@ -32,8 +32,8 @@ export default function EvolucionPorNivel({ niveles }: Props) {
         ))}
       </ul>
 
-      {/* Tres en fila desde xl; con un nivel filtrado, una sola a todo el ancho. */}
-      <div className={`grid gap-4 ${niveles.length === 3 ? 'xl:grid-cols-3' : ''}`}>
+      {/* Tres en fila desde xl. */}
+      <div className="grid gap-4 xl:grid-cols-3">
         {niveles.map((nivel) => (
           <GraficoDeNivel key={nivel.nivel} evolucion={nivel} />
         ))}

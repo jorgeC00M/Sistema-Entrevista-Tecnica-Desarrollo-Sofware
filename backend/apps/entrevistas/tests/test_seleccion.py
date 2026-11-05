@@ -170,7 +170,7 @@ class UltimaConfiguracionTest(APITestCase):
         self.assertFalse(respuesta.content)
 
     def test_devuelve_la_mas_reciente(self):
-        vieja = crear_entrevista(self.usuario, puesto="qa", tecnologia="qa_cypress")
+        vieja = crear_entrevista(self.usuario, puesto="qa", tecnologia="qa_cypress", estado=Entrevista.Estado.FINALIZADA)
         Entrevista.objects.filter(pk=vieja.pk).update(fecha_inicio=timezone.now() - timedelta(days=1))
         crear_entrevista(self.usuario, puesto="backend", tecnologia="backend_django", nivel="semi_senior")
 

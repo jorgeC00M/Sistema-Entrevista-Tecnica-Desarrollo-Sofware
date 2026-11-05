@@ -1,4 +1,4 @@
-import { GRUPOS_DE_DESTINOS } from '@/components/layout/destinos'
+import { DESTINO_INICIO, GRUPOS_DE_DESTINOS } from '@/components/layout/destinos'
 import SidebarAccionPrincipal from '@/components/layout/Sidebar/SidebarAccionPrincipal'
 import SidebarMarca from '@/components/layout/Sidebar/SidebarMarca'
 import SidebarNavItem from '@/components/layout/Sidebar/SidebarNavItem'
@@ -16,9 +16,10 @@ interface Props {
 }
 
 /**
- * Arriba la marca y la acción de practicar; en medio los destinos, por etapa
- * ("Prepararte", "Tu progreso", "Tu cuenta"); abajo quién inició sesión y
- * cerrar sesión.
+ * Arriba la marca, el Inicio y la acción de practicar; en medio los destinos,
+ * por etapa ("Prepararte", "Tu progreso", "Tu cuenta"); abajo quién inició
+ * sesión y cerrar sesión. El Inicio va antes de la acción: es el punto de
+ * partida, como el tablero de cualquier aplicación.
  *
  * Plegado, el rótulo de cada grupo se vuelve una línea y queda solo para el
  * lector de pantalla: sigue nombrando la lista que viene.
@@ -27,6 +28,12 @@ export default function Sidebar({ plegado, onAlternarPlegado, entrevistaEnCurso,
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <SidebarMarca plegado={plegado} onAlternarPlegado={onAlternarPlegado} />
+
+      <nav aria-label="Inicio">
+        <ul>
+          <SidebarNavItem destino={DESTINO_INICIO} plegado={plegado} onNavegar={onNavegar} />
+        </ul>
+      </nav>
 
       <SidebarAccionPrincipal plegado={plegado} entrevistaEnCurso={entrevistaEnCurso} />
 

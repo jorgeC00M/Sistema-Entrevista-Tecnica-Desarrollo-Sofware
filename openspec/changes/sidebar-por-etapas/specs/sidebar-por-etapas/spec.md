@@ -8,7 +8,7 @@ Que el sidebar ofrezca solo los destinos útiles, sin duplicados, ordenados seg�
 
 El sidebar SHALL mostrar, bajo el botón principal, dos grupos de destinos, cada uno con su rótulo y en este orden:
 1. **"PREPARARTE"**, con "Analizar CV" y "Comparar con oferta" (antes un solo "Revisar mi CV"; se separó en `separar-analisis-de-cv`);
-2. **"TU PROGRESO"**, con "Historial y progreso" (la pestaña "Retroalimentación" se quitó en `quitar-retroalimentacion-acumulada`).
+2. **"TU PROGRESO"**, con "Historial y progreso" (la pestaña "Retroalimentación" se quitó en `quitar-retroalimentacion-acumulada`; `inicio-con-resumen` lo renombró "Historial" y agregó "Inicio" como destino suelto, arriba del botón principal).
 
 El botón principal MUST seguir mostrando "Simular entrevista" (antes "Nueva entrevista", renombrado en `simular-entrevista`) y, si hay una entrevista a medias, "Continuar · n/total".
 

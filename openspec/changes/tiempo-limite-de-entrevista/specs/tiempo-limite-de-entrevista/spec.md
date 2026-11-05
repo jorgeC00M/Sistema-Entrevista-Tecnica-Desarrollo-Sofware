@@ -100,11 +100,11 @@ Durante la entrevista, el chat SHALL mostrar siempre el tiempo restante en minut
 - **THEN** el campo se bloquea y el usuario pasa al reporte de su entrevista, ya cerrada
 
 ### Requirement: «Continuar» dice cuánto queda
-Mientras haya una entrevista en curso, el botón «Continuar» del sidebar SHALL mostrar «Continuar · n/total · m min», con los minutos restantes. Con el sidebar plegado, SHALL decirlo en su tooltip. Una entrevista vencida MUST NOT ofrecerse para continuar.
+Mientras haya una entrevista en curso, el botón «Continuar» del sidebar SHALL mostrar «Continuar · m min», con los minutos restantes. (Decía «Continuar · n/total · m min»; `una-entrevista-en-curso` quitó «n/total», porque se congelaba y no ayuda a decidir si volver.) Con el sidebar plegado, SHALL decirlo en su tooltip. Una entrevista vencida MUST NOT ofrecerse para continuar.
 
 #### Scenario: Sidebar con una entrevista a medias
-- **WHEN** el usuario tiene una entrevista en la pregunta 3 de 5 con 18 minutos restantes
-- **THEN** el sidebar muestra «Continuar · 3/5 · 18 min»
+- **WHEN** el usuario tiene una entrevista en curso con 18 minutos restantes
+- **THEN** el sidebar muestra «Continuar · 18 min»
 
 #### Scenario: Entrevista ya vencida
 - **WHEN** la única entrevista en curso ya superó su límite

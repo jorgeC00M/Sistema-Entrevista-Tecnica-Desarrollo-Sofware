@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Tarjeta from '@/components/ui/Tarjeta'
-import DetalleDePunto from '@/features/historial/components/DetalleDePunto'
+import DetalleDePunto from '@/features/inicio/components/DetalleDePunto'
 import {
   type EvolucionDeNivel,
   type PuntoDeEvolucion,
@@ -10,7 +10,7 @@ import {
   fechaDelPunto,
   marcasDelEje,
   resumenDeSerie,
-} from '@/features/historial/historial'
+} from '@/features/inicio/evolucion'
 import { colorDePuesto } from '@/lib/puestos'
 
 // SVG simple, sin librería de gráficos: una línea de puntos por puesto no

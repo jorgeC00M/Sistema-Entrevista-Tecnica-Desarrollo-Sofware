@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import Icono from '@/components/ui/Icono'
 import Tooltip from '@/components/ui/Tooltip'
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
-import { minutosRestantes } from '@/features/entrevista/tiempo'
+import { etiquetaDeContinuar, minutosRestantes, tramoDelReloj } from '@/features/entrevista/tiempo'
 
 interface Props {
   plegado: boolean
@@ -28,9 +28,8 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
     </NavLink>
   )
 
-  const continuar = entrevistaEnCurso
-    ? `${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas} · ${minutosRestantes(entrevistaEnCurso.segundosRestantes)} min`
-    : ''
+  // En los últimos 5 minutos, el mismo ámbar que el reloj del chat.
+  const avisa = entrevistaEnCurso !== null && tramoDelReloj(entrevistaEnCurso.segundosRestantes) !== 'normal'
 
   return (
     <div className="flex flex-col gap-2">
@@ -39,15 +38,19 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
           to={`/entrevista/${entrevistaEnCurso.id}`}
           title={
             plegado
-              ? `Continuar entrevista — ${entrevistaEnCurso.puestoDisplay} · ${continuar}`
+              ? `Continuar entrevista — ${entrevistaEnCurso.puestoDisplay} · quedan ${minutosRestantes(entrevistaEnCurso.segundosRestantes)} min`
               : undefined
           }
-          className={`flex items-center gap-2 rounded-full bg-vidrio-acento text-sm font-medium text-white shadow-sm transition-colors duration-150 hover:bg-vidrio-acento-hover foco-claro ${
+          className={`flex items-center gap-2 rounded-full text-sm font-medium shadow-sm transition-colors duration-150 foco-claro ${
             plegado ? 'justify-center p-3.5' : 'justify-center px-3 py-2.5'
+          } ${
+            avisa
+              ? 'bg-progreso-fondo text-progreso-texto hover:bg-white'
+              : 'bg-vidrio-acento text-white hover:bg-vidrio-acento-hover'
           }`}
         >
           <Icono nombre="play" className="h-4 w-4" />
-          {!plegado && `Continuar · ${continuar}`}
+          {!plegado && etiquetaDeContinuar(entrevistaEnCurso.segundosRestantes)}
         </NavLink>
       )}
 
