@@ -14,25 +14,33 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import Max
-from django.db.models.functions import Coalesce
+from django.db.models import Count, F, Q
 from django.utils import timezone
 
 from apps.catalogos.selectors import areas_por_codigo
 from apps.evaluaciones.services import calificar, guardar
-from integrations.ia.base import ProveedorIA
-from integrations.ia.factory import get_proveedor
+from integrations.ia.base import ProveedorIA, RedactorDeVeredicto
+from integrations.ia.exceptions import ErrorProveedorIA
+from integrations.ia.factory import get_proveedor, get_redactor_de_veredicto
 from integrations.ia.prompts.schemas import (
     PREGUNTAS_DE_CALENTAMIENTO,
     PREGUNTAS_POR_ENTREVISTA,
     ContextoDeEntrevista,
+    Niveles,
     area_de_la_pregunta,
 )
+from integrations.ia.prompts.veredicto import EntradaDeVeredicto, RespuestaEvaluada
 
-from .models import Entrevista, Intercambio
-from .selectors import intercambio_pendiente, promedio_de_evaluaciones, temas_evaluados
+from .models import MINUTOS_DE_ENTREVISTA, Entrevista, Intercambio
+from .selectors import entrevista_del_usuario, intercambio_pendiente, promedio_de_evaluaciones, temas_evaluados
 
-MINUTOS_PARA_ABANDONO = 30
+#: Sube si cambia lo que recibe o lo que devuelve el redactor del veredicto.
+VERSION_DEL_VEREDICTO = 1
+
+
+class TiempoAgotado(ValueError):
+    """Llegó una respuesta nueva después del límite: no se guarda y la
+    entrevista ya quedó cerrada."""
 
 
 class SinIntercambioPendiente(ValueError):
@@ -138,6 +146,16 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
     que guarda la evaluación: si falla, ambas se deshacen y el reintento
     reencuentra el intercambio sin evaluar, en lugar de dejar la entrevista
     atascada sin pregunta pendiente ni estado final.
+
+    Tras la última respuesta, ya finalizada la entrevista y **fuera** de la
+    transacción, se redacta el veredicto: un fallo de la IA ahí no deshace la
+    evaluación ni el cierre, solo deja el veredicto como no disponible.
+
+    El límite de tiempo mira **cuándo llegó** la respuesta, no cuándo terminó
+    la IA: una respuesta nueva tras el límite cierra la entrevista y lanza
+    `TiempoAgotado` sin guardarse; una ya guardada a tiempo (un reintento) se
+    evalúa igual, y si el límite venció entretanto la entrevista se cierra en
+    vez de pagar una pregunta que nadie podrá responder.
     """
     proveedor = proveedor or get_proveedor()
     contexto = _contexto(entrevista)
@@ -147,6 +165,9 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
         raise SinIntercambioPendiente(
             f"La entrevista {entrevista.pk} no tiene un intercambio pendiente de respuesta"
         )
+
+    if not intercambio.respuesta and cerrar_si_vencio(entrevista):
+        raise TiempoAgotado("Se acabó el tiempo de esta entrevista.")
 
     if not intercambio.respuesta:
         intercambio.respuesta = texto
@@ -168,6 +189,8 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
         siguiente_numero = intercambio.numero + 1
         if siguiente_numero > PREGUNTAS_POR_ENTREVISTA:
             _finalizar(entrevista)
+        elif timezone.now() >= entrevista.fecha_limite:
+            cerrar_si_vencio(entrevista)
         elif not entrevista.intercambios.filter(numero=siguiente_numero).exists():
             # Las de calentamiento ya existen desde `iniciar()`: intentar crearlas
             # otra vez violaría `UniqueConstraint(entrevista, numero)`. Solo se
@@ -178,7 +201,69 @@ def responder(entrevista, texto: str, proveedor: ProveedorIA | None = None):
             )
             _crear_intercambios(entrevista, [pregunta], [siguiente_area])
 
+    if entrevista.estado == Entrevista.Estado.FINALIZADA:
+        # El mismo proveedor (o cadena) de la petición, si sabe redactarlo; los
+        # dobles de prueba de la entrevista no tienen por qué.
+        redactar_veredicto(entrevista, proveedor if isinstance(proveedor, RedactorDeVeredicto) else None)
     return evaluacion
+
+
+def _entrada_de_veredicto(entrevista) -> EntradaDeVeredicto:
+    """Lo que el redactor recibe: las evaluaciones guardadas, nunca las respuestas."""
+    calificados = entrevista.intercambios.filter(evaluacion__isnull=False).select_related("evaluacion", "area")
+    return EntradaDeVeredicto(
+        contexto=_contexto(entrevista),
+        respuestas=tuple(
+            RespuestaEvaluada(
+                numero=i.numero,
+                area=i.area_enum,
+                puntuacion=i.evaluacion.puntuacion,
+                niveles=Niveles(**i.evaluacion.niveles) if i.evaluacion.niveles else None,
+                fortalezas=i.evaluacion.fortalezas,
+                debilidades=i.evaluacion.debilidades,
+            )
+            for i in calificados.order_by("numero")
+        ),
+    )
+
+
+def redactar_veredicto(entrevista, redactor: RedactorDeVeredicto | None = None) -> dict:
+    """Pide a la IA el párrafo que resume la entrevista y lo guarda.
+
+    Nunca propaga un fallo del proveedor: el veredicto es un agregado del
+    reporte, que se muestra completo sin él (con un respaldo por reglas en la
+    pantalla). Una entrevista sin respuestas calificadas no tiene qué resumir y
+    no llama a la IA.
+    """
+    entrada = _entrada_de_veredicto(entrevista)
+    if not entrada.respuestas:
+        veredicto = {"estado": "no_disponible", "texto": "", "version": VERSION_DEL_VEREDICTO}
+    else:
+        try:
+            texto = (redactor or get_redactor_de_veredicto()).redactar_veredicto(entrada)
+            veredicto = {"estado": "ok", "texto": texto, "version": VERSION_DEL_VEREDICTO}
+        except ErrorProveedorIA:
+            veredicto = {"estado": "no_disponible", "texto": "", "version": VERSION_DEL_VEREDICTO}
+    entrevista.veredicto_ia = veredicto
+    entrevista.save(update_fields=["veredicto_ia"])
+    return veredicto
+
+
+def pedir_veredicto(usuario, pk, redactor: RedactorDeVeredicto | None = None) -> dict:
+    """El veredicto de una entrevista finalizada del usuario: el guardado si ya
+    hay uno válido, si no se redacta ahora. Cubre el «Reintentar» y las
+    entrevistas anteriores a esta función. Solo una finalizada tiene nota, y el
+    veredicto la resume: las demás no lo tienen."""
+    entrevista = entrevista_del_usuario(usuario, pk)
+    if entrevista.estado != Entrevista.Estado.FINALIZADA:
+        raise EntrevistaNoFinalizada("Solo una entrevista finalizada tiene veredicto.")
+    if (entrevista.veredicto_ia or {}).get("estado") == "ok":
+        return entrevista.veredicto_ia
+    return redactar_veredicto(entrevista, redactor)
+
+
+class EntrevistaNoFinalizada(ValueError):
+    """Se pidió el veredicto de una entrevista que no está finalizada."""
 
 
 def _finalizar(entrevista) -> None:
@@ -194,12 +279,12 @@ class EntrevistaNoEnCurso(ValueError):
 
 def abandonar(entrevista) -> None:
     """El usuario deja la entrevista a medias, a sabiendas (lo confirmó en la
-    interfaz). Es el camino manual a `ABANDONADA`; el otro es el pasivo de
-    `marcar_abandonadas`, tras `MINUTOS_PARA_ABANDONO` sin actividad.
+    interfaz). Es el camino manual a `ABANDONADA`; el otro es vencer el límite
+    sin ninguna respuesta (`cerrar_vencidas`, `cerrar_si_vencio`).
 
     Solo cambia el estado y la fecha de fin: intercambios y evaluaciones
-    quedan como están, y la nota no se guarda —el reporte calcula la parcial
-    sobre lo respondido—, igual que con el abandono pasivo.
+    quedan como están, como retroalimentación sin nota. Solo una finalizada
+    tiene nota.
 
     Es una sola actualización condicionada al estado, no leer-y-escribir: si
     justo termina la última respuesta en otra petición, gana quien llegue
@@ -213,31 +298,61 @@ def abandonar(entrevista) -> None:
     entrevista.refresh_from_db()
 
 
-def marcar_abandonadas(usuario) -> int:
-    """Transición perezosa: toda entrevista `EN_PROGRESO` de este usuario con
-    más de `MINUTOS_PARA_ABANDONO` sin actividad pasa a `ABANDONADA`.
+def _cerrar_por_tiempo(vencidas) -> int:
+    """Cierra un queryset de entrevistas `EN_PROGRESO` ya vencidas.
+
+    Sin ninguna respuesta queda `ABANDONADA`; con alguna, `TIEMPO_AGOTADO`. Se
+    cuentan respuestas y no evaluaciones: una respuesta llegada a tiempo cuya
+    evaluación falló sigue siendo una respuesta. `fecha_fin` es el límite, no
+    el momento en que alguien lo notó.
+
+    `update()` no admite un queryset con agregación, así que cada grupo se
+    resuelve como subconsulta de claves: dos sentencias, sea cual sea el
+    número de entrevistas.
+    """
+    con_respuestas = vencidas.annotate(
+        respondidas=Count("intercambios", filter=~Q(intercambios__respuesta=""))
+    )
+    fin = F("fecha_inicio") + timedelta(minutes=MINUTOS_DE_ENTREVISTA)
+    cerradas = 0
+    for estado, condicion in (
+        (Entrevista.Estado.ABANDONADA, Q(respondidas=0)),
+        (Entrevista.Estado.TIEMPO_AGOTADO, Q(respondidas__gt=0)),
+    ):
+        claves = con_respuestas.filter(condicion).values("pk")
+        # Se repite `estado=EN_PROGRESO` en el update: no pisa una FINALIZADA
+        # que otra petición haya cerrado entre la subconsulta y la escritura.
+        cerradas += Entrevista.objects.filter(
+            pk__in=claves, estado=Entrevista.Estado.EN_PROGRESO
+        ).update(estado=estado, fecha_fin=fin)
+    return cerradas
+
+
+def _vencidas():
+    limite = timezone.now() - timedelta(minutes=MINUTOS_DE_ENTREVISTA)
+    return Entrevista.objects.filter(estado=Entrevista.Estado.EN_PROGRESO, fecha_inicio__lte=limite)
+
+
+def cerrar_vencidas(usuario) -> int:
+    """Transición perezosa: cierra toda entrevista `EN_PROGRESO` de este
+    usuario cuyo límite (`MINUTOS_DE_ENTREVISTA` desde el inicio) ya pasó.
 
     Se invoca al consultar el historial, no con un planificador — el plan
-    gratuito no ofrece tareas programadas fiables.
-
-    Es una sola sentencia a propósito: al vivir dentro de un GET que se
-    ejecuta en cada carga del historial, su coste no puede crecer con el
-    número de entrevistas en progreso del usuario. `Coalesce` reproduce en
-    SQL la regla "última actividad = última respuesta, o el inicio si aún no
-    respondió nada".
+    gratuito no ofrece tareas programadas fiables. Las demás puertas (detalle,
+    responder, resultados) usan `cerrar_si_vencio`, así que un enlace directo
+    tampoco se salta el límite.
     """
-    limite = timezone.now() - timedelta(minutes=MINUTOS_PARA_ABANDONO)
+    return _cerrar_por_tiempo(_vencidas().filter(usuario=usuario))
 
-    # `update()` no admite un queryset con agregación, así que la condición se
-    # resuelve como subconsulta de claves. Sigue siendo un número de consultas
-    # constante, que es lo que importa aquí.
-    inactivas = (
-        Entrevista.objects.filter(usuario=usuario, estado=Entrevista.Estado.EN_PROGRESO)
-        .annotate(ultima_actividad=Coalesce(Max("intercambios__respondido_en"), "fecha_inicio"))
-        .filter(ultima_actividad__lt=limite)
-        .values("pk")
-    )
 
-    return Entrevista.objects.filter(pk__in=inactivas).update(
-        estado=Entrevista.Estado.ABANDONADA
-    )
+def cerrar_si_vencio(entrevista) -> bool:
+    """La misma regla que `cerrar_vencidas`, para una sola entrevista.
+
+    Devuelve si quedó cerrada por tiempo. Una que no está en curso, o cuyo
+    límite no llegó, no cambia.
+    """
+    if entrevista.estado != Entrevista.Estado.EN_PROGRESO or timezone.now() < entrevista.fecha_limite:
+        return False
+    cerrada = bool(_cerrar_por_tiempo(_vencidas().filter(pk=entrevista.pk)))
+    entrevista.refresh_from_db()
+    return cerrada

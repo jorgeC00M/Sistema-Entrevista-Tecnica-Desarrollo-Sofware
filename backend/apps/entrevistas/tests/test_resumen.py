@@ -4,15 +4,12 @@ Se calcula con las evaluaciones guardadas, sin otra llamada a la IA, y sigue la
 misma regla de publicación que las notas por pregunta.
 """
 
-from datetime import timedelta
 from unittest import mock
 
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.entrevistas import services as servicio
-from apps.entrevistas.models import Entrevista
 from apps.evaluaciones.models import Evaluacion
 from integrations.ia.fake import FakeProveedorIA
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA, Puesto, area_de_la_pregunta
@@ -114,21 +111,6 @@ class ResumenFinalTest(APITestCase):
         self._entrevista([92] * PREGUNTAS_POR_ENTREVISTA)
 
         self.assertIsNone(self._resumen(primera)["comparacion"])
-
-    def test_una_abandonada_tiene_resumen_parcial_sin_comparacion(self):
-        self._entrevista([50] * PREGUNTAS_POR_ENTREVISTA)
-        proveedor = ProveedorConNotas([92, 67])
-        abandonada = servicio.iniciar(self.usuario, puesto_de("backend"), nivel_de("junior"), proveedor=proveedor)
-        servicio.responder(abandonada, "Una", proveedor=proveedor)
-        servicio.responder(abandonada, "Dos", proveedor=proveedor)
-        Entrevista.objects.filter(pk=abandonada.pk).update(
-            estado=Entrevista.Estado.ABANDONADA, fecha_inicio=timezone.now() + timedelta(minutes=1)
-        )
-
-        resumen = self._resumen(abandonada)
-
-        self.assertEqual(resumen["promedio"], 79.5)
-        self.assertIsNone(resumen["comparacion"])
 
     def test_evaluaciones_antiguas_sin_niveles(self):
         entrevista = self._entrevista([75, 58, 92, 67, 83])

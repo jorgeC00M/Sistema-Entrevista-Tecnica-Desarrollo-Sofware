@@ -1,4 +1,4 @@
-"""`puntuacion_parcial` en el historial: la nota de lo respondido, solo en una abandonada."""
+"""La columna de nota del historial: solo una finalizada la tiene."""
 
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -26,47 +26,36 @@ def _responder(entrevista, *notas):
         )
 
 
-class PuntuacionParcialTest(TestDeAPI):
+class NotaEnElHistorialTest(TestDeAPI):
     def _del_historial(self, entrevista) -> dict:
         return next(e for e in self.client.get(URL).data if e["id"] == entrevista.pk)
 
-    def test_una_abandonada_publica_la_media_de_lo_respondido(self):
-        entrevista = crear_entrevista(self.usuario, puesto="backend", estado=Entrevista.Estado.ABANDONADA)
-        _responder(entrevista, 50, 42)
+    def test_no_hay_nota_parcial(self):
+        """Lo incompleto no se califica: ni abandonada ni con el tiempo agotado."""
+        for estado in (Entrevista.Estado.ABANDONADA, Entrevista.Estado.TIEMPO_AGOTADO):
+            with self.subTest(estado=estado):
+                entrevista = crear_entrevista(self.usuario, puesto="backend", estado=estado)
+                _responder(entrevista, 50, 42)
 
-        fila = self._del_historial(entrevista)
+                fila = self._del_historial(entrevista)
 
-        self.assertEqual(fila["puntuacion_parcial"], 46)
-        self.assertIsNone(fila["puntuacion_promedio"])
-        # La misma nota que su reporte: el historial no inventa otra cuenta.
-        resumen = self.client.get(f"{URL}{entrevista.pk}/resultados/").data["resumen"]
-        self.assertEqual(resumen["promedio"], fila["puntuacion_parcial"])
-
-    def test_una_abandonada_sin_respuestas_no_tiene_nota(self):
-        entrevista = crear_entrevista(self.usuario, estado=Entrevista.Estado.ABANDONADA)
-
-        self.assertIsNone(self._del_historial(entrevista)["puntuacion_parcial"])
+                self.assertNotIn("puntuacion_parcial", fila)
+                self.assertIsNone(fila["puntuacion_promedio"])
 
     def test_una_en_curso_no_publica_ninguna_nota(self):
         """La regla de siempre: nada de la calificación sale antes de terminar."""
         entrevista = crear_entrevista(self.usuario)
         _responder(entrevista, 75, 83)
 
-        fila = self._del_historial(entrevista)
+        self.assertIsNone(self._del_historial(entrevista)["puntuacion_promedio"])
 
-        self.assertIsNone(fila["puntuacion_parcial"])
-        self.assertIsNone(fila["puntuacion_promedio"])
-
-    def test_una_finalizada_usa_su_nota_y_no_la_parcial(self):
+    def test_una_finalizada_publica_su_nota(self):
         entrevista = crear_entrevista(
             self.usuario, estado=Entrevista.Estado.FINALIZADA, puntuacion_promedio=75
         )
         _responder(entrevista, 75, 75, 75, 75, 75)
 
-        fila = self._del_historial(entrevista)
-
-        self.assertIsNone(fila["puntuacion_parcial"])
-        self.assertEqual(fila["puntuacion_promedio"], 75)
+        self.assertEqual(self._del_historial(entrevista)["puntuacion_promedio"], 75)
 
     def test_el_historial_no_hace_una_consulta_por_entrevista(self):
         def consultas() -> int:
@@ -74,10 +63,10 @@ class PuntuacionParcialTest(TestDeAPI):
                 self.client.get(URL)
             return len(capturadas)
 
-        _responder(crear_entrevista(self.usuario, estado=Entrevista.Estado.ABANDONADA), 50)
+        _responder(crear_entrevista(self.usuario, estado=Entrevista.Estado.FINALIZADA), 50)
         con_una = consultas()
 
         for _ in range(3):
-            _responder(crear_entrevista(self.usuario, estado=Entrevista.Estado.ABANDONADA), 50, 42)
+            _responder(crear_entrevista(self.usuario, estado=Entrevista.Estado.FINALIZADA), 50, 42)
 
         self.assertEqual(consultas(), con_una)

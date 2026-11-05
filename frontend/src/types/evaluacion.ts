@@ -1,5 +1,3 @@
-import type { FechaISO } from './api'
-
 /**
  * Bandas de la rúbrica, definidas en `apps/evaluaciones/rubricas.py`.
  *
@@ -34,40 +32,8 @@ export interface Evaluacion {
   puntos_clave: string[]
 }
 
-/** Cuántas respuestas del usuario cayeron en cada banda, dentro de un área. */
-type ConteoPorBanda = Record<BandaDeRubrica, number>
-
-export interface RepartoPorArea {
-  area: string
-  area_display: string
-  total_respuestas: number
-  promedio: number
-  bandas: ConteoPorBanda
-}
-
-export interface Observacion {
-  entrevista_id: number
-  area: string
-  area_display: string
-  /** Número de la pregunta dentro de su entrevista. */
-  numero: number
-  pregunta: string
-  puntuacion: number
-  banda: BandaDeRubrica
-  debilidades: string
-  sugerencias: string
-  fecha: FechaISO
-}
-
 /**
- * Retroalimentación acumulada de todas las entrevistas del usuario.
- *
- * Cuenta también las respuestas de entrevistas abandonadas: una debilidad
- * detectada a mitad sigue siendo una debilidad real.
+ * Lo que una entrevista no finalizada publica de cada respuesta: qué estuvo
+ * bien y qué mejorar, sin puntaje ni niveles. Lo incompleto no se califica.
  */
-export interface RetroalimentacionAcumulada {
-  total_respuestas_evaluadas: number
-  por_area: RepartoPorArea[]
-  /** Acotadas a las más recientes por el backend, de más nueva a más antigua. */
-  observaciones: Observacion[]
-}
+export type Retroalimentacion = Pick<Evaluacion, 'fortalezas' | 'debilidades' | 'sugerencias'>

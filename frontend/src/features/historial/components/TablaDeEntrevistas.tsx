@@ -40,16 +40,7 @@ function Puntuacion({ entrevista }: { entrevista: Entrevista }) {
       </span>
     )
   }
-  if (entrevista.puntuacion_parcial !== null) {
-    return (
-      <span>
-        <span className="font-mono-vidrio font-semibold text-vidrio-ink">
-          {Math.round(entrevista.puntuacion_parcial)}
-        </span>
-        <span className="text-meta text-vidrio-muted"> · parcial</span>
-      </span>
-    )
-  }
+  // Solo una finalizada tiene nota: lo incompleto no se califica.
   return (
     <span className="text-vidrio-muted" aria-label="Sin nota">
       —

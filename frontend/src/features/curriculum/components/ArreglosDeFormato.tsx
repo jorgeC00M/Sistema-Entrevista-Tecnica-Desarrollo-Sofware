@@ -12,10 +12,10 @@ interface Props {
  * «Arreglar el formato»: las correcciones medidas como lista de pendientes, de
  * la más grave a la menos grave.
  *
- * Cada fila: a la izquierda, la acción, su efecto sobre el ATS y cómo hacerlo
- * (`detalle`); a la derecha, AHORA —lo que se encontró, el diagnóstico medido— y,
+ * Cada fila, desde 1024 px: en los dos tercios izquierdos, la acción, su efecto sobre el ATS y cómo hacerlo
+ * (`detalle`); en el tercio derecho, AHORA —lo que se encontró, el diagnóstico medido— y,
  * si la regla lo tiene, DESPUÉS —su ejemplo de cómo debe quedar—. AHORA no copia
- * el CV: el archivo nunca se guarda. En el celular las cajas bajan debajo del
+ * el CV: el archivo nunca se guarda. En tablet y celular las cajas bajan debajo del
  * texto. No hay casilla ni avance: la verificación real es volver a subir el CV.
  */
 export default function ArreglosDeFormato({ hallazgos }: Props) {
@@ -44,7 +44,7 @@ export default function ArreglosDeFormato({ hallazgos }: Props) {
                 key={hallazgo.codigo}
                 id={idDeHallazgo(hallazgo.codigo)}
                 tabIndex={-1}
-                className="grid scroll-mt-32 gap-x-4 gap-y-3 rounded-control py-4 outline-none focus-visible:ring-2 focus-visible:ring-vidrio-acento sm:grid-cols-[1fr_minmax(0,16rem)]"
+                className="grid scroll-mt-32 gap-y-3 rounded-control py-4 outline-none focus-visible:ring-2 focus-visible:ring-vidrio-acento lg:grid-cols-[2fr_1fr] lg:gap-x-6"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">

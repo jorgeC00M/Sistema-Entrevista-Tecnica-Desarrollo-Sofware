@@ -1,7 +1,7 @@
 import type { Capa, Nivel, PuestoConTecnologias, TecnologiaDePuesto } from '@/types/catalogos'
 
 /**
- * Estado del formulario "Nueva entrevista", en funciones puras (sin React).
+ * Estado del formulario "Simular entrevista", en funciones puras (sin React).
  *
  * Tres campos —puesto, tecnología, nivel— y las reglas que los atan: cambiar
  * de puesto vacía la tecnología (era del puesto anterior) y lo que llega de

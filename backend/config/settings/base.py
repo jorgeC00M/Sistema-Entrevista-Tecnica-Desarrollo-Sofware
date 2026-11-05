@@ -173,6 +173,10 @@ REST_FRAMEWORK = {
         "revisar-cv": "30/hour",
         # Una llamada a la IA por aviso nuevo; el mismo aviso sale de la caché.
         "analizar-convocatoria": "20/hour",
+        # El veredicto de una entrevista: la primera vez llama a la IA, las
+        # siguientes salen de lo guardado. Holgado para reintentar y para abrir
+        # varias entrevistas antiguas, estrecho frente a un bucle.
+        "veredicto": "30/hour",
         "login": "10/min",
         "registro": "5/hour",
         # Compara la contraseña actual: sin límite, una sesión robada serviría

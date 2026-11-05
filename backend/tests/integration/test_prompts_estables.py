@@ -13,15 +13,17 @@ muestra exactamente qué leerá el modelo distinto.
 import unittest
 from pathlib import Path
 
-from integrations.ia.prompts import entrevistador, evaluador
+from integrations.ia.prompts import entrevistador, evaluador, veredicto
 from integrations.ia.prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
     AreaTecnica,
     ContextoDeEntrevista,
     Nivel,
+    Niveles,
     Puesto,
     TemaEvaluado,
 )
+from integrations.ia.prompts.veredicto import EntradaDeVeredicto, RespuestaEvaluada
 
 COPIAS = Path(__file__).resolve().parent.parent / "fixtures" / "prompts"
 
@@ -38,6 +40,20 @@ PREVIAS = [
     TemaEvaluado(pregunta="¿Qué es una transacción?", puntuacion=75),
     TemaEvaluado(pregunta="¿Cómo funciona el ORM de Django?", puntuacion=50),
 ]
+
+VEREDICTO = EntradaDeVeredicto(
+    contexto=UNA_CAPA,
+    respuestas=(
+        RespuestaEvaluada(
+            numero=1,
+            area=AreaTecnica.PROGRAMACION,
+            puntuacion=75,
+            niveles=Niveles(correccion=3, completitud=3, claridad=3),
+            fortalezas="Definiste bien el concepto.",
+            debilidades="Faltó un ejemplo.",
+        ),
+    ),
+)
 
 
 def prompts() -> dict[str, str]:
@@ -63,6 +79,8 @@ def prompts() -> dict[str, str]:
     salida["evaluador_usuario"] = evaluador.usuario(
         "¿Qué es un índice?", "Una estructura que acelera las búsquedas."
     )
+    salida["veredicto_sistema"] = veredicto.sistema(UNA_CAPA)
+    salida["veredicto_usuario"] = veredicto.usuario(VEREDICTO)
     return salida
 
 

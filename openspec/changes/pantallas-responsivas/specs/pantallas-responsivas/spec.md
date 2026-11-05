@@ -50,7 +50,6 @@ Los destinos del sidebar MUST tener un área táctil de al menos 44×44 px. Si e
 En escritorio (1024 px o más) las pantallas SHALL repartir su contenido así:
 - **"Mi perfil":** sus datos en dos columnas.
 - **"Revisar mi CV":** la convocatoria y el CV con "Analizar" en dos columnas; los resultados y el historial de análisis a todo el ancho.
-- **"Retroalimentación":** el reparto por bandas y las observaciones lado a lado.
 - **"Historial y progreso":** las dos gráficas lado a lado y la lista a todo el ancho.
 
 Por debajo de 1024 px estas columnas MUST apilarse en el mismo orden.

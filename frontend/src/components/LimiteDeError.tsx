@@ -77,10 +77,11 @@ export default class LimiteDeError extends Component<Props, Estado> {
 }
 
 /**
- * Secciones cuya lista y cuyo detalle (`/mi-cv` y `/mi-cv/:id`) son el mismo
- * componente y guardan estado entre las dos: el CV y la convocatoria elegidos
- * deben sobrevivir a "Analizar otro" y a "Compara con una convocatoria". Para
- * ellas la `key` es la sección, no la ruta completa.
+ * Secciones cuyas rutas son el mismo componente y guardan estado entre ellas:
+ * en `/mi-cv` (`/mi-cv/analisis`, `/mi-cv/oferta` y sus `…/:id`), el CV y la
+ * convocatoria elegidos deben sobrevivir a "Analizar otro", a "Compara con una
+ * convocatoria" y a pasar de un destino del menú al otro. Para ellas la `key`
+ * es la sección, no la ruta completa.
  */
 const SECCIONES_CON_ESTADO_COMPARTIDO = ['/mi-cv']
 

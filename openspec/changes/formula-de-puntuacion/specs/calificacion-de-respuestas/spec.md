@@ -58,11 +58,11 @@ El sistema SHALL clasificar cada nota en las bandas Insuficiente (0–40), En de
 
 ### Requirement: La fórmula se publica al candidato
 
-El reporte de una entrevista terminada SHALL explicar cómo se calculó cada nota: el nivel obtenido en cada criterio con su descriptor, y la fórmula con esos valores sustituidos.
+El reporte de una entrevista terminada SHALL explicar cómo se calculó cada nota: cada pregunta muestra el nivel obtenido en cada criterio y la fórmula con esos valores sustituidos, y el Resumen explica una vez, en "¿Cómo se calcula?", la fórmula general y el descriptor de cada nivel (ver `encabezado-y-calculo-en-el-resumen`).
 
 #### Scenario: Ver el cálculo
-- **WHEN** el candidato abre "¿Cómo se calcula?" en una pregunta con niveles 3, 2 y 3
-- **THEN** ve los tres niveles con sus descriptores y la operación "100 · (3 + 2 + 3) / 12 = 67"
+- **WHEN** el candidato abre en la Transcripción una pregunta con niveles 3, 2 y 3
+- **THEN** ve los tres niveles y la operación "100 · (3 + 2 + 3) / 12 = 67", y en "¿Cómo se calcula?" del Resumen, qué significa cada nivel"
 
 ### Requirement: Evaluaciones anteriores conservan su nota
 
@@ -70,7 +70,7 @@ Una evaluación guardada antes de este cambio, sin niveles, SHALL conservar su n
 
 #### Scenario: Evaluación antigua
 - **WHEN** el candidato abre el reporte de una entrevista calificada antes del cambio
-- **THEN** ve la nota y los textos de cada pregunta, y no se muestra "¿Cómo se calcula?"
+- **THEN** ve la nota y los textos de cada pregunta, sin la línea de niveles ni su operación"
 
 ### Requirement: Medición de la consistencia del evaluador
 

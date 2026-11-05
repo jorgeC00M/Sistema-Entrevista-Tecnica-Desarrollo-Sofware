@@ -88,7 +88,7 @@ class CatalogosPublicosView(CatalogosView):
 
 
 class PuestosView(APIView):
-    """Todo lo que necesita la pantalla de nueva entrevista, en una respuesta:
+    """Todo lo que necesita la pantalla Simular entrevista, en una respuesta:
     puestos con sus tecnologías (cada una con su `capa`), niveles, áreas y
     duración.
 

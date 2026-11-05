@@ -9,7 +9,7 @@ Define qué puestos, tecnologías y áreas técnicas ofrece el sistema para prac
 ### Requirement: Puesto Desarrollador de Videojuegos
 El sistema SHALL ofrecer el puesto activo «Desarrollador de Videojuegos» (código `videojuegos`), con la descripción «Crea juegos para PC, consola, móvil o web.», junto a los seis puestos existentes. El puesto SHALL ofrecerse en los tres niveles: Junior, Semi-Senior y Senior.
 
-#### Scenario: El puesto aparece al elegir una nueva entrevista
+#### Scenario: El puesto aparece al simular una entrevista
 - **WHEN** un usuario autenticado consulta el catálogo de puestos
 - **THEN** la respuesta incluye siete puestos activos, entre ellos `videojuegos` con el nombre «Desarrollador de Videojuegos»
 

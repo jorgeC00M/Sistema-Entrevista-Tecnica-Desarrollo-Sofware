@@ -32,17 +32,13 @@ def entrevistas_de(usuario):
 
 
 def _con_conteo(consulta):
-    """Anota cuántas preguntas tienen nota y su media, en la misma consulta.
+    """Anota cuántas preguntas tienen evaluación, en la misma consulta.
 
-    Lo usa el serializer para marcar como parcial la nota de una entrevista
-    abandonada ("48 · parcial", "sobre 2 de 5"); anotarlo evita una consulta
-    por fila en el historial. Los dos agregados recorren el mismo join, así que
-    ninguno multiplica las filas del otro. La media se anota siempre, pero el
-    serializer solo la publica para una abandonada.
+    El desglose del reporte la usa para decir sobre cuántas respuestas se
+    calculó cada criterio; anotarla evita una consulta por fila en el historial.
     """
     return consulta.select_related("puesto", "nivel", "tecnologia", "segunda_tecnologia").annotate(
         preguntas_calificadas=Count("intercambios__evaluacion"),
-        promedio_calificado=Avg("intercambios__evaluacion__puntuacion"),
     )
 
 
@@ -98,10 +94,9 @@ def anterior_comparable(entrevista) -> Entrevista | None:
     """La entrevista finalizada inmediatamente anterior con el mismo puesto y nivel.
 
     Solo es comparable lo que se rindió en las mismas condiciones: otro nivel
-    pide otra exigencia, y una abandonada no tiene nota completa. Se compara
-    contra `fecha_inicio` de la actual y no contra su `fecha_fin`, que una
-    abandonada no tiene, para no compararla nunca consigo misma ni con una
-    posterior.
+    pide otra exigencia, y solo una finalizada tiene nota. Se compara contra
+    `fecha_inicio` de la actual y no contra su `fecha_fin`, para no compararla
+    nunca consigo misma ni con una posterior.
     """
     return (
         Entrevista.objects.filter(
@@ -118,7 +113,9 @@ def anterior_comparable(entrevista) -> Entrevista | None:
 
 
 def resumen_de(entrevista, intercambios) -> dict | None:
-    """El reporte consolidado de una entrevista terminada, sin llamar a la IA.
+    """El reporte consolidado de una entrevista finalizada, sin llamar a la IA.
+
+    Solo se pide para una finalizada: las demás no tienen nota que resumir.
 
     Todo sale de las evaluaciones ya guardadas: la banda y el promedio, el
     nivel medio de cada criterio, el criterio más débil, la prioridad para la
@@ -132,13 +129,12 @@ def resumen_de(entrevista, intercambios) -> dict | None:
     if not calificados:
         return None
 
-    notas = [i.evaluacion.puntuacion for i in calificados]
-    # Una finalizada tiene su promedio guardado; una abandonada no, y se
-    # calcula con la misma media simple sobre lo que sí se respondió.
+    # El promedio guardado al finalizar; la media simple solo cubre una fila
+    # vieja que no lo tuviera.
     promedio = (
         float(entrevista.puntuacion_promedio)
         if entrevista.puntuacion_promedio is not None
-        else fmean(notas)
+        else fmean(i.evaluacion.puntuacion for i in calificados)
     )
     banda = banda_de(round(promedio))
 
@@ -173,10 +169,6 @@ def resumen_de(entrevista, intercambios) -> dict | None:
 
 
 def _comparacion(entrevista, promedio: float) -> dict | None:
-    # Una nota parcial no se compara con una completa: diría "bajaste 30
-    # puntos" cuando lo que pasó es que no terminaste.
-    if entrevista.estado != Entrevista.Estado.FINALIZADA:
-        return None
     anterior = anterior_comparable(entrevista)
     if anterior is None:
         return None

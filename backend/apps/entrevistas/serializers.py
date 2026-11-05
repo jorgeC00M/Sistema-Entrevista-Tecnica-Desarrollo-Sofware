@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from rest_framework.exceptions import NotFound
@@ -8,7 +9,6 @@ from apps.evaluaciones.serializers import EvaluacionSerializer
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from .models import Convocatoria, Entrevista, Intercambio
-from .selectors import promedio_de_evaluaciones
 
 
 class IniciarEntrevistaSerializer(serializers.Serializer):
@@ -115,15 +115,18 @@ class EntrevistaSerializer(serializers.ModelSerializer):
     # "React + Node.js" con dos capas: lo que se muestra en historial y reporte.
     tecnologia_display = serializers.CharField(source="tecnologia_nombre", read_only=True)
     estado_display = serializers.CharField(source="get_estado_display", read_only=True)
-    # Sobre cuántas preguntas se calculó `puntuacion_promedio`. En una
-    # finalizada coincide con las previstas; en una abandonada, la nota es
-    # parcial y la interfaz lo dice en vez de presentarla como completa.
+    # Cuántas respuestas tienen evaluación, frente a las previstas: el desglose
+    # del reporte dice sobre cuántas se calculó cada criterio.
     preguntas_calificadas = serializers.SerializerMethodField()
     preguntas_previstas = serializers.SerializerMethodField()
-    # La nota parcial de una abandonada, para el historial; `null` en el resto
-    # de estados (en una en curso, porque la nota no se publica hasta terminar).
-    puntuacion_parcial = serializers.SerializerMethodField()
     desde_convocatoria = serializers.SerializerMethodField()
+    # Hasta cuándo se puede responder, y la hora del servidor al responder: el
+    # cliente cuenta el tiempo con su desfase, no con su propio reloj.
+    fecha_limite = serializers.DateTimeField(read_only=True)
+    ahora = serializers.SerializerMethodField()
+
+    def get_ahora(self, entrevista) -> str:
+        return serializers.DateTimeField().to_representation(timezone.now())
 
     def get_desde_convocatoria(self, entrevista) -> bool:
         return entrevista.convocatoria_id is not None
@@ -136,21 +139,6 @@ class EntrevistaSerializer(serializers.ModelSerializer):
 
     def get_preguntas_previstas(self, entrevista) -> int:
         return PREGUNTAS_POR_ENTREVISTA
-
-    def get_puntuacion_parcial(self, entrevista) -> float | None:
-        """La media de lo respondido en una entrevista abandonada, o `None`.
-
-        Solo una abandonada la publica. Una en curso también tiene respuestas
-        calificadas, pero su nota no sale de la API hasta que termina (como en
-        `/resultados/`), y una finalizada ya tiene su `puntuacion_promedio`.
-        """
-        if entrevista.estado != Entrevista.Estado.ABANDONADA:
-            return None
-        if hasattr(entrevista, "promedio_calificado"):
-            promedio = entrevista.promedio_calificado
-        else:
-            promedio = promedio_de_evaluaciones(entrevista)
-        return round(float(promedio), 2) if promedio is not None else None
 
     class Meta:
         model = Entrevista
@@ -168,19 +156,22 @@ class EntrevistaSerializer(serializers.ModelSerializer):
             "fecha_inicio",
             "fecha_fin",
             "puntuacion_promedio",
-            "puntuacion_parcial",
             "preguntas_calificadas",
             "preguntas_previstas",
             "desde_convocatoria",
+            "fecha_limite",
+            "ahora",
         ]
         read_only_fields = fields
 
 
 class IntercambioSerializer(serializers.ModelSerializer):
-    # La calificación solo se publica cuando la entrevista terminó: durante la
-    # entrevista se sigue calculando y guardando (la adaptatividad la necesita),
-    # pero no sale por la API. Ocultarla solo en la interfaz no serviría — se
-    # vería en la pestaña de red del navegador.
+    # Cuánto de la evaluación sale por la API lo decide el contexto
+    # `evaluacion`: "completa" (finalizada, el valor por defecto), "sin_nota"
+    # (abandonada o con el tiempo agotado: solo la retroalimentación, sin
+    # puntuación ni niveles, porque lo incompleto no se califica) o `None` (en
+    # curso: nada, aunque se siga calculando para la adaptatividad). Ocultarla
+    # solo en la interfaz no serviría — se vería en la pestaña de red.
     #
     # Se devuelve `null` en vez de omitir la clave para que la forma de la
     # respuesta no cambie según el estado de la entrevista.
@@ -191,10 +182,17 @@ class IntercambioSerializer(serializers.ModelSerializer):
     area_display = serializers.CharField(source="area.nombre", read_only=True)
 
     def get_evaluacion(self, intercambio) -> dict | None:
-        if not self.context.get("con_evaluacion", True):
-            return None
+        modo = self.context.get("evaluacion", "completa")
         evaluacion = getattr(intercambio, "evaluacion", None)
-        return EvaluacionSerializer(evaluacion).data if evaluacion else None
+        if modo is None or evaluacion is None:
+            return None
+        if modo == "sin_nota":
+            return {
+                "fortalezas": evaluacion.fortalezas,
+                "debilidades": evaluacion.debilidades,
+                "sugerencias": evaluacion.sugerencias,
+            }
+        return EvaluacionSerializer(evaluacion).data
 
     class Meta:
         model = Intercambio

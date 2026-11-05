@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import Icono from '@/components/ui/Icono'
 import Tooltip from '@/components/ui/Tooltip'
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
+import { minutosRestantes } from '@/features/entrevista/tiempo'
 
 interface Props {
   plegado: boolean
@@ -10,10 +11,10 @@ interface Props {
 }
 
 export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: Props) {
-  const botonNuevaEntrevista = (
+  const botonSimularEntrevista = (
     <NavLink
-      to="/nueva-entrevista"
-      title={plegado ? 'Nueva entrevista' : undefined}
+      to="/simular-entrevista"
+      title={plegado ? 'Simular entrevista' : undefined}
       className={`flex items-center justify-center gap-2 rounded-full text-sm font-medium foco-claro transition-colors duration-150 ${
         plegado ? 'p-3.5' : 'px-3 py-2.5'
       } ${
@@ -23,9 +24,13 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
       }`}
     >
       <Icono nombre="mas" className="h-4 w-4" />
-      {!plegado && 'Nueva entrevista'}
+      {!plegado && 'Simular entrevista'}
     </NavLink>
   )
+
+  const continuar = entrevistaEnCurso
+    ? `${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas} · ${minutosRestantes(entrevistaEnCurso.segundosRestantes)} min`
+    : ''
 
   return (
     <div className="flex flex-col gap-2">
@@ -34,7 +39,7 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
           to={`/entrevista/${entrevistaEnCurso.id}`}
           title={
             plegado
-              ? `Continuar entrevista — ${entrevistaEnCurso.puestoDisplay} · ${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas}`
+              ? `Continuar entrevista — ${entrevistaEnCurso.puestoDisplay} · ${continuar}`
               : undefined
           }
           className={`flex items-center gap-2 rounded-full bg-vidrio-acento text-sm font-medium text-white shadow-sm transition-colors duration-150 hover:bg-vidrio-acento-hover foco-claro ${
@@ -42,12 +47,11 @@ export default function SidebarAccionPrincipal({ plegado, entrevistaEnCurso }: P
           }`}
         >
           <Icono nombre="play" className="h-4 w-4" />
-          {!plegado &&
-            `Continuar · ${entrevistaEnCurso.numeroActual}/${entrevistaEnCurso.totalPreguntas}`}
+          {!plegado && `Continuar · ${continuar}`}
         </NavLink>
       )}
 
-      {plegado ? <Tooltip texto="Nueva entrevista">{botonNuevaEntrevista}</Tooltip> : botonNuevaEntrevista}
+      {plegado ? <Tooltip texto="Simular entrevista">{botonSimularEntrevista}</Tooltip> : botonSimularEntrevista}
     </div>
   )
 }

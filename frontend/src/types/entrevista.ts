@@ -1,7 +1,12 @@
 import type { FechaISO } from './api'
-import type { BandaDeRubrica, CodigoDeCriterio, Evaluacion, Niveles } from './evaluacion'
+import type { BandaDeRubrica, CodigoDeCriterio, Evaluacion, Niveles, Retroalimentacion } from './evaluacion'
 
-export type EstadoEntrevista = 'en_progreso' | 'finalizada' | 'abandonada'
+/**
+ * `tiempo_agotado`: venció el límite con alguna respuesta y sin responderlas
+ * todas. `abandonada`: el usuario la dejó, o venció sin ninguna respuesta.
+ * Solo `finalizada` tiene nota.
+ */
+export type EstadoEntrevista = 'en_progreso' | 'finalizada' | 'abandonada' | 'tiempo_agotado'
 
 export interface Entrevista {
   id: number
@@ -21,26 +26,19 @@ export interface Entrevista {
   fecha_inicio: FechaISO
   /** `null` mientras la entrevista no haya terminado. */
   fecha_fin: FechaISO | null
+  /** Hasta cuándo se puede responder: 30 minutos desde `fecha_inicio`. */
+  fecha_limite: FechaISO
+  /** La hora del servidor al responder: el reloj cuenta con ella, no con la del dispositivo. */
+  ahora: FechaISO
   /**
-   * Media sobre 100; `null` mientras la entrevista siga en curso.
+   * Media sobre 100; solo una `finalizada` la tiene.
    *
    * Número, no texto: `COERCE_DECIMAL_TO_STRING = False` hace que DRF
-   * serialice los decimales como números, igual que ya llegaban los valores
-   * agregados de `/api/estadisticas/`. Trae decimales (`75.5`), así que las
+   * serialice los decimales como números. Trae decimales (`75.5`), así que las
    * pantallas lo redondean antes de mostrarlo.
    */
   puntuacion_promedio: number | null
-  /**
-   * Media de lo respondido en una entrevista **abandonada**, la misma que su
-   * reporte llama "parcial"; `null` en cualquier otro estado. Una en curso la
-   * trae nula aunque ya tenga respuestas calificadas: la nota no se publica
-   * hasta terminar.
-   */
-  puntuacion_parcial: number | null
-  /**
-   * Sobre cuántas preguntas se calculó `puntuacion_promedio`. En una
-   * abandonada es menor que `preguntas_previstas` y la nota es parcial.
-   */
+  /** Cuántas respuestas tienen evaluación: el desglose dice sobre cuántas se calculó. */
   preguntas_calificadas: number
   preguntas_previstas: number
   /** Se inició desde una convocatoria: sus requisitos orientaron las preguntas. */
@@ -65,8 +63,11 @@ export interface Intercambio {
   respuesta: string
   /** Segundos medidos en el servidor; `null` si aún no se respondió. */
   tiempo_respuesta: number | null
-  /** `null` hasta que la respuesta se califica. */
-  evaluacion: Evaluacion | null
+  /**
+   * `null` hasta que la respuesta se califica, y siempre en una entrevista en
+   * curso. En una no finalizada llega solo la retroalimentación, sin nota.
+   */
+  evaluacion: Evaluacion | Retroalimentacion | null
 }
 
 export interface RespuestaIniciarEntrevista {
@@ -104,15 +105,32 @@ export interface RespuestaResultados {
   entrevista: Entrevista
   intercambios: Intercambio[]
   /**
-   * El reporte consolidado. `null` mientras la entrevista sigue en curso
-   * —misma regla que las notas por pregunta— o si nada llegó a calificarse.
+   * El reporte consolidado. Solo en una `finalizada`: las demás no tienen nota
+   * que resumir.
    */
   resumen: ResumenEntrevista | null
+  /**
+   * El párrafo de la IA que resume la entrevista. Solo en una `finalizada`; en
+   * una que nunca lo pidió (anteriores a esta función) llega `null` y el
+   * reporte lo pide con `pedirVeredicto`.
+   */
+  veredicto: Veredicto | null
+}
+
+/**
+ * Escrito una sola vez, al terminar. Nunca cambia una nota: el servidor
+ * descarta el texto si da una nota o un porcentaje, o si juzga la aptitud.
+ */
+export interface Veredicto {
+  /** `no_disponible`: la IA falló o su texto se descartó; se muestra el respaldo por reglas. */
+  estado: 'ok' | 'no_disponible'
+  texto: string
+  version: number
 }
 
 /** Calculado en el servidor a partir de las evaluaciones guardadas, sin IA. */
 export interface ResumenEntrevista {
-  /** Media simple de las notas; en una abandonada, solo de las respondidas. */
+  /** Media simple de las notas de la entrevista. */
   promedio: number
   banda: BandaDeRubrica
   banda_display: string

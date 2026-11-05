@@ -1,10 +1,10 @@
+import { useMemo } from 'react'
+
 import EnlaceDeAccion from '@/components/ui/EnlaceDeAccion'
-import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
-import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import Icono from '@/components/ui/Icono'
 import Paginacion from '@/components/ui/Paginacion'
 import Tabla, { type ColumnaDeTabla } from '@/components/ui/Tabla'
-import { VEREDICTOS, tipoDeRevision } from '@/features/curriculum/hallazgos'
+import { VEREDICTOS, rutaDelAnalisis, type TipoDeAnalisis } from '@/features/curriculum/hallazgos'
 import { usePaginaEnLaUrl } from '@/hooks/usePaginaEnLaUrl'
 import { fechaLegible } from '@/lib/fechas'
 import type { CurriculumEnLista } from '@/types/curriculum'
@@ -14,17 +14,10 @@ import type { CurriculumEnLista } from '@/types/curriculum'
 const POR_PAGINA = 5
 
 interface Props {
+  /** El destino que se está viendo: solo se listan los análisis de ese tipo. */
+  tipo: TipoDeAnalisis
   analisis: CurriculumEnLista[]
   cargando: boolean
-}
-
-function Tipo({ fila }: { fila: CurriculumEnLista }) {
-  // El tipo con el mismo nombre que en la barra del resultado.
-  return fila.con_convocatoria ? (
-    <EtiquetaConvocatoria>{tipoDeRevision(true)}</EtiquetaConvocatoria>
-  ) : (
-    <EtiquetaMono>{tipoDeRevision(false)}</EtiquetaMono>
-  )
 }
 
 /** El veredicto del Resumen en palabras, con icono: nunca color solo, nunca un número. */
@@ -42,7 +35,7 @@ function Estado({ fila }: { fila: CurriculumEnLista }) {
 function Ver({ fila }: { fila: CurriculumEnLista }) {
   return (
     <EnlaceDeAccion
-      to={`/mi-cv/${fila.id}`}
+      to={rutaDelAnalisis(fila.con_convocatoria, fila.id)}
       icono="ojo"
       aria-label={`Ver el análisis de ${fila.nombre_archivo} del ${fechaLegible(fila.fecha)}`}
     >
@@ -66,7 +59,6 @@ const COLUMNAS: ColumnaDeTabla<CurriculumEnLista>[] = [
       </span>
     ),
   },
-  { clave: 'tipo', titulo: 'Tipo de análisis', celda: (fila) => <Tipo fila={fila} /> },
   { clave: 'estado', titulo: 'Estado del CV', celda: (fila) => <Estado fila={fila} /> },
   {
     clave: 'campos',
@@ -83,10 +75,7 @@ function TarjetaDeAnalisis({ fila }: { fila: CurriculumEnLista }) {
       <p title={fila.nombre_archivo} className="truncate font-mono-vidrio text-sm text-vidrio-ink">
         {fila.nombre_archivo}
       </p>
-      <p className="flex flex-wrap items-center gap-2 text-meta text-vidrio-muted">
-        {fechaLegible(fila.fecha)}
-        <Tipo fila={fila} />
-      </p>
+      <p className="text-meta text-vidrio-muted">{fechaLegible(fila.fecha)}</p>
       <div className="flex items-center gap-3 text-sm">
         <Estado fila={fila} />
         {fila.parseabilidad && (
@@ -101,9 +90,11 @@ function TarjetaDeAnalisis({ fila }: { fila: CurriculumEnLista }) {
 }
 
 /**
- * Los análisis que el usuario ya hizo, para que pueda ver si su CV mejoró: una
- * tabla del más reciente al más antiguo, de cinco en cinco (`?pagina=`), que por
- * debajo de 640 px pinta cada fila como tarjeta.
+ * Los análisis que el usuario ya hizo **de este tipo**, para que pueda ver si su
+ * CV mejoró: una tabla del más reciente al más antiguo, de cinco en cinco
+ * (`?pagina=`), que con el panel angosto pinta cada fila como tarjeta. Cada
+ * destino del menú lista los suyos, así que la tabla no repite el tipo en una
+ * columna.
  *
  * Sin esto cada análisis se perdía al recargar, y el módulo existe justamente para
  * corregir el documento y volver a medirlo: faltaba la mitad del ciclo.
@@ -117,12 +108,16 @@ function TarjetaDeAnalisis({ fila }: { fila: CurriculumEnLista }) {
  * Si la lista está vacía no se renderiza nada. Una tarjeta que diga "aún no has
  * analizado ningún CV" en la pantalla donde vas a analizar el primero es ruido.
  */
-export default function HistorialDeAnalisis({ analisis, cargando }: Props) {
-  const { pagina, totalPaginas, filas, refInicio, cambiarPagina } = usePaginaEnLaUrl(analisis, POR_PAGINA)
+export default function HistorialDeAnalisis({ tipo, analisis, cargando }: Props) {
+  const delTipo = useMemo(
+    () => analisis.filter((fila) => fila.con_convocatoria === (tipo === 'dirigido')),
+    [analisis, tipo],
+  )
+  const { pagina, totalPaginas, filas, refInicio, cambiarPagina } = usePaginaEnLaUrl(delTipo, POR_PAGINA)
 
   // Mientras carga tampoco se muestra nada: un esqueleto por una lista que suele
   // tener dos o tres filas parpadearía más de lo que informa.
-  if (cargando || analisis.length === 0) return null
+  if (cargando || delTipo.length === 0) return null
 
   return (
     <section aria-labelledby="titulo-historial-cv" className="space-y-3">

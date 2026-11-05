@@ -16,7 +16,7 @@ export default function EntradaRaiz() {
   const { usuario, cargando } = useAuth()
 
   if (cargando) return <Spinner texto="Verificando sesión…" />
-  if (usuario) return <Navigate to="/nueva-entrevista" replace />
+  if (usuario) return <Navigate to="/simular-entrevista" replace />
 
   return <LandingPage />
 }

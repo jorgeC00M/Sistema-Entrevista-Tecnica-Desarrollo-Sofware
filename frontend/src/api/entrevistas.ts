@@ -5,6 +5,7 @@ import type {
   RespuestaIniciarEntrevista,
   RespuestaResponder,
   RespuestaResultados,
+  Veredicto,
 } from '@/types/entrevista'
 
 import type { ConvocatoriaAnalizada, UltimaConfiguracion } from '@/types/catalogos'
@@ -49,10 +50,26 @@ export function obtenerEstado(
   return peticion<RespuestaEstadoEntrevista>(`/api/entrevistas/${id}/`, { signal })
 }
 
+/**
+ * La última respuesta hace dos llamadas seguidas a la IA —la evaluación y el
+ * veredicto—, así que el plazo es el doble del de cualquier otra petición.
+ */
+const TIEMPO_DE_RESPUESTA_MS = 90_000
+
 export function responder(id: number | string, respuesta: string): Promise<RespuestaResponder> {
   return peticion<RespuestaResponder>(`/api/entrevistas/${id}/responder/`, {
     method: 'POST',
     body: { respuesta },
+    timeoutMs: TIEMPO_DE_RESPUESTA_MS,
+  })
+}
+
+/** El guardado si ya existe; si falta o falló, el servidor lo redacta ahora. */
+export function pedirVeredicto(id: number | string, signal?: AbortSignal): Promise<Veredicto> {
+  return peticion<Veredicto>(`/api/entrevistas/${id}/veredicto/`, {
+    method: 'POST',
+    signal,
+    timeoutMs: TIEMPO_DE_RESPUESTA_MS,
   })
 }
 

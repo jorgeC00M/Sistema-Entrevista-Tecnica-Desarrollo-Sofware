@@ -18,11 +18,11 @@ entrada, y el aviso llega ya enmascarado (sin correos, teléfonos ni enlaces).
 
 from __future__ import annotations
 
-import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
 from ..exceptions import RespuestaIAInvalida
+from .guardas import comparable
 from .marcadores import MARCADOR, SIN_PUESTO
 
 MAXIMO_REQUISITOS = 8
@@ -155,13 +155,6 @@ def esquema(entrada: EntradaDeConvocatoria) -> dict[str, Any]:
         "required": ["puesto", "tecnologias", "nivel", "requisitos", "fuera_de_alcance"],
         "additionalProperties": False,
     }
-
-
-def comparable(texto: str) -> str:
-    """Minúsculas, sin acentos y con los espacios colapsados."""
-    sin_acentos = unicodedata.normalize("NFD", texto.lower())
-    sin_acentos = "".join(c for c in sin_acentos if unicodedata.category(c) != "Mn")
-    return " ".join(sin_acentos.split())
 
 
 def _textos(datos: dict[str, Any], clave: str) -> list[str]:

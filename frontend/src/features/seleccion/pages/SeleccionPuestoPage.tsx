@@ -49,7 +49,7 @@ function desplazarSuave(elemento: HTMLElement | null) {
 }
 
 /**
- * Nueva entrevista: carga el catálogo y, con él, muestra el formulario.
+ * Simular entrevista: carga el catálogo y, con él, muestra el formulario.
  *
  * Nada del catálogo está escrito aquí: puestos, tecnologías (con su capa y su
  * grupo) y niveles llegan de `GET /api/catalogos/puestos/`.

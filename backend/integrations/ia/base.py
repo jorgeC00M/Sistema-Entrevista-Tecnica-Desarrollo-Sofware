@@ -8,9 +8,10 @@ from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 from .exceptions import RespuestaIAInvalida
-from .prompts import analista_convocatoria, entrevistador, evaluador, revisor_cv
+from .prompts import analista_convocatoria, entrevistador, evaluador, revisor_cv, veredicto
 from .prompts.analista_convocatoria import EntradaDeConvocatoria, PerfilDetectado
 from .prompts.revisor_cv import EntradaDeRevision, RevisionDeCV
+from .prompts.veredicto import EntradaDeVeredicto
 
 from .prompts.schemas import (
     PREGUNTAS_POR_ENTREVISTA,
@@ -118,6 +119,23 @@ class AnalizadorDeConvocatoria(Protocol):
         ...
 
 
+@runtime_checkable
+class RedactorDeVeredicto(Protocol):
+    """Un proveedor capaz de resumir en palabras una entrevista ya calificada.
+
+    Contrato aparte por el mismo motivo que `RevisorDeCV`. No se filtra por
+    `apto_para_datos_personales`: recibe evaluaciones, no las respuestas ni datos
+    del candidato.
+    """
+
+    nombre: str
+    modelo: str
+
+    def redactar_veredicto(self, entrada: EntradaDeVeredicto) -> str:
+        """Un párrafo que resume el desempeño, sin notas ni juicio de aptitud."""
+        ...
+
+
 class ProveedorIAporJSON(ProveedorIA):
     """Base de los proveedores que piden JSON estructurado a un modelo.
 
@@ -189,6 +207,16 @@ class ProveedorIAporJSON(ProveedorIA):
             esquema=analista_convocatoria.esquema(entrada),
         )
         return analista_convocatoria.parsear_perfil(datos, entrada)
+
+    def redactar_veredicto(self, entrada: EntradaDeVeredicto) -> str:
+        """Implementa `RedactorDeVeredicto` con la misma secuencia que las demás
+        operaciones."""
+        datos = self._pedir_json(
+            sistema=veredicto.sistema(entrada.contexto),
+            entrada=veredicto.usuario(entrada),
+            esquema=veredicto.ESQUEMA_VEREDICTO,
+        )
+        return veredicto.parsear_veredicto(datos)
 
     @abstractmethod
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:

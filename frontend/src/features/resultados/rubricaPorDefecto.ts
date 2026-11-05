@@ -1,15 +1,22 @@
 import type { CodigoDeCriterio } from '@/types/evaluacion'
 
 /**
- * La rúbrica que se muestra mientras el catálogo no llegó (o si falló): los
- * mismos criterios, en el mismo orden y con los mismos nombres que publica
- * `/api/catalogos/` (`apps/evaluaciones/rubricas.py`). Con el catálogo
- * cargado, manda siempre lo que dice el servidor.
+ * Lo que el reporte necesita de la rúbrica aunque el catálogo no haya llegado
+ * (o haya fallado): los criterios, en el mismo orden que publica
+ * `/api/catalogos/` (`apps/evaluaciones/rubricas.py`), y el máximo de la escala.
+ * Con el catálogo cargado, los descriptores y los pesos salen del servidor.
  */
 export const NIVEL_MAXIMO_POR_DEFECTO = 4
 
-export const CRITERIOS_POR_DEFECTO: { codigo: CodigoDeCriterio; nombre: string }[] = [
-  { codigo: 'correccion', nombre: 'Corrección técnica' },
-  { codigo: 'completitud', nombre: 'Completitud' },
-  { codigo: 'claridad', nombre: 'Claridad' },
-]
+export const ORDEN_DE_CRITERIOS: CodigoDeCriterio[] = ['correccion', 'completitud', 'claridad']
+
+/**
+ * Los nombres que ve el candidato. La rúbrica, sus pesos y el texto que lee el
+ * evaluador no cambian («Corrección técnica» sigue en el prompt): esto es solo
+ * presentación, para que cada criterio diga qué mide.
+ */
+export const NOMBRE_EN_PANTALLA: Record<CodigoDeCriterio, string> = {
+  correccion: 'Conocimiento técnico (corrección)',
+  completitud: 'Profundidad (completitud)',
+  claridad: 'Claridad',
+}

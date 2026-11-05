@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { ErrorAPI } from '@/api/client'
 import { mensajeDeError } from '@/api/errores'
 import { obtenerEstado, obtenerResultados, responder } from '@/api/entrevistas'
 import type { AutorDeMensaje } from '@/features/entrevista/components/BurbujaPregunta'
+import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
 
 export interface MensajeDeChat {
   autor: AutorDeMensaje
@@ -23,6 +25,14 @@ export function useEntrevista(id: string) {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [ultimaRespuesta, setUltimaRespuesta] = useState<string | null>(null)
+  // El reloj: el límite lo fija el servidor y el desfase corrige el reloj del
+  // dispositivo. `segundos` es `null` hasta cargar.
+  const [fechaLimite, setFechaLimite] = useState<string | null>(null)
+  const [desfaseMs, setDesfaseMs] = useState(0)
+  const [segundos, setSegundos] = useState<number | null>(null)
+  const [minutosDeEntrevista, setMinutosDeEntrevista] = useState(0)
+
+  const alReporte = useCallback(() => navigate(`/entrevista/${id}/resultados`, { replace: true }), [id, navigate])
 
   // Reconstruye el chat desde el servidor al montar: si el usuario recarga la
   // página a mitad de la entrevista, se retoma en la pregunta pendiente en
@@ -67,6 +77,11 @@ export function useEntrevista(id: string) {
         setPuestoDisplay(estado.entrevista.puesto_display)
         setNivelDisplay(estado.entrevista.nivel_display)
         setDesdeConvocatoria(estado.entrevista.desde_convocatoria)
+        setFechaLimite(estado.entrevista.fecha_limite)
+        setMinutosDeEntrevista(
+          Math.round((Date.parse(estado.entrevista.fecha_limite) - Date.parse(estado.entrevista.fecha_inicio)) / 60_000),
+        )
+        setDesfaseMs(desfaseDelReloj(estado.entrevista.ahora, Date.now()))
       } catch (err: unknown) {
         if (!cancelado) {
           setError(mensajeDeError(err, 'No se pudo cargar la entrevista.'))
@@ -82,6 +97,32 @@ export function useEntrevista(id: string) {
     }
   }, [id, navigate])
 
+  // Cuenta cada segundo. El instante se toma en el intervalo, no en el render.
+  useEffect(() => {
+    if (fechaLimite === null) return
+    const contar = () => setSegundos(segundosRestantes(fechaLimite, desfaseMs, Date.now()))
+    contar()
+    const intervalo = window.setInterval(contar, 1000)
+    return () => window.clearInterval(intervalo)
+  }, [fechaLimite, desfaseMs])
+
+  // En 0 ya no se acepta otra respuesta. Quien cierra la entrevista es el
+  // servidor: pedir el estado la cierra, y se va al reporte. Si justo se está
+  // evaluando una respuesta, se espera: llegó a tiempo y cuenta.
+  const vencido = segundos === 0
+  useEffect(() => {
+    if (!vencido || enviando) return
+    const control = new AbortController()
+    obtenerEstado(id, control.signal)
+      .then((estado) => {
+        if (estado.entrevista.estado !== 'en_progreso') alReporte()
+      })
+      .catch(() => {
+        if (!control.signal.aborted) setError('Se acabó el tiempo, pero no pudimos cerrar la entrevista.')
+      })
+    return () => control.abort()
+  }, [vencido, enviando, id, alReporte])
+
   const enviarRespuesta = useCallback(
     async (texto: string) => {
       setError('')
@@ -91,21 +132,32 @@ export function useEntrevista(id: string) {
 
       try {
         const resultado = await responder(id, texto)
+        setDesfaseMs(desfaseDelReloj(resultado.entrevista.ahora, Date.now()))
 
         // No se pinta ninguna calificación: la respuesta se evalúa en el
         // servidor —es lo que calibra la exigencia de las preguntas
         // siguientes— pero la nota y la retroalimentación solo se muestran al
         // terminar, en el módulo de resultados. Un entrevistador real tampoco
         // canta el puntaje a mitad de la sesión.
+        //
+        // Sin siguiente pregunta, la entrevista terminó: finalizada, o cerrada
+        // porque el límite venció mientras se evaluaba una respuesta que llegó
+        // a tiempo. En los dos casos, al reporte.
         if (resultado.siguiente_pregunta) {
           const siguiente = resultado.siguiente_pregunta
           setMensajes((previos) => [...previos, { autor: 'sistema', texto: siguiente.texto }])
           setNumeroActual(siguiente.numero)
           setEnviando(false)
         } else {
-          navigate(`/entrevista/${id}/resultados`)
+          alReporte()
         }
       } catch (err: unknown) {
+        // 409: la entrevista ya no sigue (se acabó el tiempo o se cerró en
+        // otra pestaña). No hay nada que reintentar: al reporte.
+        if (err instanceof ErrorAPI && err.status === 409) {
+          alReporte()
+          return
+        }
         // La respuesta ya quedó guardada en el servidor (el backend es
         // idempotente ante reintentos): se retira del chat local para no
         // duplicarla visualmente y se ofrece reintentar sin perder lo escrito.
@@ -114,7 +166,7 @@ export function useEntrevista(id: string) {
         setEnviando(false)
       }
     },
-    [id, navigate],
+    [id, alReporte],
   )
 
   const reintentar = useCallback(() => {
@@ -131,6 +183,11 @@ export function useEntrevista(id: string) {
     cargandoInicial,
     enviando,
     error,
+    /** Segundos que quedan; `null` hasta cargar. */
+    segundos,
+    vencido,
+    /** La duración total, del servidor: el texto bajo la cabecera la nombra. */
+    minutosDeEntrevista,
     enviarRespuesta,
     reintentar,
   }

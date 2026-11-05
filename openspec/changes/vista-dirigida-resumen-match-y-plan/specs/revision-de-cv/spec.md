@@ -18,17 +18,17 @@ En un análisis con convocatoria, la barra del resultado SHALL mostrar, junto al
 ### Requirement: El Resumen dirigido separa el formato de los requisitos
 En el análisis dirigido, el Resumen SHALL mostrar:
 - el banner del estado con la misma dona y el mismo estado que el análisis general;
-- en el panel derecho, dos bloques lado a lado («Formato», igual que en el general, y «Requisitos de la oferta»), que en pantallas angostas SHALL apilarse;
+- a la derecha de la dona, el estado y, debajo, dos bloques lado a lado («Formato», igual que en el general, y «Requisitos de la oferta»), que en pantallas angostas SHALL apilarse. Cada uno va en su propio panel (ver `paneles-del-resumen-y-plan-de-mejora`);
 - debajo, el espejo de lo que el ATS ve, a ancho completo;
 - la práctica de la entrevista.
 
-«Requisitos de la oferta» SHALL tener una fila por cada requisito ausente, obligatorios primero, con «No se detectó», el término en una etiqueta y «obligatorio» o «deseable» cuando el aviso los separa. Debajo SHALL llevar la nota «“No se detectó” indica que no está escrito en tu CV, no que no lo sepas.». Si no hay ausentes, dirá «Se detectaron todos los requisitos de la oferta».
+«Requisitos de la oferta» SHALL tener «No se detectó:» una sola vez como encabezado (ver `paneles-del-resumen-y-plan-de-mejora`) y una fila por cada requisito ausente, obligatorios primero, con el término en una etiqueta y «obligatorio» o «deseable» cuando el aviso los separa. Debajo SHALL llevar la nota «“No se detectó” indica que no está escrito en tu CV, no que no lo sepas.». Si no hay ausentes, dirá «Se detectaron todos los requisitos de la oferta».
 
 La dona y el estado SHALL depender solo de los datos extraídos: los requisitos no detectados NO SHALL cambiarlos. El Resumen dirigido NO SHALL mostrar la tarjeta de tecnologías ni la franja de búsqueda del reclutador con «Ver el match».
 
 #### Scenario: CV legible con requisitos sin detectar
 - **WHEN** el CV tiene todos sus datos clave extraídos y el aviso pide Docker, que no aparece
-- **THEN** el banner dice «Legible» y «Requisitos de la oferta» muestra «No se detectó [Docker] obligatorio» con su nota
+- **THEN** el banner dice «Legible» y «Requisitos de la oferta» muestra «No se detectó:» y debajo «[Docker] obligatorio», con su nota
 
 #### Scenario: Sin franja ni tecnologías
 - **WHEN** el usuario abre el Resumen de un análisis dirigido

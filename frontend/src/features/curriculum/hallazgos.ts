@@ -145,12 +145,26 @@ export function accionDe(hallazgo: Pick<Hallazgo, 'accion' | 'titulo'>): string 
   return hallazgo.accion || hallazgo.titulo
 }
 
-/** Los dos análisis que se eligen en la entrada: solo el CV, o el CV frente a un aviso. */
+/**
+ * Los dos análisis: solo el CV («Analizar CV») o el CV frente a un aviso
+ * («Comparar con oferta»). Cada uno tiene su destino del menú y su ruta.
+ */
 export type TipoDeAnalisis = 'general' | 'dirigido'
 
-/** El nombre del tipo de análisis: el mismo en la entrada, la barra del resultado y el historial. */
+/** El nombre del tipo de análisis, el mismo en la barra del resultado. */
 export function tipoDeRevision(conConvocatoria: boolean): string {
   return conConvocatoria ? 'Análisis dirigido' : 'Análisis general'
+}
+
+/**
+ * La ruta de un tipo de análisis: su entrada o, con `id`, uno de sus
+ * resultados. Las dos son simétricas (`/mi-cv/analisis`, `/mi-cv/oferta`) para
+ * que ningún segmento fijo se confunda con un id; es el único sitio que arma
+ * estas URL.
+ */
+export function rutaDelAnalisis(conConvocatoria: boolean, id?: number): string {
+  const base = conConvocatoria ? '/mi-cv/oferta' : '/mi-cv/analisis'
+  return id === undefined ? base : `${base}/${id}`
 }
 
 /**

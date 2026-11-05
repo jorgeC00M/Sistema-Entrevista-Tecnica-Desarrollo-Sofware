@@ -8,6 +8,7 @@ from .views import (
     ResponderView,
     ResultadosView,
     UltimaConfiguracionView,
+    VeredictoView,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path("<int:pk>/responder/", ResponderView.as_view(), name="entrevistas-responder"),
     path("<int:pk>/resultados/", ResultadosView.as_view(), name="entrevistas-resultados"),
     path("<int:pk>/abandonar/", AbandonarView.as_view(), name="entrevistas-abandonar"),
+    path("<int:pk>/veredicto/", VeredictoView.as_view(), name="entrevistas-veredicto"),
 ]

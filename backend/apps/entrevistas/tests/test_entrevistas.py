@@ -103,10 +103,9 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
         for intercambio in terminada.data["intercambios"]:
             self.assertIsNotNone(intercambio["evaluacion"])
 
-    def test_una_entrevista_abandonada_si_muestra_sus_evaluaciones(self):
-        """Coherente con la retroalimentación acumulada, que a propósito incluye
-        las entrevistas dejadas a medias: una debilidad detectada en la pregunta
-        2 sigue siendo real aunque no se haya terminado."""
+    def test_una_entrevista_abandonada_muestra_su_retroalimentacion_sin_nota(self):
+        """Una debilidad detectada antes de abandonar sigue siendo real, así que
+        se publica la retroalimentación; lo que no se publica es la nota."""
         inicio = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
         entrevista_id = inicio.data["entrevista"]["id"]
         self.client.post(
@@ -121,6 +120,7 @@ class FlujoDeEntrevistaPorHttpTest(APITestCase):
 
         calificados = [i for i in resultados.data["intercambios"] if i["evaluacion"]]
         self.assertEqual(len(calificados), 1)
+        self.assertNotIn("puntuacion", calificados[0]["evaluacion"])
 
     def test_las_dos_primeras_preguntas_se_crean_al_iniciar(self):
         """El calentamiento se pide en una sola llamada: ninguna de las dos

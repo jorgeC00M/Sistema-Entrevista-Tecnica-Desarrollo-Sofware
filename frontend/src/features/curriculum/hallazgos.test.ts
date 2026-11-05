@@ -12,6 +12,7 @@ import {
   estadoDelCampo,
   tipoDeRevision,
   puedeAnalizar,
+  rutaDelAnalisis,
   VEREDICTOS,
   veredictoDeLegibilidad,
 } from '@/features/curriculum/hallazgos'
@@ -145,6 +146,18 @@ describe('tipoDeRevision', () => {
   it('nombra igual cada tipo de análisis', () => {
     expect(tipoDeRevision(false)).toBe('Análisis general')
     expect(tipoDeRevision(true)).toBe('Análisis dirigido')
+  })
+})
+
+describe('rutaDelAnalisis', () => {
+  it('lleva cada tipo a su entrada', () => {
+    expect(rutaDelAnalisis(false)).toBe('/mi-cv/analisis')
+    expect(rutaDelAnalisis(true)).toBe('/mi-cv/oferta')
+  })
+
+  it('y cada resultado a la ruta de su tipo', () => {
+    expect(rutaDelAnalisis(false, 7)).toBe('/mi-cv/analisis/7')
+    expect(rutaDelAnalisis(true, 7)).toBe('/mi-cv/oferta/7')
   })
 })
 

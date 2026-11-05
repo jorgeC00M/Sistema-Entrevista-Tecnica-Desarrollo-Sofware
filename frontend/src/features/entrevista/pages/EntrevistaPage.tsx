@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { mensajeDeError } from '@/api/errores'
 import { abandonarEntrevista } from '@/api/entrevistas'
 import Boton from '@/components/ui/Boton'
-import Cronometro from '@/components/ui/Cronometro'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import ModalDeConfirmacion from '@/components/ui/ModalDeConfirmacion'
 import Spinner from '@/components/ui/Spinner'
@@ -12,6 +11,7 @@ import Tarjeta from '@/components/ui/Tarjeta'
 import BarraProgreso from '@/features/entrevista/components/BarraProgreso'
 import CampoRespuesta from '@/features/entrevista/components/CampoRespuesta'
 import ChatEntrevista from '@/features/entrevista/components/ChatEntrevista'
+import RelojDeEntrevista from '@/features/entrevista/components/RelojDeEntrevista'
 import { useEntrevista } from '@/features/entrevista/hooks/useEntrevista'
 
 export default function EntrevistaPage() {
@@ -26,6 +26,9 @@ export default function EntrevistaPage() {
     cargandoInicial,
     enviando,
     error,
+    segundos,
+    vencido,
+    minutosDeEntrevista,
     enviarRespuesta,
     reintentar,
   } = useEntrevista(id ?? '')
@@ -80,7 +83,7 @@ export default function EntrevistaPage() {
                 {String(numeroActual).padStart(2, '0')} / {String(totalPreguntas).padStart(2, '0')}
               </p>
             </div>
-            <Cronometro />
+            {segundos !== null && <RelojDeEntrevista segundos={segundos} />}
             {/* Deshabilitado mientras se evalúa una respuesta: abandonar a
                 mitad de esa llamada dejaría su resultado en el aire. */}
             <Boton
@@ -98,15 +101,19 @@ export default function EntrevistaPage() {
           <BarraProgreso actual={numeroActual} total={totalPreguntas} />
         </div>
 
-        {/* La ausencia de notas durante la entrevista es deliberada; decirlo
-            evita que se lea como un fallo. */}
+        {/* La ausencia de notas durante la entrevista es deliberada, y que solo
+            la terminada tenga nota también: decirlo antes evita sorpresas. */}
         <p className="mt-3 text-body-sm text-vidrio-muted">
-          Tu calificación y la retroalimentación aparecerán al terminar, como en una
-          entrevista real.
+          Tienes {minutosDeEntrevista} minutos para las {totalPreguntas} preguntas. Tu calificación aparece solo si
+          terminas la entrevista, como en una entrevista real.
         </p>
       </Tarjeta>
 
-      <ChatEntrevista mensajes={mensajes} evaluando={enviando} />
+      <ChatEntrevista
+        mensajes={mensajes}
+        evaluando={enviando}
+        esLaUltima={totalPreguntas > 0 && numeroActual === totalPreguntas}
+      />
 
       {error && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
@@ -117,7 +124,7 @@ export default function EntrevistaPage() {
         </div>
       )}
 
-      <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={enviando} />
+      <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={enviando || vencido} />
 
       {confirmandoAbandono && (
         <ModalDeConfirmacion
@@ -130,14 +137,11 @@ export default function EntrevistaPage() {
           {respondidas > 0 ? (
             <p>
               Se cerrará con {respondidas === 1 ? 'la pregunta' : `las ${respondidas} preguntas`} que
-              respondiste y la nota quedará como parcial. No podrás retomarla ni responder las que
-              faltan.
+              respondiste. No tendrá nota: verás la retroalimentación de lo que respondiste, y no
+              podrás retomarla.
             </p>
           ) : (
-            <p>
-              No respondiste ninguna pregunta, así que no habrá nota. No podrás retomar esta
-              entrevista.
-            </p>
+            <p>No respondiste ninguna pregunta. No tendrá nota y no podrás retomar esta entrevista.</p>
           )}
           {errorAbandono && (
             <p role="alert" className="mt-3 text-error-texto">

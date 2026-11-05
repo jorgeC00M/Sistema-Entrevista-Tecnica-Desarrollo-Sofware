@@ -17,8 +17,8 @@ interface Props {
 
 /**
  * Arriba la marca y la acción de practicar; en medio los destinos, por etapa
- * ("Prepararte", "Tu progreso"); abajo el bloque de usuario, que lleva al
- * perfil, y cerrar sesión.
+ * ("Prepararte", "Tu progreso", "Tu cuenta"); abajo quién inició sesión y
+ * cerrar sesión.
  *
  * Plegado, el rótulo de cada grupo se vuelve una línea y queda solo para el
  * lector de pantalla: sigue nombrando la lista que viene.
@@ -52,7 +52,7 @@ export default function Sidebar({ plegado, onAlternarPlegado, entrevistaEnCurso,
         })}
       </nav>
 
-      <SidebarPerfil plegado={plegado} onNavegar={onNavegar} />
+      <SidebarPerfil plegado={plegado} />
     </div>
   )
 }

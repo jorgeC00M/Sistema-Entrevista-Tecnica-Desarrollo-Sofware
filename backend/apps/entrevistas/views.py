@@ -50,7 +50,7 @@ class EntrevistaListCreateView(APIView):
         return "iniciar-entrevista" if self.request.method == "POST" else None
 
     def get(self, request):
-        services.marcar_abandonadas(request.user)
+        services.cerrar_vencidas(request.user)
         return Response(
             EntrevistaSerializer(selectors.entrevistas_de(request.user), many=True).data
         )
@@ -83,6 +83,9 @@ class EntrevistaDetailView(APIView):
 
     def get(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
+        # Un enlace directo o una pestaña que quedó abierta no se saltan el
+        # límite: cada puerta lo aplica, no solo el historial.
+        services.cerrar_si_vencio(entrevista)
 
         return Response(
             {
@@ -101,6 +104,9 @@ class ResponderView(APIView):
     def post(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
 
+        # No se cierra aquí si venció: una respuesta ya guardada a tiempo (un
+        # reintento) todavía se evalúa. `services.responder` decide por la
+        # pregunta pendiente.
         if entrevista.estado != Entrevista.Estado.EN_PROGRESO:
             return Response(
                 {"detail": "Esta entrevista ya no está en progreso."},
@@ -116,6 +122,8 @@ class ResponderView(APIView):
             # guardando — es lo que alimenta la adaptatividad de las preguntas
             # siguientes y lo que luego muestra el módulo de resultados.
             services.responder(entrevista, entrada.validated_data["respuesta"])
+        except services.TiempoAgotado as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
         except services.SinIntercambioPendiente as exc:
             # No debería ocurrir dado el chequeo de estado de arriba; queda
             # como red de seguridad ante una condición de carrera. Se captura
@@ -124,10 +132,14 @@ class ResponderView(APIView):
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
         entrevista.refresh_from_db()
+        # Una respuesta guardada a tiempo puede terminar de evaluarse ya vencido
+        # el límite: entonces la entrevista quedó cerrada y no hay siguiente,
+        # aunque exista la de calentamiento sin responder.
+        en_curso = entrevista.estado == Entrevista.Estado.EN_PROGRESO
         return Response(
             {
                 "siguiente_pregunta": _pregunta_dict(
-                    selectors.intercambio_pendiente(entrevista)
+                    selectors.intercambio_pendiente(entrevista) if en_curso else None
                 ),
                 "entrevista": EntrevistaSerializer(entrevista).data,
             }
@@ -139,13 +151,21 @@ class ResultadosView(APIView):
 
     def get(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
+        services.cerrar_si_vencio(entrevista)
 
-        # Mientras la entrevista siga en progreso no se publica ninguna
-        # calificación: este mismo endpoint es el que usa el chat para
-        # reconstruirse al recargar la página, así que devolverlas filtraría la
-        # nota a mitad de entrevista. Una abandonada sí las muestra, igual que
-        # hace la retroalimentación acumulada con las dejadas a medias.
-        en_progreso = entrevista.estado == Entrevista.Estado.EN_PROGRESO
+        # Solo una finalizada tiene nota. En curso no se publica ninguna
+        # evaluación: este mismo endpoint es el que usa el chat para
+        # reconstruirse al recargar, así que devolverlas filtraría la nota a
+        # mitad de entrevista. Abandonada o con el tiempo agotado se publica la
+        # retroalimentación sin puntajes ni niveles: lo incompleto no se
+        # califica, pero se aprende de lo que sí se respondió.
+        finalizada = entrevista.estado == Entrevista.Estado.FINALIZADA
+        if finalizada:
+            evaluacion = "completa"
+        elif entrevista.estado == Entrevista.Estado.EN_PROGRESO:
+            evaluacion = None
+        else:
+            evaluacion = "sin_nota"
 
         intercambios = list(selectors.intercambios_de(entrevista))
         return Response(
@@ -154,13 +174,32 @@ class ResultadosView(APIView):
                 "intercambios": IntercambioSerializer(
                     intercambios,
                     many=True,
-                    context={"con_evaluacion": not en_progreso},
+                    context={"evaluacion": evaluacion},
                 ).data,
-                # Misma condición que las notas por pregunta: el resumen se
-                # calcula con ellas, así que publicarlo antes las filtraría.
-                "resumen": None if en_progreso else selectors.resumen_de(entrevista, intercambios),
+                # El resumen y el veredicto resumen la nota: solo con ella.
+                "resumen": selectors.resumen_de(entrevista, intercambios) if finalizada else None,
+                "veredicto": entrevista.veredicto_ia if finalizada else None,
             }
         )
+
+
+class VeredictoView(APIView):
+    """`POST /api/entrevistas/<id>/veredicto/`: el párrafo de la IA que resume la entrevista.
+
+    Devuelve el guardado sin llamar a la IA si ya existe; si falta o falló, lo
+    redacta. 200 aunque el proveedor falle (`estado: "no_disponible"`); 409 si
+    no está finalizada; 404 si es de otro usuario.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "veredicto"
+
+    def post(self, request, pk):
+        try:
+            veredicto = services.pedir_veredicto(request.user, pk)
+        except services.EntrevistaNoFinalizada as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+        return Response(veredicto)
 
 
 class UltimaConfiguracionView(APIView):

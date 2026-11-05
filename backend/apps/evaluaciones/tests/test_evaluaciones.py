@@ -1,8 +1,7 @@
-"""Verifica el desglose por área de la retroalimentación (y que el viejo
-/api/estadisticas/ ya no existe), calculado con agregaciones reales sobre
-PostgreSQL — no reimplementadas en Python en la prueba, para no validar el
-cálculo contra sí mismo. Se arman entrevistas completas conocidas y se
-comprueban los números exactos que deberían salir.
+"""Verifica que cada pregunta guarda su propia área (leída del reporte), que
+el viejo /api/estadisticas/ ya no existe y que cualquier nota se reconstruye a
+mano desde su JSON. Las entrevistas se arman completas y conocidas, y se
+comprueban los valores exactos que deberían salir.
 """
 
 from django.contrib.auth import get_user_model
@@ -19,8 +18,6 @@ from integrations.ia.prompts.schemas import (
 )
 
 Usuario = get_user_model()
-
-URL_RETROALIMENTACION = "/api/estadisticas/retroalimentacion/"
 
 
 class ProveedorPuntuacionFija(FakeProveedorIA):
@@ -56,8 +53,10 @@ def _completar_entrevista(usuario, puesto, nivel, puntuacion):
 
 
 class EndpointDeEstadisticasRetiradoTest(APITestCase):
-    """`/api/estadisticas/` solo alimentaba las cifras del encabezado del
-    historial, que se quitaron; la retroalimentación sigue bajo el mismo prefijo."""
+    """`/api/estadisticas/` alimentó primero las cifras del encabezado del
+    historial y después la retroalimentación acumulada; las dos se quitaron
+    (`quitar-retroalimentacion-acumulada`): la retroalimentación vive en el
+    reporte de cada entrevista."""
 
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
@@ -65,59 +64,41 @@ class EndpointDeEstadisticasRetiradoTest(APITestCase):
         )
         self.client.force_authenticate(self.usuario)
 
-    def test_ya_no_existe_y_la_retroalimentacion_sigue(self):
-        self.assertEqual(self.client.get("/api/estadisticas/").status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(
-            self.client.get("/api/estadisticas/retroalimentacion/").status_code, status.HTTP_200_OK
-        )
+    def test_el_prefijo_y_la_retroalimentacion_ya_no_existen(self):
+        for url in ("/api/estadisticas/", "/api/estadisticas/retroalimentacion/"):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
 
 
-class DesglosePorAreaTest(APITestCase):
+class AreaPorPreguntaTest(APITestCase):
+    """El área vive en cada intercambio, no en la entrevista: el puesto reparte
+    los temas entre sus preguntas. Se lee del reporte, que es donde el usuario
+    la ve."""
+
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
             email="egresado@example.com", password="clave-segura-123", nombre_completo="Egresado"
         )
         self.client.force_authenticate(self.usuario)
 
-    def test_el_desglose_por_area_reparte_los_temas_de_la_entrevista(self):
-        """Una sola entrevista aporta a varias áreas, porque el puesto reparte
-        los temas entre sus preguntas. Antes la entrevista tenía un área única y
-        las cinco respuestas heredaban esa etiqueta; ahora el desglose dice de
-        verdad en qué temas le fue bien o mal al candidato. Ese desglose vive en
-        la retroalimentación acumulada.
-        """
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 92)
+    def _areas(self, entrevista):
+        respuesta = self.client.get(f"/api/entrevistas/{entrevista.pk}/resultados/")
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        return {intercambio["area"] for intercambio in respuesta.data["intercambios"]}
 
-        respuesta = self.client.get(URL_RETROALIMENTACION)
+    def test_una_entrevista_reparte_los_temas_que_cubre_el_puesto(self):
+        entrevista = _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 92)
 
-        por_area = {fila["area"]: fila for fila in respuesta.data["por_area"]}
-        esperadas = {a.value for a in areas_que_cubre(Puesto.BACKEND)}
-        self.assertEqual(set(por_area), esperadas)
-        for codigo, fila in por_area.items():
-            with self.subTest(area=codigo):
-                self.assertEqual(float(fila["promedio"]), 92.0)
+        self.assertEqual(self._areas(entrevista), {a.value for a in areas_que_cubre(Puesto.BACKEND)})
 
     def test_dos_puestos_distintos_tocan_conjuntos_de_areas_distintos(self):
         """Elegir Backend o Frontend cambia los temas que se evalúan: es lo que
         hace que el puesto signifique algo y no sea solo una etiqueta."""
-        _completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67)
-
-        del_backend = {fila["area"] for fila in self.client.get(URL_RETROALIMENTACION).data["por_area"]}
-
-        _completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 67)
-        con_ambos = {fila["area"] for fila in self.client.get(URL_RETROALIMENTACION).data["por_area"]}
+        del_backend = self._areas(_completar_entrevista(self.usuario, puesto_de("backend"), nivel_de("junior"), 67))
+        del_frontend = self._areas(_completar_entrevista(self.usuario, puesto_de("frontend"), nivel_de("junior"), 67))
 
         # El frontend aporta temas que el backend no toca.
-        self.assertTrue(con_ambos - del_backend)
-
-
-
-
-
-if __name__ == "__main__":
-    import unittest
-
-    unittest.main()
+        self.assertTrue(del_frontend - del_backend)
 
 
 class TrazabilidadDeLaNotaTest(APITestCase):
@@ -144,3 +125,9 @@ class TrazabilidadDeLaNotaTest(APITestCase):
                 self.assertEqual(puntuacion_de(datos["niveles"], datos["pesos"]), evaluacion.puntuacion)
                 self.assertEqual(evaluacion.puntuacion, 67)
                 self.assertEqual(datos["puntos_clave"], ["Primer punto", "Segundo punto"])
+
+
+if __name__ == "__main__":
+    import unittest
+
+    unittest.main()

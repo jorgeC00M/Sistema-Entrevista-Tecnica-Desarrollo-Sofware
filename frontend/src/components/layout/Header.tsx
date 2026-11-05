@@ -48,7 +48,7 @@ export default function Header({ onAbrirMenu, menuAbierto, ref }: Props) {
         {/*
           No es un <h1>: cada página ya tiene el suyo en su contenido
           (SeleccionPuestoPage, EntrevistaPage, ResultadosPage, HistorialPage,
-          RetroalimentacionPage, PerfilPage).
+          CurriculumPage, PerfilPage).
           Un segundo <h1> aquí rompería la jerarquía de encabezados de la
           página. Esto es una etiqueta de la interfaz (chrome), no contenido.
         */}

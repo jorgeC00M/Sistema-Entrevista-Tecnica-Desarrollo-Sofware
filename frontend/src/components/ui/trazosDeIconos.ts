@@ -9,8 +9,6 @@ export const TRAZOS = {
   mas: 'M12 5l0 14M5 12l14 0',
   play: 'M7 4v16l13 -8l-13 -8',
   historial: 'M12 8l0 4l2 2M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5',
-  brujula:
-    'M8 16l2 -6l6 -2l-2 6l-6 2M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M12 3l0 2M12 19l0 2M3 12l2 0M19 12l2 0',
   usuario: 'M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2',
   salir:
     'M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2M9 12h12l-3 -3M18 15l3 -3',

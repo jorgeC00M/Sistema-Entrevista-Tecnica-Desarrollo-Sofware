@@ -13,7 +13,7 @@ export default function SidebarMarca({ plegado, onAlternarPlegado }: Props) {
   return (
     <div className={`flex items-center gap-2 ${plegado ? 'flex-col' : 'justify-between'}`}>
       <NavLink
-        to="/nueva-entrevista"
+        to="/simular-entrevista"
         className={`flex min-w-0 items-center gap-3 rounded-control px-1 py-1 foco-claro ${
           plegado ? 'justify-center' : ''
         }`}

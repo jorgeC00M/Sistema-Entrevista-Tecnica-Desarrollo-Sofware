@@ -23,10 +23,11 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import TypeVar
 
-from .base import AnalizadorDeConvocatoria, ProveedorIA, RevisorDeCV
+from .base import AnalizadorDeConvocatoria, ProveedorIA, RedactorDeVeredicto, RevisorDeCV
 from .exceptions import ErrorProveedorIA
 from .prompts.analista_convocatoria import EntradaDeConvocatoria, PerfilDetectado
 from .prompts.revisor_cv import EntradaDeRevision, RevisionDeCV
+from .prompts.veredicto import EntradaDeVeredicto
 from .prompts.schemas import (
     AreaTecnica,
     ContextoDeEntrevista,
@@ -112,3 +113,9 @@ class ProveedorEnCadena(ProveedorIA):
         porque el aviso no es un dato personal y llega enmascarado."""
         capaces = [e for e in self._eslabones if isinstance(e, AnalizadorDeConvocatoria)]
         return self._intentar(lambda p: p.analizar_convocatoria(entrada), capaces)
+
+    def redactar_veredicto(self, entrada: EntradaDeVeredicto) -> str:
+        """Con los eslabones que saben redactarlo; todos sirven, porque recibe
+        evaluaciones y no datos personales."""
+        capaces = [e for e in self._eslabones if isinstance(e, RedactorDeVeredicto)]
+        return self._intentar(lambda p: p.redactar_veredicto(entrada), capaces)

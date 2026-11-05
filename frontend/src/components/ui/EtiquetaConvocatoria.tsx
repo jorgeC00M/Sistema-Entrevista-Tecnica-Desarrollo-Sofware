@@ -8,7 +8,7 @@ interface Props {
 
 /**
  * La pastilla que marca una entrevista iniciada desde una convocatoria. Se ve
- * igual en el resumen de Nueva entrevista, en el modal de inicio y en el
+ * igual en el resumen de Simular entrevista, en el modal de inicio y en el
  * historial, así que vive en un solo sitio.
  */
 export default function EtiquetaConvocatoria({ children, className = '' }: Props) {

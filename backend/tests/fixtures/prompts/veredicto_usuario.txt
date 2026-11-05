@@ -1,0 +1,5 @@
+Pregunta 1 · Fundamentos de Programación · Corrección técnica 3/4, Completitud 3/4, Claridad 3/4
+Fortalezas: Definiste bien el concepto.
+Debilidades: Faltó un ejemplo.
+
+Resume la entrevista.

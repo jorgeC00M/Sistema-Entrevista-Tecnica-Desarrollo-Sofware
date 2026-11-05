@@ -5,6 +5,8 @@ Diagnosticar por qué un currículum queda fuera de la búsqueda de un reclutado
 ## ADDED Requirements
 
 ### Requirement: El tipo de análisis se elige con dos pestañas
+> Reemplazado por `separar-analisis-de-cv`: el tipo ya no se elige con pestañas en la entrada, sino con dos destinos del menú («Analizar CV» en `/mi-cv/analisis` y «Comparar con oferta» en `/mi-cv/oferta`). Este requisito queda como registro de la versión anterior.
+
 La entrada de «Revisar mi CV» SHALL ofrecer el tipo de análisis como dos pestañas, «Análisis general» y «Análisis dirigido», con el mismo componente y patrón que «Nueva entrevista». El patrón es ARIA *tabs*:
 - solo la pestaña elegida está en el orden de Tab;
 - las flechas, Inicio y Fin cambian de pestaña;

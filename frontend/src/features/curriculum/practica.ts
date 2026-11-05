@@ -7,5 +7,5 @@ import type { RevisionIA } from '@/types/curriculum'
  */
 export function destinoDePractica(revision: RevisionIA | null): string {
   const puesto = revision?.puesto_sugerido
-  return puesto ? `/nueva-entrevista?puesto=${encodeURIComponent(puesto)}` : '/nueva-entrevista'
+  return puesto ? `/simular-entrevista?puesto=${encodeURIComponent(puesto)}` : '/simular-entrevista'
 }

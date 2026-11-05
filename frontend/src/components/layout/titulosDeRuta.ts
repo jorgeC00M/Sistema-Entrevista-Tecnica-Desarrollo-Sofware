@@ -30,29 +30,24 @@ const TITULOS: TituloDeRuta[] = [
     subtitulo: 'Responde a tu ritmo; puedes retomarla si te vas a medias',
   },
   {
-    patron: '/nueva-entrevista',
-    titulo: 'Nueva entrevista',
+    patron: '/simular-entrevista',
+    titulo: 'Simular entrevista',
     subtitulo: 'Elige el puesto al que quieres postular y el nivel de exigencia',
   },
   {
-    patron: '/mi-cv/:id',
-    titulo: 'Revisar mi CV',
-    subtitulo: 'Qué lee un ATS de tu currículum, y cómo encaja en una convocatoria',
+    patron: '/mi-cv/analisis/*',
+    titulo: 'Analizar CV',
+    subtitulo: 'Qué lee un ATS de tu currículum',
   },
   {
-    patron: '/mi-cv',
-    titulo: 'Revisar mi CV',
-    subtitulo: 'Qué lee un ATS de tu currículum, y cómo encaja en una convocatoria',
+    patron: '/mi-cv/oferta/*',
+    titulo: 'Comparar con oferta',
+    subtitulo: 'Cómo encaja tu currículum en una convocatoria',
   },
   {
     patron: '/historial',
     titulo: 'Historial y progreso',
     subtitulo: 'Tus entrevistas anteriores y tu evolución en el tiempo',
-  },
-  {
-    patron: '/retroalimentacion',
-    titulo: 'Retroalimentación',
-    subtitulo: 'Lo que se te repite entre entrevistas',
   },
   {
     patron: '/perfil',

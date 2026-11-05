@@ -6,6 +6,7 @@ export const TONO_POR_ESTADO: Record<EstadoEntrevista, TonoDeBadge> = {
   finalizada: 'exito',
   en_progreso: 'progreso',
   abandonada: 'neutro',
+  tiempo_agotado: 'progreso',
 }
 
 /** Segundos como duración compacta: `1h 05m` / `14m 28s`. */

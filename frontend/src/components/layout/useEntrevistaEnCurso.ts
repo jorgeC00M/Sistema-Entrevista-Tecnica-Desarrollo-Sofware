@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
+
 import { obtenerEstado, obtenerHistorial } from '@/api/entrevistas'
+import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
 import { usePeticion } from '@/hooks/usePeticion'
 import type { Entrevista } from '@/types/entrevista'
 
@@ -7,16 +10,22 @@ export interface EntrevistaEnCurso {
   puestoDisplay: string
   numeroActual: number
   totalPreguntas: number
+  /** Segundos hasta el límite, con la hora del servidor; se refresca cada minuto. */
+  segundosRestantes: number
 }
 
+/** El sidebar dice minutos, no segundos: basta con recontar una vez por minuto. */
+const REFRESCO_MS = 60_000
+
 /**
- * La entrevista que el estudiante dejó a medias, si hay una: alimenta el botón
- * "Continuar · n/total" del sidebar.
+ * La entrevista que el estudiante dejó a medias, si hay una y no venció:
+ * alimenta el botón "Continuar · n/total · m min" del sidebar.
  *
  * Comparte la clave `historial` de la caché con la pantalla de historial, que
  * pide el mismo endpoint: así entrar a /historial no dispara dos peticiones al
- * mismo sitio, y ese endpoint además escribe, porque marca las entrevistas
- * abandonadas.
+ * mismo sitio, y ese endpoint además escribe, porque cierra las vencidas. Con
+ * la caché, una entrevista puede vencer después de listarla: por eso los
+ * minutos se cuentan aquí y, en 0, el botón desaparece.
  *
  * Un fallo no se reporta: es información de conveniencia para el menú, y un
  * error aquí no debe interrumpir a alguien que estaba haciendo otra cosa. Si
@@ -38,11 +47,23 @@ export function useEntrevistaEnCurso(): EntrevistaEnCurso | null {
     { activo: Boolean(pendiente) },
   )
 
-  if (!pendiente || !estado) return null
+  // El desfase se toma al llegar el estado; el instante, en el efecto.
+  const [segundos, setSegundos] = useState<number | null>(null)
+  useEffect(() => {
+    if (!estado || estado.entrevista.estado !== 'en_progreso') return
+    const desfase = desfaseDelReloj(estado.entrevista.ahora, Date.now())
+    const contar = () => setSegundos(segundosRestantes(estado.entrevista.fecha_limite, desfase, Date.now()))
+    contar()
+    const intervalo = window.setInterval(contar, REFRESCO_MS)
+    return () => window.clearInterval(intervalo)
+  }, [estado])
+
+  if (!pendiente || !estado || estado.entrevista.estado !== 'en_progreso' || !segundos) return null
   return {
     id: pendiente.id,
     puestoDisplay: pendiente.puesto_display,
     numeroActual: estado.pregunta_pendiente?.numero ?? estado.total_preguntas,
     totalPreguntas: estado.total_preguntas,
+    segundosRestantes: segundos,
   }
 }

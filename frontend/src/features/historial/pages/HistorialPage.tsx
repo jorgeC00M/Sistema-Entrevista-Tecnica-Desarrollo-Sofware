@@ -31,7 +31,7 @@ export default function HistorialPage() {
   if (entrevistas.length === 0) {
     return (
       <EstadoVacio icono="historial" titulo="Todavía no realizaste ninguna entrevista.">
-        <Link to="/nueva-entrevista" className="font-medium text-vidrio-acento hover:underline">
+        <Link to="/simular-entrevista" className="font-medium text-vidrio-acento hover:underline">
           Empieza la primera
         </Link>
       </EstadoVacio>

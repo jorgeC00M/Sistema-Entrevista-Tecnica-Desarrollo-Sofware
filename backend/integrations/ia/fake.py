@@ -5,13 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from .base import ProveedorIA
-from .prompts.analista_convocatoria import (
-    NO_IDENTIFICADO,
-    EntradaDeConvocatoria,
-    PerfilDetectado,
-    comparable,
-)
 from .exceptions import ErrorTransitorio
+from .prompts.analista_convocatoria import NO_IDENTIFICADO, EntradaDeConvocatoria, PerfilDetectado
+from .prompts.guardas import comparable
 from .prompts.revisor_cv import (
     EntradaDeRevision,
     PreguntaProbable,
@@ -30,6 +26,7 @@ from .prompts.schemas import (
     parsear_pregunta,
     parsear_preguntas,
 )
+from .prompts.veredicto import EntradaDeVeredicto, parsear_veredicto
 
 
 def _dos_caminos(termino: str) -> dict[str, str]:
@@ -219,6 +216,18 @@ class FakeProveedorIA(ProveedorIA):
             tecnologias=tuple(por_capa.values()),
             nivel=nivel,
             requisitos=entrada.terminos[:8],
+        )
+
+    def redactar_veredicto(self, entrada: EntradaDeVeredicto) -> str:
+        """Un párrafo neutro con los temas de la entrada, por el mismo parser que
+        uno real: describe, no califica."""
+        self._contar_llamada()
+        temas = ", ".join(dict.fromkeys(r.area.etiqueta for r in entrada.respuestas)) or "la entrevista"
+        return parsear_veredicto(
+            {
+                "veredicto": f"En esta entrevista trabajaste {temas}. "
+                "Tu estructura fue adecuada; te faltaron detalles técnicos en algunas respuestas."
+            }
         )
 
 

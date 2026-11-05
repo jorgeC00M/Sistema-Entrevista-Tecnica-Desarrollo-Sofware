@@ -1,4 +1,4 @@
-"""GET /api/catalogos/puestos/: lo que necesita la pantalla de nueva entrevista."""
+"""GET /api/catalogos/puestos/: lo que necesita la pantalla Simular entrevista."""
 
 from rest_framework import status
 from rest_framework.test import APITestCase

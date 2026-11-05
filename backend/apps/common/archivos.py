@@ -1,8 +1,8 @@
 """Validación de documentos subidos (PDF/DOCX), compartida por las apps.
 
 La usan el módulo de CV (el currículum y la convocatoria contra la que medirlo)
-y la nueva entrevista (la convocatoria a la que se postula). Vive aquí y no en
-una de ellas para que ninguna importe de la otra.
+y la pantalla Simular entrevista (la convocatoria a la que se postula). Vive
+aquí y no en una de ellas para que ninguna importe de la otra.
 """
 
 from __future__ import annotations

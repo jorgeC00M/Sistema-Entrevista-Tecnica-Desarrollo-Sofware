@@ -15,7 +15,7 @@ export default function SidebarNavItem({ destino, plegado, onNavegar }: Props) {
   const enlace = (
     <NavLink
       to={destino.ruta}
-      end
+      end={!destino.prefijo}
       onClick={onNavegar}
       title={plegado ? destino.etiqueta : undefined}
       // Plegado, `p-3` alrededor del icono de 20 px: 44 px de área táctil.

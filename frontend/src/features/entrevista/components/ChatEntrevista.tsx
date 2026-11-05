@@ -6,9 +6,11 @@ import type { MensajeDeChat } from '@/features/entrevista/hooks/useEntrevista'
 interface Props {
   mensajes: MensajeDeChat[]
   evaluando: boolean
+  /** La última pregunta: tras evaluarla, la IA escribe además el veredicto. */
+  esLaUltima: boolean
 }
 
-export default function ChatEntrevista({ mensajes, evaluando }: Props) {
+export default function ChatEntrevista({ mensajes, evaluando, esLaUltima }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null)
 
   // A partir de la 3.ª pregunta el hilo ya no cabe en pantalla: sin esto,
@@ -45,7 +47,9 @@ export default function ChatEntrevista({ mensajes, evaluando }: Props) {
           <span className="h-2 w-2 animate-bounce rounded-full bg-vidrio-muted [animation-delay:-0.3s]" />
           <span className="h-2 w-2 animate-bounce rounded-full bg-vidrio-muted [animation-delay:-0.15s]" />
           <span className="h-2 w-2 animate-bounce rounded-full bg-vidrio-muted" />
-          <span>Evaluando tu respuesta…</span>
+          <span>
+            {esLaUltima ? 'Evaluando tu última respuesta y escribiendo tu veredicto…' : 'Evaluando tu respuesta…'}
+          </span>
         </output>
       )}
     </div>

@@ -33,7 +33,7 @@ const FUNCIONES: Funcion[] = [
     colorIcono: 'text-vidrio-ink',
     titulo: 'Tu progreso',
     texto:
-      'El historial de tus entrevistas, tu promedio por tema y la retroalimentación acumulada de todas tus respuestas, para ver qué se repite.',
+      'El historial de tus entrevistas, tu evolución por nivel y puesto, y el reporte de cada una con su plan de mejora.',
   },
 ]
 

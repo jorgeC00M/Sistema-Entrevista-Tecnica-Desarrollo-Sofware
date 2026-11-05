@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
-// Los tonos que `TONO_POR_ESTADO` puede producir, y nada más: una entrevista
-// solo está finalizada, en progreso o abandonada. Había un `error` que ningún
-// estado sabía pedir.
+// Los tonos que `TONO_POR_ESTADO` puede producir, y nada más. Había un `error`
+// que ningún estado sabía pedir. «Tiempo agotado» comparte el ámbar de «En
+// progreso»: quedó a medias, pero no por decisión del usuario.
 const TONOS = {
   exito: 'bg-exito-fondo text-exito-texto',
   progreso: 'bg-progreso-fondo text-progreso-texto',

@@ -15,11 +15,19 @@ reescriba el historial de quien ya rindió.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.db import models
 
 from integrations.ia.prompts.schemas import AreaTecnica, Nivel, Puesto
 
+
+
+#: Lo que dura una entrevista, contado desde que se crea (el «Comenzar»). Es un
+#: límite total, no de inactividad: responder no lo extiende. Vive aquí y no en
+#: `services` porque `Entrevista.fecha_limite` lo necesita.
+MINUTOS_DE_ENTREVISTA = 30
 
 class Convocatoria(models.Model):
     """Un aviso de trabajo que el usuario pegó o subió, ya analizado.
@@ -62,6 +70,9 @@ class Entrevista(models.Model):
         EN_PROGRESO = "en_progreso", "En progreso"
         FINALIZADA = "finalizada", "Finalizada"
         ABANDONADA = "abandonada", "Abandonada"
+        # Venció el límite con al menos una respuesta y sin responderlas todas.
+        # Si vence sin ninguna, queda ABANDONADA.
+        TIEMPO_AGOTADO = "tiempo_agotado", "Tiempo agotado"
 
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="entrevistas"
@@ -105,15 +116,20 @@ class Entrevista(models.Model):
     fecha_inicio = models.DateTimeField(auto_now_add=True)
     fecha_fin = models.DateTimeField(null=True, blank=True)
     puntuacion_promedio = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    # El párrafo que resume la entrevista, escrito por la IA una sola vez:
+    # `{"estado": "ok" | "no_disponible", "texto": str, "version": int}`. `None`
+    # si nunca se pidió (entrevistas anteriores a esta función, que lo piden
+    # al abrir el reporte). Solo lo tiene una FINALIZADA. Nunca cambia una nota.
+    veredicto_ia = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ["-fecha_inicio"]
         indexes = [
             # Sirve al listado del historial, que ordena por fecha.
             models.Index(fields=["usuario", "fecha_inicio"]),
-            # El filtro realmente caliente: `marcar_abandonadas` y las
-            # estadísticas filtran por usuario + estado en cada consulta del
-            # historial, no por usuario + fecha.
+            # El filtro realmente caliente: `cerrar_vencidas` filtra por
+            # usuario + estado en cada consulta del historial, no por
+            # usuario + fecha.
             models.Index(fields=["usuario", "estado"]),
         ]
         verbose_name = "entrevista"
@@ -121,6 +137,14 @@ class Entrevista(models.Model):
 
     def __str__(self) -> str:
         return f"{self.usuario} — {self.puesto.nombre} ({self.get_estado_display()})"
+
+    @property
+    def fecha_limite(self) -> datetime:
+        """Hasta cuándo se puede responder: `fecha_inicio` + la duración.
+
+        Se deriva y no se guarda: una entrevista cerrada ya no depende de él, y
+        una en curso usa la duración vigente."""
+        return self.fecha_inicio + timedelta(minutes=MINUTOS_DE_ENTREVISTA)
 
     @property
     def puesto_enum(self) -> Puesto:

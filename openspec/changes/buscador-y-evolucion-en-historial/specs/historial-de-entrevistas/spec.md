@@ -191,10 +191,10 @@ La API SHALL no ofrecer `GET /api/estadisticas/`, que se usaba solo para las cif
 
 #### Scenario: Endpoint retirado
 - **WHEN** un cliente autenticado pide `GET /api/estadisticas/`
-- **THEN** recibe 404, y `GET /api/estadisticas/retroalimentacion/` sigue respondiendo 200
+- **THEN** recibe 404 (y desde `quitar-retroalimentacion-acumulada`, `GET /api/estadisticas/retroalimentacion/` también)
 
 ### Requirement: El historial no repite el desglose por área
-"Historial y progreso" SHALL no mostrar un gráfico de promedio por área. El desglose por área SHALL seguir disponible en Retroalimentación.
+"Historial y progreso" SHALL no mostrar un gráfico de promedio por área. El desglose acumulado por área se quitó con la pestaña Retroalimentación (`quitar-retroalimentacion-acumulada`): cada pregunta muestra su área en el reporte de su entrevista.
 
 #### Scenario: Página de historial
 - **WHEN** el usuario abre "Historial y progreso"
@@ -207,8 +207,6 @@ La columna Acción de la tabla, y la tarjeta de cada entrevista en pantallas ang
 
 El nombre accesible de cada enlace SHALL decir de qué entrevista se trata: «Ver resultados: <Puesto> del <fecha>» o «Continuar: <Puesto> del <fecha>». El icono SHALL ser decorativo.
 
-El mismo enlace (ojo + «Ver») SHALL usarse en Retroalimentación para abrir la entrevista de una observación, con el nombre accesible «Ver la entrevista completa: pregunta <n> de <área>».
-
 #### Scenario: Entrevista finalizada
 - **WHEN** el usuario mira la fila de una entrevista de Desarrollador Backend finalizada el 21/10/2026
 - **THEN** la columna Acción muestra el icono de ojo y «Ver», y un lector de pantalla anuncia «Ver resultados: Desarrollador Backend del 21/10/2026»
@@ -217,6 +215,3 @@ El mismo enlace (ojo + «Ver») SHALL usarse en Retroalimentación para abrir la
 - **WHEN** el usuario mira la fila de una entrevista en curso
 - **THEN** la columna Acción muestra el icono de play y «Continuar», y al pulsarlo retoma la entrevista
 
-#### Scenario: Observación en Retroalimentación
-- **WHEN** el usuario pulsa el ojo + «Ver» de una observación
-- **THEN** se abren los resultados de esa entrevista

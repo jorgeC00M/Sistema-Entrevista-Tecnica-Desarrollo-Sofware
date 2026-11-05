@@ -281,7 +281,7 @@ Cálidos y seguros: píldoras que cambian de tono sin brusquedad.
 - **Error:** borde y mensaje en el color de error, anunciado a lectores de pantalla.
 
 ### Navigation
-- **Barra lateral:** fondo Azul Pizarra. Los elementos se muestran en Pizarra Atenuada; el activo es una píldora rellena de Tinta de Evaluador con texto blanco. La acción principal, "Nueva entrevista", es otra píldora de tinta.
+- **Barra lateral:** fondo Azul Pizarra. Los elementos se muestran en Pizarra Atenuada; el activo es una píldora rellena de Tinta de Evaluador con texto blanco. La acción principal, "Simular entrevista", es otra píldora de tinta.
 - **Cabecera:** clara, de 64px, con el nombre de la sección actual (no el de la aplicación).
 - **Landing:** barra flotante de vidrio que es oscura sobre el hero y clara después, y marca la sección visible.
 

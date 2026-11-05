@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from importlib import import_module
 
-from .base import AnalizadorDeConvocatoria, ProveedorIA, RevisorDeCV
+from .base import AnalizadorDeConvocatoria, ProveedorIA, RedactorDeVeredicto, RevisorDeCV
 from .exceptions import ProveedorNoConfigurado
 
 # nombre -> (módulo, clase). El import es diferido para no exigir el SDK de
@@ -93,6 +93,24 @@ def get_analizador_de_convocatoria(nombre: str | None = None) -> AnalizadorDeCon
     clases = [c for c in (_clase(n) for n in nombres) if callable(getattr(c, "analizar_convocatoria", None))]
     if not clases:
         raise ProveedorNoDisponible(f"Ningún proveedor de '{','.join(nombres)}' sabe analizar convocatorias.")
+    if len(clases) == 1:
+        return clases[0]()
+
+    from .cadena import ProveedorEnCadena
+
+    return ProveedorEnCadena([clase() for clase in clases])
+
+
+def get_redactor_de_veredicto(nombre: str | None = None) -> RedactorDeVeredicto:
+    """El proveedor configurado, si sabe redactar el veredicto de una entrevista.
+
+    Como la convocatoria, no se filtra por `apto_para_datos_personales`: recibe
+    evaluaciones ya guardadas, no las respuestas ni datos del candidato.
+    """
+    nombres = _nombres(nombre)
+    clases = [c for c in (_clase(n) for n in nombres) if callable(getattr(c, "redactar_veredicto", None))]
+    if not clases:
+        raise ProveedorNoDisponible(f"Ningún proveedor de '{','.join(nombres)}' sabe redactar el veredicto.")
     if len(clases) == 1:
         return clases[0]()
 

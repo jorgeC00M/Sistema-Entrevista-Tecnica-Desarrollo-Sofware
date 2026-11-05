@@ -165,9 +165,9 @@ Figura 10\. Formulario de Registro de Usuario (Elaboración Propia)
 
 Figura 11\. Formulario de Inicio de Sesión (Elaboración Propia)
 
-Figura 12\. Formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
+Figura 12\. Formulario «Simular entrevista» (pestaña Personalizada) (Elaboración Propia)
 
-Figura 13\. Formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+Figura 13\. Formulario «Simular entrevista» (pestaña Con convocatoria) (Elaboración Propia)
 
 Figura 14\. Formulario de Respuesta en Entrevista (chat) (Elaboración Propia)
 
@@ -215,9 +215,9 @@ Tabla 15\. Campos del formulario de Registro de Usuario (Elaboración Propia)
 
 Tabla 16\. Campos del formulario de Inicio de Sesión (Elaboración Propia)
 
-Tabla 17\. Campos del formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
+Tabla 17\. Campos del formulario «Simular entrevista» (pestaña Personalizada) (Elaboración Propia)
 
-Tabla 18\. Campos del formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+Tabla 18\. Campos del formulario «Simular entrevista» (pestaña Con convocatoria) (Elaboración Propia)
 
 Tabla 19\. Campos del formulario de Respuesta en Entrevista (chat) (Elaboración Propia)
 
@@ -991,11 +991,11 @@ A continuación, se presentan los formularios y paneles principales que el usuar
 
 ###### *Tabla 16\. Campos del formulario de Inicio de Sesión (Elaboración Propia)*
 
-* **Formulario de Nueva Entrevista (pestaña Personalizada)**
+* **Formulario «Simular entrevista» (pestaña Personalizada)**
 
 [INSERTAR CAPTURA DE PANTALLA]
 
-##### Figura 12\. Formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)
+##### Figura 12\. Formulario «Simular entrevista» (pestaña Personalizada) (Elaboración Propia)
 
 | Campo | Tipo | Obligatorio | Validación o contenido |
 | :---- | :---- | :---- | :---- |
@@ -1003,20 +1003,20 @@ A continuación, se presentan los formularios y paneles principales que el usuar
 | Nivel | Lista de selección | Sí | Junior, Semi-Senior o Senior. |
 | Tecnología | Lista de selección | Sí | Debe pertenecer al puesto; en Full Stack se elige una de frontend y una de backend. |
 
-###### *Tabla 17\. Campos del formulario de Nueva Entrevista (pestaña Personalizada) (Elaboración Propia)*
+###### *Tabla 17\. Campos del formulario «Simular entrevista» (pestaña Personalizada) (Elaboración Propia)*
 
-* **Formulario de Nueva Entrevista (pestaña Con convocatoria)**
+* **Formulario «Simular entrevista» (pestaña Con convocatoria)**
 
 [INSERTAR CAPTURA DE PANTALLA]
 
-##### Figura 13\. Formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)
+##### Figura 13\. Formulario «Simular entrevista» (pestaña Con convocatoria) (Elaboración Propia)
 
 | Campo | Tipo | Obligatorio | Validación o contenido |
 | :---- | :---- | :---- | :---- |
 | Texto de la convocatoria | Área de texto | Uno de los dos | Entre 30 y 5000 caracteres. |
 | Archivo de la convocatoria | Archivo | Uno de los dos | PDF o DOCX, máximo 2 MB. |
 
-###### *Tabla 18\. Campos del formulario de Nueva Entrevista (pestaña Con convocatoria) (Elaboración Propia)*
+###### *Tabla 18\. Campos del formulario «Simular entrevista» (pestaña Con convocatoria) (Elaboración Propia)*
 
 * **Formulario de Respuesta en Entrevista (chat)**
 
@@ -1043,7 +1043,7 @@ A continuación, se presentan los formularios y paneles principales que el usuar
 | Detalle por pregunta | Dato | – | Nota, niveles por criterio, fortalezas, debilidades, sugerencias y puntos clave. |
 | ¿Cómo se calcula? | Dato | – | La fórmula con los niveles de la respuesta sustituidos. |
 | Comparación | Dato | – | Diferencia con la entrevista anterior del mismo puesto y nivel. |
-| Practicar de nuevo este puesto | Botón | – | Abre una nueva entrevista con el mismo puesto y nivel preseleccionados. |
+| Practicar de nuevo este puesto | Botón | – | Abre «Simular entrevista» con el mismo puesto y nivel preseleccionados. |
 
 ###### *Tabla 20\. Campos del panel de Resultados (Elaboración Propia)*
 

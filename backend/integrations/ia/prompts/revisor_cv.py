@@ -13,7 +13,7 @@ tarea multiplicaría coste, latencia y superficie de fallo.
 
 **La lectura general nunca juzga la aptitud.** Si concluye que la persona es apta
 o idónea, estima una probabilidad o da un porcentaje, se descarta entera
-(`_CONCLUYE_APTITUD`): la pantalla promete que no evalúa si alguien es apto, y esa
+(`CONCLUYE_APTITUD`): la pantalla promete que no evalúa si alguien es apto, y esa
 promesa la cumple el código, no el prompt.
 
 **El parser descarta todo lo que no está anclado a la entrada.** Una viñeta que
@@ -28,26 +28,17 @@ enmascarada por quien la construye.
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
 from ..exceptions import RespuestaIAInvalida
+from .guardas import CONCLUYE_APTITUD, comparable
 from .marcadores import MARCADOR, SIN_PUESTO
 from .schemas import Puesto
 
 MAXIMO_PREGUNTAS = 5
 MAXIMO_CORRECCIONES = 10
 TIPOS_DE_CORRECCION = ("ortografia", "persona", "tiempo_verbal")
-
-#: Lo que delata una lectura que juzga en vez de resumir. Se busca sobre el texto
-#: sin acentos y con límites de palabra, para no descartar «aptitudes».
-_CONCLUYE_APTITUD = re.compile(
-    r"\b(?:apt[oa]s?|idone\w*|calificad\w*|cualificad\w*|probabilidad\w*|porcentaje\w*"
-    r"|deberias postular\w*|encajas perfectamente)\b|%"
-)
-
 
 @dataclass(frozen=True)
 class RequisitoARevisar:
@@ -248,17 +239,6 @@ ESQUEMA_REVISION: dict[str, Any] = {
 }
 
 
-def _comparable(texto: str) -> str:
-    """Minúsculas, sin acentos y con los espacios colapsados.
-
-    El modelo puede devolver "Desarrollé  la API" con un espacio de más o sin la
-    tilde; eso no lo vuelve inventado. Lo que sí debe coincidir son las palabras.
-    """
-    sin_acentos = unicodedata.normalize("NFD", texto.lower())
-    sin_acentos = "".join(c for c in sin_acentos if unicodedata.category(c) != "Mn")
-    return " ".join(sin_acentos.split())
-
-
 def _items(datos: dict[str, Any], clave: str) -> list[dict[str, Any]]:
     lista = datos.get(clave)
     if not isinstance(lista, list):
@@ -286,7 +266,7 @@ def _lectura(datos: dict[str, Any], entrada: EntradaDeRevision) -> str:
     """La lectura general, o vacía: sin convocatoria no hay match que resumir, y
     una lectura que juzga la aptitud se descarta entera."""
     lectura = _campo_limpio(datos, "lectura")
-    if not entrada.convocatoria.strip() or _CONCLUYE_APTITUD.search(_comparable(lectura)):
+    if not entrada.convocatoria.strip() or CONCLUYE_APTITUD.search(comparable(lectura)):
         return ""
     return lectura
 
@@ -310,22 +290,22 @@ def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> Revis
     if not isinstance(datos, dict):
         raise RespuestaIAInvalida(f"Se esperaba un objeto JSON, se recibió {type(datos).__name__}")
 
-    referencia = _comparable(entrada.texto_de_referencia)
-    vinetas_enviadas = {_comparable(vineta): vineta for vineta in entrada.vinetas}
-    enviados = {_comparable(r.termino): r for r in entrada.requisitos}
+    referencia = comparable(entrada.texto_de_referencia)
+    vinetas_enviadas = {comparable(vineta): vineta for vineta in entrada.vinetas}
+    enviados = {comparable(r.termino): r for r in entrada.requisitos}
 
     vinetas = tuple(
-        VinetaReescrita(original=vinetas_enviadas[_comparable(original)], sugerida=sugerida)
+        VinetaReescrita(original=vinetas_enviadas[comparable(original)], sugerida=sugerida)
         for item in _items(datos, "vinetas")
         if (original := _texto(item, "original")) and (sugerida := _texto(item, "sugerida"))
-        and _comparable(original) in vinetas_enviadas
+        and comparable(original) in vinetas_enviadas
         and _limpio(sugerida)
     )
 
     requisitos = tuple(
         sugerencia
         for item in _items(datos, "requisitos")
-        if (enviado := enviados.get(_comparable(_texto(item, "termino"))))
+        if (enviado := enviados.get(comparable(_texto(item, "termino"))))
         and (sugerencia := _sugerencia_de_requisito(item, enviado.termino, enviado.estado))
     )
 
@@ -333,7 +313,7 @@ def parsear_revision(datos: dict[str, Any], entrada: EntradaDeRevision) -> Revis
         PreguntaProbable(pregunta=pregunta, motivo=motivo)
         for item in _items(datos, "preguntas")
         if (pregunta := _texto(item, "pregunta")) and (motivo := _texto(item, "motivo"))
-        and _comparable(motivo) in referencia
+        and comparable(motivo) in referencia
         and _limpio(pregunta, motivo)
     )[:MAXIMO_PREGUNTAS]
 

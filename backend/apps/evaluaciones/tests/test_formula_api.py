@@ -62,7 +62,7 @@ class FormulaEnLaApiTest(APITestCase):
                 self.assertEqual(intercambio["evaluacion"]["puntuacion"], 74)
                 self.assertEqual(intercambio["evaluacion"]["puntos_clave"], [])
 
-    def test_una_abandonada_declara_sobre_cuantas_preguntas_se_calculo(self):
+    def test_una_no_finalizada_declara_cuantas_preguntas_tienen_evaluacion(self):
         entrevista = self._iniciar()
         servicio.responder(entrevista, "Una respuesta", proveedor=self.proveedor)
         servicio.responder(entrevista, "Otra respuesta", proveedor=self.proveedor)
