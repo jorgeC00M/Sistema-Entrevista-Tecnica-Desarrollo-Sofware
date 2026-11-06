@@ -1,10 +1,8 @@
 import type { BandaDeRubrica } from '@/types/evaluacion'
 
 /**
- * Un solo lugar donde vive el color de un puntaje. Antes vivía en
- * `features/resultados/bandas.ts`; se mueve a `lib/` porque ya no es solo de
- * "resultados" — `ChipPuntaje`, la retroalimentación y el historial lo usan
- * igual.
+ * Un solo lugar donde vive el color de un puntaje. Está en `lib/` y no en
+ * `features/resultados/` porque lo usan el reporte, el historial y el Inicio.
  *
  * El backend (`apps/evaluaciones/rubricas.py`) decide 4 bandas con cortes en
  * 40/60/80 y las manda en el campo `banda`. Este módulo NO recalcula esos
@@ -13,17 +11,13 @@ import type { BandaDeRubrica } from '@/types/evaluacion'
  * backend, una única fuente de verdad.
  */
 
-export type NivelDePuntaje = 'error' | 'progreso' | 'exito'
+type NivelDePuntaje = 'error' | 'progreso' | 'exito'
 
 const NIVEL_POR_BANDA: Record<BandaDeRubrica, NivelDePuntaje> = {
   insuficiente: 'error',
   en_desarrollo: 'error',
   aceptable: 'progreso',
   solido: 'exito',
-}
-
-export function obtenerNivel(banda: BandaDeRubrica): NivelDePuntaje {
-  return NIVEL_POR_BANDA[banda]
 }
 
 const ETIQUETA_POR_BANDA: Record<BandaDeRubrica, string> = {

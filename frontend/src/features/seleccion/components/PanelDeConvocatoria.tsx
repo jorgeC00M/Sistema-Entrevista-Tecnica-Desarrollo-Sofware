@@ -4,11 +4,11 @@ import type { ReactNode } from 'react'
 import { mensajeDeError } from '@/api/errores'
 import { analizarConvocatoria } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
+import AlertaDeIA from '@/components/ui/AlertaDeIA'
 import Boton from '@/components/ui/Boton'
 import Icono from '@/components/ui/Icono'
 import Textarea from '@/components/ui/Textarea'
-import ZonaDeArchivo from '@/features/curriculum/components/ZonaDeArchivo'
-import EleccionDeVia, { type Via } from '@/features/seleccion/components/EleccionDeVia'
+import { type ErrorDeIA, errorDeIA } from '@/lib/erroresDeIA'
 import type { ConvocatoriaAnalizada } from '@/types/catalogos'
 
 /** Igual que en el backend (`AnalizarConvocatoriaSerializer`). */
@@ -23,37 +23,35 @@ interface Props {
 }
 
 /**
- * La pestaña "Con convocatoria": dos tarjetas para elegir cómo dar el aviso
- * (pegar el texto o subir el archivo), el campo de la elegida y "Analizar
- * convocatoria"; y lo detectado, debajo en móvil y tablet, a la derecha en
- * escritorio. Ahí, antes del primer análisis, un aviso ocupa su lugar para que
- * la entrada no salte cuando aparezca el resultado.
+ * La pestaña "Con convocatoria": el texto del aviso y "Analizar convocatoria";
+ * y lo detectado, debajo en móvil y tablet, a la derecha en escritorio. Ahí,
+ * antes del primer análisis, un aviso ocupa su lugar para que la entrada no
+ * salte cuando aparezca el resultado.
  *
- * Solo se ve el campo de la tarjeta elegida, y solo eso se envía: el servidor
- * acepta uno de los dos. Lo escrito o el archivo de la otra se conserva por si
- * el usuario vuelve a ella. El análisis lo hace el servidor (IA anclada al
- * catálogo); aquí solo se envía.
+ * Solo se pega o se escribe (`convocatoria-de-entrevista-solo-texto`, igual que
+ * en el CV): un aviso vive en una página web y lo natural es copiarlo; elegir
+ * entre pegar y subir un archivo era un paso más antes de empezar. El análisis
+ * lo hace el servidor (IA anclada al catálogo); aquí solo se envía.
  */
 export default function PanelDeConvocatoria({ onAnalizada, resumen }: Props) {
-  const [via, setVia] = useState<Via>('texto')
   const [texto, setTexto] = useState('')
-  const [archivo, setArchivo] = useState<File | null>(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [errorIA, setErrorIA] = useState<ErrorDeIA | null>(null)
 
   const largo = texto.trim().length
-  const listo = via === 'texto' ? largo >= MINIMO_CARACTERES : archivo !== null
+  const listo = largo >= MINIMO_CARACTERES
 
   const analizar = async () => {
     setError('')
+    setErrorIA(null)
     setCargando(true)
     try {
-      const analizada = await analizarConvocatoria(
-        via === 'archivo' && archivo ? { archivo } : { texto: texto.trim() },
-      )
-      onAnalizada(analizada)
+      onAnalizada(await analizarConvocatoria(texto.trim()))
     } catch (err) {
-      // 422 (no es de software), 400 (archivo ilegible) y 503 llegan con su mensaje.
+      // 400 (aviso corto) y 422 (no es de software) llegan con su mensaje;
+      // un fallo de la IA, con su código y el aviso de IA.
+      setErrorIA(errorDeIA(err))
       setError(mensajeDeError(err, 'No se pudo analizar la convocatoria.'))
     } finally {
       setCargando(false)
@@ -63,35 +61,36 @@ export default function PanelDeConvocatoria({ onAnalizada, resumen }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       <div className="flex min-w-0 flex-col gap-5">
-        <EleccionDeVia via={via} onCambiar={setVia} deshabilitado={cargando} />
+        <div className="flex flex-col gap-2">
+          <Textarea
+            id="convocatoria-texto"
+            etiqueta="Texto de la convocatoria"
+            value={texto}
+            onChange={(evento) => setTexto(evento.target.value)}
+            maxLength={MAXIMO_CARACTERES}
+            maximoCaracteres={MAXIMO_CARACTERES}
+            rows={6}
+            disabled={cargando}
+            placeholder="Pega aquí el aviso: puesto, requisitos y nivel que piden."
+          />
+          {largo > 0 && largo < MINIMO_CARACTERES && (
+            <p className="text-meta text-vidrio-muted">
+              Pega el aviso completo: con tan poco texto no se identifica el puesto.
+            </p>
+          )}
+        </div>
 
-        {via === 'texto' ? (
-          <div className="flex flex-col gap-2">
-            <Textarea
-              id="convocatoria-texto"
-              etiqueta="Texto de la convocatoria"
-              value={texto}
-              onChange={(evento) => setTexto(evento.target.value)}
-              maxLength={MAXIMO_CARACTERES}
-              maximoCaracteres={MAXIMO_CARACTERES}
-              rows={6}
-              disabled={cargando}
-              placeholder="Pega aquí el aviso: puesto, requisitos y nivel que piden."
-            />
-            {largo > 0 && largo < MINIMO_CARACTERES && (
-              <p className="text-meta text-vidrio-muted">
-                Pega el aviso completo: con tan poco texto no se identifica el puesto.
-              </p>
-            )}
-          </div>
+        {errorIA ? (
+          <AlertaDeIA
+            titulo={errorIA.titulo}
+            detalle="Tu texto sigue aquí."
+          />
         ) : (
-          <ZonaDeArchivo que="la convocatoria" archivo={archivo} deshabilitado={cargando} onElegir={setArchivo} />
-        )}
-
-        {error && (
-          <Alerta variante="enLinea" className="text-sm">
-            {error}
-          </Alerta>
+          error && (
+            <Alerta variante="enLinea" className="text-sm">
+              {error}
+            </Alerta>
+          )
         )}
 
         <div className="flex justify-end">

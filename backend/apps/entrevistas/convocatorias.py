@@ -19,9 +19,8 @@ La llamada a la IA va fuera de cualquier transacción, como la evaluación en
 
 from __future__ import annotations
 
-import hashlib
-
 from apps.catalogos.selectors import niveles_activos, puestos_con_tecnologias
+from apps.common.textos import hash_de_texto
 from integrations.documentos.anonimizar import enmascarar
 from integrations.documentos.convocatoria import partir
 from integrations.ia.base import AnalizadorDeConvocatoria
@@ -55,7 +54,7 @@ def analizar_convocatoria(
 ) -> Convocatoria:
     """Devuelve la convocatoria analizada (nueva o de la caché) del usuario."""
     enmascarado = enmascarar(texto.strip())
-    huella = hashlib.sha256(enmascarado.encode("utf-8")).hexdigest()
+    huella = hash_de_texto(enmascarado)
 
     existente = Convocatoria.objects.filter(usuario=usuario, hash=huella).first()
     if existente is not None:

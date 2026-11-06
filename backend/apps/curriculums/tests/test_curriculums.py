@@ -200,7 +200,9 @@ class ContraUnaConvocatoriaTest(BaseDeCurriculums):
         brecha = respuesta.data["analisis"]["brecha"]
         self.assertFalse(brecha["con_evidencia"])
 
-    def test_la_convocatoria_como_archivo_tambien_vale(self):
+    def test_un_archivo_de_convocatoria_se_ignora(self):
+        """La convocatoria solo llega como texto (`comparar-con-oferta-en-dos-pasos`):
+        un archivo que mande un cliente viejo no la reemplaza ni la completa."""
         respuesta = self.client.post(
             "/api/curriculums/",
             {
@@ -211,34 +213,8 @@ class ContraUnaConvocatoriaTest(BaseDeCurriculums):
         )
 
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(respuesta.data["con_convocatoria"])
-
-    def test_no_se_admiten_las_dos_vias_a_la_vez(self):
-        """Aceptar ambas obligaría a elegir una en silencio."""
-        respuesta = self.client.post(
-            "/api/curriculums/",
-            {
-                "archivo": _subida("una_columna.pdf"),
-                "convocatoria": CONVOCATORIA_BACKEND,
-                "archivo_convocatoria": _subida("habilidades_declaradas.pdf"),
-            },
-            format="multipart",
-        )
-
-        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_una_convocatoria_escaneada_se_rechaza_con_su_motivo(self):
-        respuesta = self.client.post(
-            "/api/curriculums/",
-            {
-                "archivo": _subida("una_columna.pdf"),
-                "archivo_convocatoria": _subida("escaneado.pdf"),
-            },
-            format="multipart",
-        )
-
-        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("imagen", str(respuesta.data).lower())
+        self.assertFalse(respuesta.data["con_convocatoria"])
+        self.assertIsNone(respuesta.data["analisis"]["brecha"])
 
 
 class _RevisorQueFalla:

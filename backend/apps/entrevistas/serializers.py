@@ -3,11 +3,12 @@ from rest_framework import serializers
 
 from rest_framework.exceptions import NotFound
 
-from apps.catalogos.models import Nivel, Puesto, Tecnologia
-from apps.common.archivos import texto_de_convocatoria, validar_archivo
+from apps.catalogos.models import Tecnologia
+from apps.catalogos.selectors import niveles_activos, puestos_activos, tecnologias_activas
 from apps.evaluaciones.serializers import EvaluacionSerializer
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
+from . import selectors
 from .models import Convocatoria, Entrevista, Intercambio
 
 
@@ -28,18 +29,13 @@ class IniciarEntrevistaSerializer(serializers.Serializer):
     puestos la segunda no se admite.
     """
 
-    puesto = serializers.SlugRelatedField(
-        slug_field="codigo", queryset=Puesto.objects.filter(activo=True)
-    )
-    nivel = serializers.SlugRelatedField(
-        slug_field="codigo", queryset=Nivel.objects.filter(activo=True)
-    )
-    tecnologia = serializers.SlugRelatedField(
-        slug_field="codigo", queryset=Tecnologia.objects.filter(activo=True)
-    )
+    # Solo lo activo del catálogo: la misma regla que la pantalla (selectores).
+    puesto = serializers.SlugRelatedField(slug_field="codigo", queryset=puestos_activos())
+    nivel = serializers.SlugRelatedField(slug_field="codigo", queryset=niveles_activos())
+    tecnologia = serializers.SlugRelatedField(slug_field="codigo", queryset=tecnologias_activas())
     segunda_tecnologia = serializers.SlugRelatedField(
         slug_field="codigo",
-        queryset=Tecnologia.objects.filter(activo=True),
+        queryset=tecnologias_activas(),
         required=False,
         allow_null=True,
     )
@@ -249,36 +245,30 @@ class ConfiguracionSerializer(serializers.Serializer):
 
 #: Menos de esto no alcanza para identificar un puesto; más, no es un aviso.
 MINIMO_CARACTERES_CONVOCATORIA = 30
-MAXIMO_CARACTERES_CONVOCATORIA = 5000
+MAXIMO_CARACTERES_CONVOCATORIA_ENTREVISTA = 5000
 
 
 class AnalizarConvocatoriaSerializer(serializers.Serializer):
-    """El aviso pegado (`texto`) o subido (`archivo`, PDF/DOCX), no las dos cosas.
+    """El aviso pegado o escrito (`texto`).
 
-    Devuelve siempre el texto en `validated_data["texto"]`: el formato en que
-    llegó es un detalle de la entrada, no del análisis.
+    Solo texto (`convocatoria-de-entrevista-solo-texto`, como el CV en
+    `comparar-con-oferta-en-dos-pasos`): un aviso vive en una página web y lo
+    natural es copiarlo. Un `archivo` que mande un cliente viejo no está
+    declarado, así que DRF lo ignora y cae en el aviso incompleto, antes de
+    gastar una llamada a la IA.
     """
 
     texto = serializers.CharField(required=False, allow_blank=True, trim_whitespace=True)
-    archivo = serializers.FileField(required=False)
-
-    def validate_archivo(self, archivo):
-        return validar_archivo(archivo)
 
     def validate(self, datos):
         pegado = datos.get("texto", "").strip()
-        archivo = datos.get("archivo")
-        if pegado and archivo:
-            raise serializers.ValidationError("Envía la convocatoria pegada o como archivo, no las dos cosas.")
-        if archivo:
-            pegado = texto_de_convocatoria(archivo, "archivo").strip()
         if len(pegado) < MINIMO_CARACTERES_CONVOCATORIA:
             raise serializers.ValidationError(
                 {"texto": "Pega el aviso completo: con tan poco texto no se puede identificar el puesto."}
             )
-        if len(pegado) > MAXIMO_CARACTERES_CONVOCATORIA:
+        if len(pegado) > MAXIMO_CARACTERES_CONVOCATORIA_ENTREVISTA:
             raise serializers.ValidationError(
-                {"texto": f"La convocatoria supera los {MAXIMO_CARACTERES_CONVOCATORIA} caracteres."}
+                {"texto": f"La convocatoria supera los {MAXIMO_CARACTERES_CONVOCATORIA_ENTREVISTA} caracteres."}
             )
         return {"texto": pegado}
 
@@ -296,9 +286,7 @@ class ConvocatoriaSerializer(serializers.ModelSerializer):
     def get_perfil(self, convocatoria) -> dict:
         perfil = dict(convocatoria.perfil)
         codigos = _codigos_de_tecnologia(perfil)
-        puesto = Puesto.objects.filter(codigo=perfil.get("puesto")).first()
-        tecnologias = Tecnologia.objects.in_bulk(codigos, field_name="codigo")
-        nivel = Nivel.objects.filter(codigo=perfil.get("nivel")).first()
+        puesto, tecnologias, nivel = selectors.catalogo_del_perfil(perfil.get("puesto"), codigos, perfil.get("nivel"))
         perfil["puesto_nombre"] = puesto.nombre if puesto else None
         perfil["tecnologias"] = [c for c in codigos if c in tecnologias]
         perfil["tecnologias_nombres"] = [tecnologias[c].nombre for c in perfil["tecnologias"]]

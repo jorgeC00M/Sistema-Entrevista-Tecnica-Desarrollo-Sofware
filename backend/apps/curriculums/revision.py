@@ -48,7 +48,7 @@ VERSION_DE_REVISION = 2
 
 #: Topes de lo que se envía: acotan el coste por análisis y lo que sale del sistema.
 MAXIMO_CARACTERES_DE_SECCIONES = 6000
-MAXIMO_CARACTERES_DE_CONVOCATORIA = 3000
+MAXIMO_CARACTERES_CONVOCATORIA_PARA_LA_IA = 3000
 
 #: Clave con la que la interfaz encuentra la sugerencia del requisito de años.
 CLAVE_DE_EXPERIENCIA = "experiencia"
@@ -102,7 +102,7 @@ def revisar(
         vinetas=tuple(vinetas_enmascaradas),
         requisitos=requisitos,
         secciones=enmascarar(_texto_de_secciones(secciones), nombre)[:MAXIMO_CARACTERES_DE_SECCIONES],
-        convocatoria=convocatoria.strip()[:MAXIMO_CARACTERES_DE_CONVOCATORIA],
+        convocatoria=convocatoria.strip()[:MAXIMO_CARACTERES_CONVOCATORIA_PARA_LA_IA],
         demostrados=_demostrados(brecha),
     )
 

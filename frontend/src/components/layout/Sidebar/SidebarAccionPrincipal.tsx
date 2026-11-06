@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import Icono from '@/components/ui/Icono'
 import Tooltip from '@/components/ui/Tooltip'
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
-import { etiquetaDeContinuar, minutosRestantes, tramoDelReloj } from '@/features/entrevista/tiempo'
+import { etiquetaDeContinuar, minutosRestantes, tramoDelReloj } from '@/lib/tiempo'
 
 interface Props {
   plegado: boolean

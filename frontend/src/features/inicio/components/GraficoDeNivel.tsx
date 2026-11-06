@@ -7,10 +7,10 @@ import {
   type EvolucionDeNivel,
   type PuntoDeEvolucion,
   type SerieDePuesto,
-  fechaDelPunto,
   marcasDelEje,
   resumenDeSerie,
 } from '@/features/inicio/evolucion'
+import { fechaNumerica } from '@/lib/fechas'
 import { colorDePuesto } from '@/lib/puestos'
 
 // SVG simple, sin librería de gráficos: una línea de puntos por puesto no
@@ -32,7 +32,7 @@ const GUIAS = [0, 25, 50, 75, 100]
 /** El nombre accesible de un punto: los mismos cuatro datos que su cuadro. */
 function nombreDelPunto(serie: SerieDePuesto, punto: PuntoDeEvolucion): string {
   return [
-    `Fecha ${fechaDelPunto(punto.fecha)}`,
+    `Fecha ${fechaNumerica(punto.fecha)}`,
     `Puesto ${serie.etiqueta}`,
     `Tecnología ${punto.tecnologia ?? 'sin tecnología'}`,
     `Puntaje ${Math.round(punto.nota)} de 100`,

@@ -169,17 +169,12 @@ export function rutaDelAnalisis(conConvocatoria: boolean, id?: number): string {
 
 /**
  * Si el análisis elegido ya tiene lo que necesita: el CV y, en el dirigido, el
- * texto o el archivo de la convocatoria. En el general la convocatoria no
- * cuenta aunque haya algo cargado: no se envía.
+ * texto de la convocatoria. En el general la convocatoria no cuenta aunque haya
+ * algo escrito: no se envía.
  */
-export function puedeAnalizar(
-  tipo: TipoDeAnalisis,
-  archivo: File | null,
-  convocatoria: string,
-  archivoConvocatoria: File | null,
-): boolean {
+export function puedeAnalizar(tipo: TipoDeAnalisis, archivo: File | null, convocatoria: string): boolean {
   if (!archivo) return false
-  return tipo === 'general' || convocatoria.trim() !== '' || archivoConvocatoria !== null
+  return tipo === 'general' || convocatoria.trim() !== ''
 }
 
 /**

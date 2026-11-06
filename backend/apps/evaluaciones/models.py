@@ -33,10 +33,8 @@ class Evaluacion(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # La retroalimentación acumulada ordena las observaciones por fecha
-        # descendente sobre todas las evaluaciones del usuario; sin índice esa
-        # ordenación es un scan completo de la tabla.
-        indexes = [models.Index(fields=["creado_en"])]
+        # Sin índice por `creado_en`: lo usaba la retroalimentación acumulada,
+        # que se retiró; ninguna consulta ordena ni filtra por esa fecha.
         verbose_name = "evaluación"
         verbose_name_plural = "evaluaciones"
 

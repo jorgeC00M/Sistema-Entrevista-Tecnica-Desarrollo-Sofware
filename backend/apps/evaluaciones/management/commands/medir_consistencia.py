@@ -17,7 +17,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from integrations.ia.factory import get_proveedor
 
-from ...consistencia import REPETICIONES_MINIMAS, medir
+from ...consistencia.medicion import REPETICIONES_MINIMAS, medir
 
 
 class Command(BaseCommand):

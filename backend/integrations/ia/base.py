@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from typing import Any, Protocol, runtime_checkable
+from collections.abc import Callable, Sequence
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from .exceptions import RespuestaIAInvalida
 from .prompts import analista_convocatoria, entrevistador, evaluador, revisor_cv, veredicto
@@ -24,6 +24,23 @@ from .prompts.schemas import (
     parsear_pregunta,
     parsear_preguntas,
 )
+
+
+T = TypeVar("T")
+
+#: Tope de cada llamada a un proveedor, en segundos. Sin timeout, una llamada
+#: colgada retiene el hilo que la atiende. Es por intento, no por petición: con
+#: los reintentos el peor caso se multiplica. Lo usan todos los adaptadores.
+TIMEOUT_SEGUNDOS = 30.0
+
+#: Reintentos del SDK ante errores de red o saturación (429, 5xx), con retroceso.
+#: Los mismos en todos los adaptadores: que uno reintentara y otro no fue justo
+#: la divergencia que esta base vino a eliminar.
+MAX_REINTENTOS = 2
+
+#: Veces que se vuelve a pedir la misma operación al mismo proveedor cuando su
+#: respuesta no se pudo usar (JSON roto o fuera del esquema).
+REINTENTOS_ANTE_RESPUESTA_INVALIDA = 1
 
 
 class ProveedorIA(ABC):
@@ -151,14 +168,14 @@ class ProveedorIAporJSON(ProveedorIA):
     def generar_preguntas_iniciales(
         self, contexto: ContextoDeEntrevista, areas: Sequence[AreaTecnica]
     ) -> list[Pregunta]:
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=entrevistador.sistema_de_calentamiento(
                 contexto, areas, PREGUNTAS_POR_ENTREVISTA
             ),
             entrada=entrevistador.usuario_de_calentamiento(areas),
             esquema=entrevistador.esquema_de_preguntas(len(areas)),
+            parsear=lambda d: parsear_preguntas(d, desde_numero=1, cuantas=len(areas)),
         )
-        return parsear_preguntas(datos, desde_numero=1, cuantas=len(areas))
 
     def generar_pregunta(
         self,
@@ -167,12 +184,12 @@ class ProveedorIAporJSON(ProveedorIA):
         numero: int,
         previas: list[TemaEvaluado],
     ) -> Pregunta:
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=entrevistador.sistema(contexto, area, numero, PREGUNTAS_POR_ENTREVISTA),
             entrada=entrevistador.usuario(numero, previas),
             esquema=entrevistador.ESQUEMA_PREGUNTA,
+            parsear=lambda d: parsear_pregunta(d, numero=numero),
         )
-        return parsear_pregunta(datos, numero=numero)
 
     def evaluar_respuesta(
         self,
@@ -181,42 +198,62 @@ class ProveedorIAporJSON(ProveedorIA):
         pregunta: str,
         respuesta: str,
     ) -> Evaluacion:
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=evaluador.sistema(contexto, area),
             entrada=evaluador.usuario(pregunta, respuesta),
             esquema=evaluador.ESQUEMA_EVALUACION,
+            parsear=parsear_evaluacion,
         )
-        return parsear_evaluacion(datos)
 
     def revisar_cv(self, entrada: EntradaDeRevision) -> RevisionDeCV:
         """Implementa `RevisorDeCV` con la misma secuencia que las demás
         operaciones: así Gemini y Claude lo obtienen sin código propio."""
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=revisor_cv.sistema(),
             entrada=revisor_cv.usuario(entrada),
             esquema=revisor_cv.ESQUEMA_REVISION,
+            parsear=lambda d: revisor_cv.parsear_revision(d, entrada),
         )
-        return revisor_cv.parsear_revision(datos, entrada)
 
     def analizar_convocatoria(self, entrada: EntradaDeConvocatoria) -> PerfilDetectado:
         """Implementa `AnalizadorDeConvocatoria` con la misma secuencia que las
         demás operaciones: así todos los adaptadores lo obtienen sin código propio."""
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=analista_convocatoria.sistema(entrada),
             entrada=analista_convocatoria.usuario(entrada),
             esquema=analista_convocatoria.esquema(entrada),
+            parsear=lambda d: analista_convocatoria.parsear_perfil(d, entrada),
         )
-        return analista_convocatoria.parsear_perfil(datos, entrada)
 
     def redactar_veredicto(self, entrada: EntradaDeVeredicto) -> str:
         """Implementa `RedactorDeVeredicto` con la misma secuencia que las demás
         operaciones."""
-        datos = self._pedir_json(
+        return self._pedir_y_parsear(
             sistema=veredicto.sistema(entrada.contexto),
             entrada=veredicto.usuario(entrada),
             esquema=veredicto.ESQUEMA_VEREDICTO,
+            parsear=veredicto.parsear_veredicto,
         )
-        return veredicto.parsear_veredicto(datos)
+
+    def _pedir_y_parsear(
+        self, sistema: str, entrada: str, esquema: dict[str, Any], parsear: Callable[[dict[str, Any]], T]
+    ) -> T:
+        """Pide el JSON y lo parsea; si la respuesta no se pudo usar, lo pide una
+        vez más.
+
+        Un JSON mal formado suele salir bien al segundo intento, y el SDK solo
+        reintenta errores de red o de saturación, no este. Va aquí, en el único
+        paso común, para que valga para todas las operaciones y proveedores. Si
+        el reintento también falla, el error sube: con una cadena configurada,
+        `ProveedorEnCadena` pasa al siguiente.
+        """
+        for intento in range(REINTENTOS_ANTE_RESPUESTA_INVALIDA + 1):
+            try:
+                return parsear(self._pedir_json(sistema=sistema, entrada=entrada, esquema=esquema))
+            except RespuestaIAInvalida:
+                if intento == REINTENTOS_ANTE_RESPUESTA_INVALIDA:
+                    raise
+        raise AssertionError("inalcanzable")
 
     @abstractmethod
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:

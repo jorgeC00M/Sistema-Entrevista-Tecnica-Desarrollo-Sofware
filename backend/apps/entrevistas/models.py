@@ -197,6 +197,11 @@ class Intercambio(models.Model):
         blank=True,
         help_text="Segundos entre mostrar la pregunta y recibir la respuesta, medidos en el servidor.",
     )
+    # Cuándo el servidor agotó sus intentos con la IA al evaluar esta respuesta
+    # (o al generar la siguiente pregunta). Le dice al chat recargado que no
+    # espere: la respuesta está guardada y solo queda «Reintentar». Un reintento
+    # la limpia al empezar.
+    evaluacion_fallida_en = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["numero"]

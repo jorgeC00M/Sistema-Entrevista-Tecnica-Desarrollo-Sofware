@@ -14,13 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.evaluaciones.rubricas import (
-    CRITERIOS,
-    DESCRIPTORES,
-    NIVEL_MAXIMO,
-    NOMBRES_DE_CRITERIOS,
-    PESOS,
-)
+from apps.evaluaciones.rubricas import rubrica_publica
 from integrations.ia.prompts.schemas import PREGUNTAS_POR_ENTREVISTA
 
 from .selectors import (
@@ -47,29 +41,9 @@ class CatalogosView(APIView):
                 "niveles": NivelSerializer(niveles_activos(), many=True).data,
                 "areas": AreaSerializer(areas_activas(), many=True).data,
                 "preguntas_por_entrevista": PREGUNTAS_POR_ENTREVISTA,
-                "rubrica": _rubrica(),
+                "rubrica": rubrica_publica(),
             }
         )
-
-
-def _rubrica() -> dict:
-    """La rúbrica con la que se califica, tal como la recibe el evaluador.
-
-    Se publica para que el reporte explique cada nota con los mismos
-    descriptores que leyó el modelo, sin copiarlos en el frontend.
-    """
-    return {
-        "nivel_maximo": NIVEL_MAXIMO,
-        "criterios": [
-            {
-                "codigo": criterio,
-                "nombre": NOMBRES_DE_CRITERIOS[criterio],
-                "peso": PESOS[criterio],
-                "descriptores": list(DESCRIPTORES[criterio]),
-            }
-            for criterio in CRITERIOS
-        ],
-    }
 
 
 class CatalogosPublicosView(CatalogosView):

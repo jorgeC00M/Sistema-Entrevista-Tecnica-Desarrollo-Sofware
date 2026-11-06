@@ -24,7 +24,7 @@ from typing import Any
 
 import openai
 
-from .base import ProveedorIAporJSON
+from .base import MAX_REINTENTOS, TIMEOUT_SEGUNDOS, ProveedorIAporJSON
 from .exceptions import (
     ErrorPermanente,
     ErrorTransitorio,
@@ -32,9 +32,6 @@ from .exceptions import (
     RespuestaIAInvalida,
 )
 
-# Mismos topes que Claude y Gemini: por intento, no por petición.
-TIMEOUT_SEGUNDOS = 30.0
-MAX_REINTENTOS = 2
 MAX_TOKENS = 2048
 
 # 408 y 409 los reintenta el propio SDK; 429 es la cuota gratuita agotada, que

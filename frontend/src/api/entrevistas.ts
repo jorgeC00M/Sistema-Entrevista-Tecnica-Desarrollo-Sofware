@@ -102,18 +102,10 @@ export function abandonarEntrevista(id: number | string): Promise<Entrevista> {
 }
 
 /**
- * Analiza la convocatoria pegada (`texto`) o subida (`archivo` PDF/DOCX). El
- * archivo viaja como `FormData`; `peticion` no fija el Content-Type para que el
- * navegador ponga el `boundary`. Responde 422 si no se identifica un puesto de
- * desarrollo de software y 400 si el archivo no se puede leer.
+ * Analiza la convocatoria pegada o escrita (solo texto desde
+ * `convocatoria-de-entrevista-solo-texto`). Responde 400 si el aviso es muy
+ * corto y 422 si no se identifica un puesto de desarrollo de software.
  */
-export function analizarConvocatoria(entrada: { texto: string } | { archivo: File }): Promise<ConvocatoriaAnalizada> {
-  let body: FormData | { texto: string }
-  if ('archivo' in entrada) {
-    body = new FormData()
-    body.append('archivo', entrada.archivo)
-  } else {
-    body = { texto: entrada.texto }
-  }
-  return peticion<ConvocatoriaAnalizada>('/api/entrevistas/convocatoria/', { method: 'POST', body })
+export function analizarConvocatoria(texto: string): Promise<ConvocatoriaAnalizada> {
+  return peticion<ConvocatoriaAnalizada>('/api/entrevistas/convocatoria/', { method: 'POST', body: { texto } })
 }

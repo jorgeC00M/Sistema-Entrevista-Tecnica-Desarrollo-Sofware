@@ -51,6 +51,8 @@ class ErroresAlIniciarTest(APITestCase):
         respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(respuesta.data["codigo"], "ia_ocupada")
+        self.assertNotIn("falla", respuesta.data["detail"].lower())
 
     @mock.patch("apps.entrevistas.services.get_proveedor")
     def test_error_permanente_responde_502(self, mock_get_proveedor):
@@ -59,6 +61,7 @@ class ErroresAlIniciarTest(APITestCase):
         respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(respuesta.data["codigo"], "ia_rechazo")
 
     @mock.patch("apps.entrevistas.services.get_proveedor")
     def test_respuesta_invalida_responde_502(self, mock_get_proveedor):
@@ -67,6 +70,7 @@ class ErroresAlIniciarTest(APITestCase):
         respuesta = self.client.post("/api/entrevistas/", {"puesto": "backend", "nivel": "junior", "tecnologia": "backend_django"})
 
         self.assertEqual(respuesta.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(respuesta.data["codigo"], "ia_respuesta_invalida")
 
     @mock.patch("apps.entrevistas.services.get_proveedor")
     def test_fallo_al_iniciar_no_deja_entrevista_huerfana(self, mock_get_proveedor):
@@ -102,6 +106,11 @@ class ErroresAlResponderTest(APITestCase):
         )
 
         self.assertEqual(respuesta.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(respuesta.data["codigo"], "ia_ocupada")
+        # La respuesta quedó guardada y marcada: el chat recargado ofrece «Reintentar».
+        detalle = self.client.get(f"/api/entrevistas/{self.entrevista_id}/").data
+        self.assertEqual(detalle["pregunta_pendiente"]["respuesta"], "Mi respuesta")
+        self.assertTrue(detalle["pregunta_pendiente"]["evaluacion_fallida"])
 
 
 class CadenaDeRespaldoTest(APITestCase):

@@ -7,7 +7,7 @@ import Alerta from '@/components/ui/Alerta'
 import Boton from '@/components/ui/Boton'
 import Icono from '@/components/ui/Icono'
 import Modal from '@/components/ui/Modal'
-import CampoAuth from '@/features/auth/components/CampoAuth'
+import CampoAuth from '@/components/ui/CampoAuth'
 
 type Campo = 'actual' | 'nueva' | 'repetida'
 

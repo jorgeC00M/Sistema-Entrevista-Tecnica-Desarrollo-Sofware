@@ -7,13 +7,12 @@ export const EXTENSIONES_ACEPTADAS = '.pdf,.docx'
 /** Mismo tope que `MAXIMO_BYTES` en el serializer del backend. */
 export const MAXIMO_BYTES = 2 * 1024 * 1024
 
-// El mapa inverso de `analizarCurriculum`, para `repartirErrores`. Solo
-// `archivo_convocatoria` necesita traducción real: los otros dos nombres ya
-// coinciden entre el serializer y el formulario.
+// El mapa inverso de `analizarCurriculum`, para `repartirErrores`. Los nombres
+// coinciden entre el serializer y el formulario; el mapa sigue siendo lo que
+// manda a la alerta general un error de un campo que el formulario no pinta.
 const CAMPO_DEL_FORMULARIO: Record<string, string> = {
   archivo: 'archivo',
   convocatoria: 'convocatoria',
-  archivo_convocatoria: 'archivoConvocatoria',
 }
 
 /** Traduce una clave de error de `analizarCurriculum()` al nombre del formulario. */
@@ -23,23 +22,14 @@ export function campoDeCurriculum(campoDelBackend: string): string | undefined {
 
 interface Entrada {
   archivo: File
-  /** Pegada. Excluyente con `archivoConvocatoria`: el backend rechaza las dos. */
+  /** Pegada o escrita: es la única vía (`comparar-con-oferta-en-dos-pasos`). */
   convocatoria?: string
-  archivoConvocatoria?: File | null
 }
 
-export function analizarCurriculum({
-  archivo,
-  convocatoria,
-  archivoConvocatoria,
-}: Entrada): Promise<Curriculum> {
+export function analizarCurriculum({ archivo, convocatoria }: Entrada): Promise<Curriculum> {
   const formulario = new FormData()
   formulario.append('archivo', archivo)
-
-  // Solo se envía la vía que tenga contenido: mandar la otra vacía haría que el
-  // backend viera las dos y rechazara la petición.
   if (convocatoria?.trim()) formulario.append('convocatoria', convocatoria.trim())
-  else if (archivoConvocatoria) formulario.append('archivo_convocatoria', archivoConvocatoria)
 
   // Solo medición: abrir el documento y recorrerlo es trabajo de CPU, y la IA ya
   // no va en esta petición (ver `pedirRevision`). El tope por defecto sobra.

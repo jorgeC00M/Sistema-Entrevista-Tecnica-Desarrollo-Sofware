@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
-import BurbujaPregunta from '@/features/entrevista/components/BurbujaPregunta'
-import type { MensajeDeChat } from '@/features/entrevista/hooks/useEntrevista'
+import BurbujaPregunta from '@/components/ui/BurbujaPregunta'
+import type { MensajeDeChat } from '@/features/entrevista/chat'
 
 interface Props {
   mensajes: MensajeDeChat[]

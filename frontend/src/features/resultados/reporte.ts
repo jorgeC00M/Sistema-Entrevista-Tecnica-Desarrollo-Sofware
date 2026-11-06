@@ -63,7 +63,7 @@ export function fortalezasYDebilidades(intercambios: Intercambio[]): {
   }
 }
 
-export interface TemaARepasar {
+interface TemaARepasar {
   numero: number
   area: string
   puntuacion: number
@@ -99,7 +99,7 @@ export function consejoDeComunicacion(criterio: CodigoDeCriterio | null): string
   return CONSEJOS[criterio ?? 'claridad']
 }
 
-export interface PracticaRecomendada {
+interface PracticaRecomendada {
   puesto: string
   puestoNombre: string
   nivel: string

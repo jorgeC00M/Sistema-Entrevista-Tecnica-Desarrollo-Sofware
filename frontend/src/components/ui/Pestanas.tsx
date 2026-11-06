@@ -39,8 +39,8 @@ const COLUMNAS: Record<number, string> = {
  * La activación es automática (mover el foco selecciona): cambiar de pestaña
  * es instantáneo y no hay nada que cargar.
  *
- * Para cambiar de vista. Un interruptor de opciones dentro de un formulario es
- * `ControlSegmentado`, que es otra cosa para el lector de pantalla.
+ * Para cambiar de vista, no para elegir una opción dentro de un formulario:
+ * eso es un grupo de radios, que es otra cosa para el lector de pantalla.
  */
 export default function Pestanas({
   etiqueta,

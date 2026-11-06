@@ -1,13 +1,13 @@
 from rest_framework import serializers
 
-from apps.common.archivos import texto_de_convocatoria, validar_archivo
+from apps.common.archivos import validar_archivo
 
 from .models import AnalisisATS, Curriculum
 
 #: Tope del texto de la convocatoria. Una descripción de puesto larga ronda los
 #: 6.000 caracteres; este margen la admite de sobra y evita que se use el campo
 #: para almacenar texto arbitrario.
-MAXIMO_CARACTERES_CONVOCATORIA = 20_000
+MAXIMO_CARACTERES_CONVOCATORIA_CV = 20_000
 
 
 class SubirCurriculumSerializer(serializers.Serializer):
@@ -17,8 +17,10 @@ class SubirCurriculumSerializer(serializers.Serializer):
     "¿puede el ATS leer mi CV?" se responde sin ella, y exigirla le negaría esa
     respuesta a quien solo quiere eso.
 
-    Llega por una de dos vías, pegada o como archivo, nunca por las dos a la vez:
-    aceptar ambas obligaría a elegir una en silencio.
+    Llega solo como texto, pegado o escrito (`comparar-con-oferta-en-dos-pasos`):
+    un aviso vive en una página web y lo natural es copiarlo. Ya no se acepta como
+    archivo; un `archivo_convocatoria` que mande un cliente viejo no está
+    declarado, así que DRF lo ignora y el análisis sale general, sin error.
     """
 
     archivo = serializers.FileField()
@@ -26,33 +28,11 @@ class SubirCurriculumSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
         trim_whitespace=True,
-        max_length=MAXIMO_CARACTERES_CONVOCATORIA,
+        max_length=MAXIMO_CARACTERES_CONVOCATORIA_CV,
     )
-    archivo_convocatoria = serializers.FileField(required=False)
 
     def validate_archivo(self, archivo):
         return validar_archivo(archivo)
-
-    def validate_archivo_convocatoria(self, archivo):
-        return validar_archivo(archivo)
-
-    def validate(self, datos):
-        pegada = datos.get("convocatoria", "").strip()
-        en_archivo = datos.get("archivo_convocatoria")
-
-        if pegada and en_archivo:
-            raise serializers.ValidationError(
-                "Envía la convocatoria pegada o como archivo, no las dos cosas."
-            )
-
-        # El servicio recibe la convocatoria siempre como texto: el formato en que
-        # llegó es un detalle de la entrada, no del análisis. Extraerla aquí
-        # también hace que un archivo ilegible se rechace antes de tocar el CV.
-        if en_archivo:
-            datos["convocatoria"] = texto_de_convocatoria(en_archivo, "archivo_convocatoria")
-
-        datos.pop("archivo_convocatoria", None)
-        return datos
 
 
 class CampoSerializer(serializers.Serializer):

@@ -4,14 +4,15 @@ import { useNavigate } from 'react-router-dom'
 import { ErrorAPI } from '@/api/client'
 import { mensajeDeError } from '@/api/errores'
 import { obtenerEstado, obtenerResultados, responder } from '@/api/entrevistas'
-import type { AutorDeMensaje } from '@/features/entrevista/components/BurbujaPregunta'
-import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
+import { type MensajeDeChat, reconstruirChat } from '@/features/entrevista/chat'
+import { useRelojDeEntrevista } from '@/features/entrevista/hooks/useRelojDeEntrevista'
+import { INTERVALO_DE_CONSULTA_MS, queHacerConLaPendiente } from '@/features/entrevista/reanudar'
 import { invalidarCache } from '@/hooks/usePeticion'
+import { errorDeIA } from '@/lib/erroresDeIA'
+import type { PreguntaPendiente } from '@/types/entrevista'
 
-export interface MensajeDeChat {
-  autor: AutorDeMensaje
-  texto: string
-}
+/** Título del fallo que se descubre al volver: el código original ya no se conoce. */
+const NO_SE_PUDO_EVALUAR = 'No pudimos evaluar tu respuesta.'
 
 export function useEntrevista(id: string) {
   const navigate = useNavigate()
@@ -24,13 +25,16 @@ export function useEntrevista(id: string) {
   const [desdeConvocatoria, setDesdeConvocatoria] = useState(false)
   const [cargandoInicial, setCargandoInicial] = useState(true)
   const [enviando, setEnviando] = useState(false)
+  // Un error que no es de la IA (red caída, la carga inicial).
   const [error, setError] = useState('')
-  const [ultimaRespuesta, setUltimaRespuesta] = useState<string | null>(null)
-  // El reloj: el límite lo fija el servidor y el desfase corrige el reloj del
-  // dispositivo. `segundos` es `null` hasta cargar.
-  const [fechaLimite, setFechaLimite] = useState<string | null>(null)
-  const [desfaseMs, setDesfaseMs] = useState(0)
-  const [segundos, setSegundos] = useState<number | null>(null)
+  // La respuesta guardada en el servidor está en evaluación: se consulta el
+  // estado sin reenviarla, también tras recargar.
+  const [esperandoEvaluacion, setEsperandoEvaluacion] = useState(false)
+  // La evaluación falló: la respuesta sigue guardada y solo queda reintentar.
+  const [fallo, setFallo] = useState<{ titulo: string } | null>(null)
+  // Lo que «Reintentar» reenvía. Si ya estaba guardada, el servidor ignora el
+  // texto y evalúa la guardada: por eso sirve tomarlo del servidor al recargar.
+  const [textoAReintentar, setTextoAReintentar] = useState<string | null>(null)
   const [minutosDeEntrevista, setMinutosDeEntrevista] = useState(0)
 
   // Toda salida del chat hacia el reporte (finalizar, vencer, 409) cierra la
@@ -40,15 +44,34 @@ export function useEntrevista(id: string) {
     navigate(`/entrevista/${id}/resultados`, { replace: true })
   }, [id, navigate])
 
+  const { segundos, vencido, reanclar } = useRelojDeEntrevista(id, alReporte)
+
+  /**
+   * Una pendiente con respuesta guardada no se vuelve a pedir: o se espera su
+   * evaluación, o se ofrece reintentarla.
+   */
+  const aplicarPendienteGuardada = useCallback((pendiente: PreguntaPendiente, ahoraServidor: string) => {
+    const accion = queHacerConLaPendiente(pendiente, ahoraServidor)
+    if (accion === 'responder') return
+    setTextoAReintentar(pendiente.respuesta)
+    setEsperandoEvaluacion(accion === 'esperar')
+    setFallo(accion === 'fallo' ? { titulo: NO_SE_PUDO_EVALUAR } : null)
+  }, [])
+
   // Reconstruye el chat desde el servidor al montar: si el usuario recarga la
-  // página a mitad de la entrevista, se retoma en la pregunta pendiente en
-  // vez de perder el progreso (la entrevista sigue EN_PROGRESO en el backend).
+  // página a mitad de la entrevista, se retoma donde iba en vez de perder el
+  // progreso (la entrevista sigue EN_PROGRESO en el backend).
   useEffect(() => {
-    let cancelado = false
+    // Se aborta de verdad al salir o al cambiar de entrevista: antes solo se
+    // marcaba, y tras el primer `await` se seguía navegando o invalidando la
+    // caché por una entrevista que ya no estaba en pantalla.
+    const control = new AbortController()
+    const cancelado = () => control.signal.aborted
 
     async function cargar() {
       try {
-        const estado = await obtenerEstado(id)
+        const estado = await obtenerEstado(id, control.signal)
+        if (cancelado()) return
 
         if (estado.entrevista.estado !== 'en_progreso') {
           // Pudo cerrarse al abrirla (venció): que el sidebar no la ofrezca más.
@@ -57,69 +80,79 @@ export function useEntrevista(id: string) {
           return
         }
 
-        const resultados = await obtenerResultados(id)
-        if (cancelado) return
+        const resultados = await obtenerResultados(id, control.signal)
+        if (cancelado()) return
 
-        // Solo los turnos ya respondidos: el endpoint de resultados devuelve
-        // también los intercambios pendientes (con la respuesta vacía), y el
-        // que toca ahora lo aporta `estado.pregunta_pendiente` justo debajo.
-        // Sin este filtro la pregunta en curso se pintaría dos veces, con una
-        // burbuja de usuario vacía en medio.
-        //
-        // El criterio es la respuesta y no la evaluación: durante la entrevista
-        // la API ya no publica calificaciones, así que filtrar por evaluación
-        // dejaría el historial entero fuera.
-        const previos: MensajeDeChat[] = resultados.intercambios
-          .filter((i) => i.respuesta !== '')
-          .flatMap((i) => [
-            { autor: 'sistema' as const, texto: i.pregunta },
-            { autor: 'usuario' as const, texto: i.respuesta },
-          ])
-        const pendiente: MensajeDeChat[] = estado.pregunta_pendiente
-          ? [{ autor: 'sistema', texto: estado.pregunta_pendiente.texto }]
-          : []
-
-        setMensajes([...previos, ...pendiente])
-        setNumeroActual(estado.pregunta_pendiente?.numero ?? estado.total_preguntas)
+        const pendiente = estado.pregunta_pendiente
+        setMensajes(reconstruirChat(resultados.intercambios, pendiente))
+        setNumeroActual(pendiente?.numero ?? estado.total_preguntas)
         setTotalPreguntas(estado.total_preguntas)
         setPuestoDisplay(estado.entrevista.puesto_display)
         setNivelDisplay(estado.entrevista.nivel_display)
         setDesdeConvocatoria(estado.entrevista.desde_convocatoria)
-        setFechaLimite(estado.entrevista.fecha_limite)
         setMinutosDeEntrevista(
           Math.round((Date.parse(estado.entrevista.fecha_limite) - Date.parse(estado.entrevista.fecha_inicio)) / 60_000),
         )
-        setDesfaseMs(desfaseDelReloj(estado.entrevista.ahora, Date.now()))
+        reanclar(estado.entrevista)
+        if (pendiente) aplicarPendienteGuardada(pendiente, estado.entrevista.ahora)
       } catch (err: unknown) {
-        if (!cancelado) {
+        if (!cancelado()) {
           setError(mensajeDeError(err, 'No se pudo cargar la entrevista.'))
         }
       } finally {
-        if (!cancelado) setCargandoInicial(false)
+        if (!cancelado()) setCargandoInicial(false)
       }
     }
 
     void cargar()
-    return () => {
-      cancelado = true
-    }
-  }, [id, navigate])
+    return () => control.abort()
+  }, [id, navigate, reanclar, aplicarPendienteGuardada])
 
-  // Cuenta cada segundo. El instante se toma en el intervalo, no en el render.
+  // Mientras se evalúa una respuesta guardada, se mira el estado cada pocos
+  // segundos. Nunca se reenvía: la petición original sigue en el servidor.
   useEffect(() => {
-    if (fechaLimite === null) return
-    const contar = () => setSegundos(segundosRestantes(fechaLimite, desfaseMs, Date.now()))
-    contar()
-    const intervalo = window.setInterval(contar, 1000)
-    return () => window.clearInterval(intervalo)
-  }, [fechaLimite, desfaseMs])
+    if (!esperandoEvaluacion) return
+    const control = new AbortController()
+    let temporizador = 0
+
+    const consultar = async () => {
+      try {
+        const estado = await obtenerEstado(id, control.signal)
+        if (control.signal.aborted) return
+        reanclar(estado.entrevista)
+        const pendiente = estado.pregunta_pendiente
+        if (estado.entrevista.estado !== 'en_progreso' || pendiente === null) {
+          alReporte()
+          return
+        }
+        if (pendiente.numero !== numeroActual) {
+          // Ya se evaluó: aparece la siguiente pregunta, sin que el usuario haga nada.
+          setMensajes((previos) => [...previos, { autor: 'sistema', texto: pendiente.texto }])
+          setNumeroActual(pendiente.numero)
+          setEsperandoEvaluacion(false)
+          setTextoAReintentar(null)
+          return
+        }
+        aplicarPendienteGuardada(pendiente, estado.entrevista.ahora)
+      } catch {
+        // Un tropiezo de red no decide nada: se vuelve a mirar, hasta el plazo.
+        if (control.signal.aborted) return
+      }
+      temporizador = window.setTimeout(consultar, INTERVALO_DE_CONSULTA_MS)
+    }
+
+    temporizador = window.setTimeout(consultar, INTERVALO_DE_CONSULTA_MS)
+    return () => {
+      control.abort()
+      window.clearTimeout(temporizador)
+    }
+  }, [esperandoEvaluacion, id, numeroActual, alReporte, reanclar, aplicarPendienteGuardada])
 
   // En 0 ya no se acepta otra respuesta. Quien cierra la entrevista es el
   // servidor: pedir el estado la cierra, y se va al reporte. Si justo se está
   // evaluando una respuesta, se espera: llegó a tiempo y cuenta.
-  const vencido = segundos === 0
   useEffect(() => {
-    if (!vencido || enviando) return
+    if (!vencido || enviando || esperandoEvaluacion) return
     const control = new AbortController()
     obtenerEstado(id, control.signal)
       .then((estado) => {
@@ -129,18 +162,19 @@ export function useEntrevista(id: string) {
         if (!control.signal.aborted) setError('Se acabó el tiempo, pero no pudimos cerrar la entrevista.')
       })
     return () => control.abort()
-  }, [vencido, enviando, id, alReporte])
+  }, [vencido, enviando, esperandoEvaluacion, id, alReporte])
 
-  const enviarRespuesta = useCallback(
-    async (texto: string) => {
+  const enviar = useCallback(
+    async (texto: string, burbujaYaVisible: boolean) => {
       setError('')
+      setFallo(null)
       setEnviando(true)
-      setUltimaRespuesta(texto)
-      setMensajes((previos) => [...previos, { autor: 'usuario', texto }])
+      setTextoAReintentar(texto)
+      if (!burbujaYaVisible) setMensajes((previos) => [...previos, { autor: 'usuario', texto }])
 
       try {
         const resultado = await responder(id, texto)
-        setDesfaseMs(desfaseDelReloj(resultado.entrevista.ahora, Date.now()))
+        reanclar(resultado.entrevista)
 
         // No se pinta ninguna calificación: la respuesta se evalúa en el
         // servidor —es lo que calibra la exigencia de las preguntas
@@ -155,6 +189,7 @@ export function useEntrevista(id: string) {
           const siguiente = resultado.siguiente_pregunta
           setMensajes((previos) => [...previos, { autor: 'sistema', texto: siguiente.texto }])
           setNumeroActual(siguiente.numero)
+          setTextoAReintentar(null)
           setEnviando(false)
         } else {
           alReporte()
@@ -166,20 +201,44 @@ export function useEntrevista(id: string) {
           alReporte()
           return
         }
-        // La respuesta ya quedó guardada en el servidor (el backend es
-        // idempotente ante reintentos): se retira del chat local para no
-        // duplicarla visualmente y se ofrece reintentar sin perder lo escrito.
+        // La IA falló: la respuesta quedó guardada (se guarda antes de llamar a
+        // la IA), así que se queda en el chat y solo queda reintentar.
+        const deIA = errorDeIA(err)
+        if (deIA) {
+          setFallo({ titulo: deIA.titulo })
+          setEnviando(false)
+          return
+        }
+        // Otro fallo (red caída, el cliente dejó de esperar): se pregunta al
+        // servidor si la respuesta llegó. Si llegó, se espera su evaluación
+        // como tras recargar; si no, se retira del chat y se ofrece reenviarla.
+        try {
+          const estado = await obtenerEstado(id)
+          const pendiente = estado.pregunta_pendiente
+          if (pendiente && pendiente.respuesta !== '') {
+            reanclar(estado.entrevista)
+            aplicarPendienteGuardada(pendiente, estado.entrevista.ahora)
+            setEnviando(false)
+            return
+          }
+        } catch {
+          // Tampoco hay servidor: se trata como no recibida.
+        }
         setMensajes((previos) => previos.slice(0, -1))
-        setError(mensajeDeError(err, 'No se pudo evaluar tu respuesta.'))
+        setError(mensajeDeError(err, 'No se pudo enviar tu respuesta.'))
         setEnviando(false)
       }
     },
-    [id, alReporte],
+    [id, alReporte, reanclar, aplicarPendienteGuardada],
   )
 
+  const enviarRespuesta = useCallback((texto: string) => enviar(texto, false), [enviar])
+
+  // Tras un fallo de la IA la respuesta ya está en pantalla y en el servidor;
+  // tras un fallo de red se retiró del chat y vuelve a pintarse al reenviarla.
   const reintentar = useCallback(() => {
-    if (ultimaRespuesta) void enviarRespuesta(ultimaRespuesta)
-  }, [ultimaRespuesta, enviarRespuesta])
+    if (textoAReintentar !== null) void enviar(textoAReintentar, fallo !== null)
+  }, [textoAReintentar, fallo, enviar])
 
   return {
     mensajes,
@@ -191,6 +250,12 @@ export function useEntrevista(id: string) {
     cargandoInicial,
     enviando,
     error,
+    /** La respuesta guardada se está evaluando: el chat solo mira. */
+    esperandoEvaluacion,
+    /** La evaluación falló; la respuesta sigue guardada. */
+    fallo,
+    /** Si hay algo que reenviar con «Reintentar». */
+    puedeReintentar: textoAReintentar !== null,
     /** Segundos que quedan; `null` hasta cargar. */
     segundos,
     vencido,

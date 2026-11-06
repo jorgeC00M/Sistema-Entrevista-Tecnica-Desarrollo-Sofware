@@ -31,15 +31,15 @@ export function useFocusTrap<
 >(activo: boolean, onEscape: () => void): Resultado<C, D> {
   const contenedorRef = useRef<C>(null)
   const disparadorRef = useRef<D>(null)
+  const estabaActivo = useRef(activo)
 
   // Devolver el foco a quien lo disparó. Sin esto, desactivar el trampolín
-  // deja al teclado al principio del documento.
+  // deja al teclado al principio del documento. Solo al pasar de activo a
+  // inactivo: el efecto también corre al montar (con `activo` en falso), y
+  // enfocar el disparador al cargar la página era desconcertante.
   useEffect(() => {
-    if (activo) return
-    disparadorRef.current?.focus()
-    // Solo al pasar de activo a inactivo; en el primer render no hay nada que
-    // devolver, y enfocar el disparador al cargar sería desconcertante.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (estabaActivo.current && !activo) disparadorRef.current?.focus()
+    estabaActivo.current = activo
   }, [activo])
 
   useEffect(() => {

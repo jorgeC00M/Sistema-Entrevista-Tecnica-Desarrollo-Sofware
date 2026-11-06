@@ -21,26 +21,10 @@ para diseñar entrevistas y no son lo que pide el mercado.
 
 from __future__ import annotations
 
-import hashlib
-
 from django.conf import settings
 from django.db import models
 
 from integrations.documentos.ats import estado_del_cv
-
-
-def hash_de_texto(texto: str) -> str:
-    """Huella del texto, para reconocer un contenido ya analizado.
-
-    Se calcula sobre el texto y no sobre los bytes del archivo a propósito:
-    reexportar el mismo CV desde Word produce bytes distintos y texto idéntico.
-    Lo que interesa es si hay algo nuevo que analizar.
-
-    Un texto vacío —el caso de "sin convocatoria"— devuelve el hash de la cadena
-    vacía, que es un valor válido y no NULL. Eso es deliberado: ver la nota en
-    `Curriculum.hash_convocatoria`.
-    """
-    return hashlib.sha256(texto.strip().encode("utf-8")).hexdigest()
 
 
 class Curriculum(models.Model):

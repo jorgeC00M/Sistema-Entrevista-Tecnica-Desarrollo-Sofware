@@ -1,7 +1,7 @@
 import EnlaceDeAccion from '@/components/ui/EnlaceDeAccion'
 import Icono from '@/components/ui/Icono'
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
-import { minutosRestantes } from '@/features/entrevista/tiempo'
+import { minutosRestantes } from '@/lib/tiempo'
 
 interface Props {
   entrevista: EntrevistaEnCurso

@@ -50,6 +50,19 @@ export interface Pregunta {
   texto: string
 }
 
+/**
+ * La pregunta pendiente que da el detalle: la primera sin evaluar. Puede tener
+ * ya respuesta guardada —en evaluación, o con la evaluación fallida—, y
+ * entonces el chat no la vuelve a pedir (`features/entrevista/reanudar.ts`).
+ */
+export interface PreguntaPendiente extends Pregunta {
+  /** `''` si todavía no tiene respuesta. */
+  respuesta: string
+  respondido_en: FechaISO | null
+  /** El servidor agotó sus intentos con la IA al evaluarla. */
+  evaluacion_fallida: boolean
+}
+
 export interface Intercambio {
   numero: number
   /**
@@ -83,7 +96,7 @@ export interface RespuestaIniciarEntrevista {
 export interface RespuestaEstadoEntrevista {
   entrevista: Entrevista
   /** `null` cuando ya no queda ninguna pregunta por responder. */
-  pregunta_pendiente: Pregunta | null
+  pregunta_pendiente: PreguntaPendiente | null
   total_preguntas: number
 }
 

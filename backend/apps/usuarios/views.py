@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
-from django.db import transaction
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -19,8 +18,6 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from . import services
@@ -33,11 +30,6 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _tokens_para(usuario: Usuario) -> dict[str, str]:
-    refresh = RefreshToken.for_user(usuario)
-    return {"access": str(refresh.access_token), "refresh": str(refresh)}
 
 
 class LoginView(TokenObtainPairView):
@@ -59,7 +51,7 @@ class RegistroView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         usuario = serializer.save()
-        return Response(_tokens_para(usuario), status=status.HTTP_201_CREATED)
+        return Response(services.tokens_para(usuario), status=status.HTTP_201_CREATED)
 
 
 class PerfilView(generics.RetrieveAPIView):
@@ -71,36 +63,16 @@ class PerfilView(generics.RetrieveAPIView):
 
 
 class CambiarContrasenaView(APIView):
-    """Cambia la contraseña y cierra las demás sesiones.
-
-    Todo refresh token emitido antes queda en la lista negra, así que ningún
-    otro dispositivo puede renovar su acceso; este recibe un par nuevo y sigue
-    conectado. Los access tokens ya emitidos valen hasta caducar (15 min): la
-    lista negra solo alcanza a los refresh. Los refresh emitidos antes de
-    activar `token_blacklist` no quedaron registrados y caducan solos.
-    """
+    """Cambia la contraseña y cierra las demás sesiones (`services.cambiar_contrasena`)."""
 
     permission_classes = [IsAuthenticated]
     throttle_scope = "contrasena"
 
     def post(self, request):
-        usuario = request.user
-        serializer = CambiarContrasenaSerializer(data=request.data, context={"usuario": usuario})
+        serializer = CambiarContrasenaSerializer(data=request.data, context={"usuario": request.user})
         serializer.is_valid(raise_exception=True)
-
-        # Atómico: una contraseña cambiada con las sesiones viejas aún vivas
-        # sería justo lo que el cambio debía evitar.
-        with transaction.atomic():
-            usuario.set_password(serializer.validated_data["nueva"])
-            usuario.save(update_fields=["password"])
-            # Una sola inserción para todos; los que ya estaban en la lista
-            # negra (un cambio anterior) se saltan en vez de fallar.
-            BlacklistedToken.objects.bulk_create(
-                [BlacklistedToken(token=token) for token in OutstandingToken.objects.filter(user=usuario)],
-                ignore_conflicts=True,
-            )
-
-        return Response(_tokens_para(usuario), status=status.HTTP_200_OK)
+        tokens = services.cambiar_contrasena(request.user, serializer.validated_data["nueva"])
+        return Response(tokens, status=status.HTTP_200_OK)
 
 
 class GoogleLoginView(APIView):
@@ -152,4 +124,4 @@ class GoogleLoginView(APIView):
         usuario = services.usuario_de_google(
             email=payload["email"], nombre=payload.get("name")
         )
-        return Response(_tokens_para(usuario), status=status.HTTP_200_OK)
+        return Response(services.tokens_para(usuario), status=status.HTTP_200_OK)

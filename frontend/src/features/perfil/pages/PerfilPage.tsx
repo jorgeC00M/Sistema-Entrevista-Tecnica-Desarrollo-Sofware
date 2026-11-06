@@ -5,14 +5,7 @@ import Tarjeta from '@/components/ui/Tarjeta'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import ModalCambiarContrasena from '@/features/perfil/components/ModalCambiarContrasena'
-
-function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-BO', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
+import { fechaLarga } from '@/lib/fechas'
 
 export default function PerfilPage() {
   const { usuario } = useAuth()
@@ -25,7 +18,7 @@ export default function PerfilPage() {
   const campos: { etiqueta: string; valor: string }[] = [
     { etiqueta: 'Nombre completo', valor: usuario.nombre_completo },
     { etiqueta: 'Correo electrónico', valor: usuario.email },
-    { etiqueta: 'Miembro desde', valor: formatearFecha(usuario.date_joined) },
+    { etiqueta: 'Miembro desde', valor: fechaLarga(usuario.date_joined) },
   ]
   if (usuario.carnet) {
     campos.splice(2, 0, { etiqueta: 'Carnet de identidad', valor: usuario.carnet })

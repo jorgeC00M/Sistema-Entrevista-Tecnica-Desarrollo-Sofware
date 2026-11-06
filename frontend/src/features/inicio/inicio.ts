@@ -6,7 +6,7 @@
  */
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
 import { destinoDePractica } from '@/features/curriculum/practica'
-import { minutosRestantes } from '@/features/entrevista/tiempo'
+import { minutosRestantes } from '@/lib/tiempo'
 import { practicaRecomendada } from '@/features/resultados/reporte'
 import type { Nivel } from '@/types/catalogos'
 import type { CurriculumEnLista, RevisionIA } from '@/types/curriculum'

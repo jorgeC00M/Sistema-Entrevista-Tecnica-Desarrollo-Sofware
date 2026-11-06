@@ -1,12 +1,14 @@
 import { useRef } from 'react'
 
 import Alerta from '@/components/ui/Alerta'
+import AlertaDeIA from '@/components/ui/AlertaDeIA'
 import Boton from '@/components/ui/Boton'
 import EtiquetaConvocatoria from '@/components/ui/EtiquetaConvocatoria'
 import Modal from '@/components/ui/Modal'
 import ModalDeConfirmacion from '@/components/ui/ModalDeConfirmacion'
 import type { EntrevistaEnCurso } from '@/components/layout/useEntrevistaEnCurso'
-import { minutosRestantes } from '@/features/entrevista/tiempo'
+import { minutosRestantes } from '@/lib/tiempo'
+import type { ErrorDeIA } from '@/lib/erroresDeIA'
 
 interface Props {
   puesto: string
@@ -18,6 +20,8 @@ interface Props {
   cargando: boolean
   /** Por qué no se pudo iniciar; vacío si no hubo error. */
   error: string
+  /** Si lo que falló fue la IA: se muestra con `AlertaDeIA` en lugar de `error`. */
+  errorDeIA: ErrorDeIA | null
   /**
    * La entrevista que ya está en curso, si hay una (la sabía la interfaz o la
    * informó el 409 del servidor): el modal pregunta qué hacer con ella.
@@ -50,6 +54,7 @@ export default function ModalDeInicio({
   totalPreguntas,
   cargando,
   error,
+  errorDeIA,
   enCurso,
   onComenzar,
   onContinuarEnCurso,
@@ -58,10 +63,18 @@ export default function ModalDeInicio({
 }: Props) {
   const botonContinuar = useRef<HTMLButtonElement>(null)
 
-  const alerta = error && (
-    <Alerta variante="enLinea" className="mt-4">
-      {error}
-    </Alerta>
+  // Un fallo de la IA dice qué pasó y que no se creó nada; el modal sigue
+  // abierto, así que el reintento es el mismo botón de siempre.
+  const alerta = errorDeIA ? (
+    <div className="mt-4">
+      <AlertaDeIA titulo={errorDeIA.titulo} detalle="No se creó la entrevista; puedes intentarlo de nuevo." />
+    </div>
+  ) : (
+    error && (
+      <Alerta variante="enLinea" className="mt-4">
+        {error}
+      </Alerta>
+    )
   )
 
   if (enCurso) {

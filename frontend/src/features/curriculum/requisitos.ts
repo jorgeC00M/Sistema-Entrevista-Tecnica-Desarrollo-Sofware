@@ -1,6 +1,6 @@
 import type { Brecha, EstadoDeRequisito, Requisito } from '@/types/curriculum'
 
-export type TipoDeRequisito = 'obligatorio' | 'deseable'
+type TipoDeRequisito = 'obligatorio' | 'deseable'
 
 export interface RequisitoConTipo {
   requisito: Requisito
@@ -8,7 +8,7 @@ export interface RequisitoConTipo {
   tipo: TipoDeRequisito | null
 }
 
-export interface RequisitosPorEstado {
+interface RequisitosPorEstado {
   /** Lo que aparece en el CV: con evidencia, solo en habilidades o sin secciones reconocidas. */
   coinciden: RequisitoConTipo[]
   /** Lo que no está escrito en el CV. */

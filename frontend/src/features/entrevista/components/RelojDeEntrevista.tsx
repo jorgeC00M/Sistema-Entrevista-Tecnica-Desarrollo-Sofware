@@ -1,5 +1,5 @@
 import Icono from '@/components/ui/Icono'
-import { formatoReloj, tramoDelReloj, type TramoDelReloj } from '@/features/entrevista/tiempo'
+import { formatoReloj, tramoDelReloj, type TramoDelReloj } from '@/lib/tiempo'
 
 interface Props {
   /** Segundos que quedan, ya corregidos con la hora del servidor. */

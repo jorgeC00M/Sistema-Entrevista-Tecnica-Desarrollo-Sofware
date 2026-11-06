@@ -2,20 +2,30 @@
  * El reloj de la entrevista, como lógica pura.
  *
  * El servidor es la autoridad: publica `fecha_limite` y su propia hora
- * (`ahora`). El cliente solo cuenta, corrigiendo la diferencia entre su reloj y
- * el del servidor, así que un dispositivo con la hora mal puesta no da ni quita
- * minutos. Al llegar a 0 la interfaz deja de aceptar respuestas, pero quien
- * cierra la entrevista es el servidor.
+ * (`ahora`). Lo que queda se calcula **solo con horas del servidor** al llegar
+ * su respuesta, y desde ahí se descuenta con `performance.now()`, un reloj
+ * monotónico: ni un dispositivo con la hora mal puesta ni alguien que la cambie
+ * a mitad de la entrevista dan o quitan minutos. Al llegar a 0 la interfaz deja
+ * de aceptar respuestas, pero quien cierra la entrevista es el servidor.
  */
 
-/** Cuánto va adelantado el reloj del dispositivo frente al del servidor, en ms. */
-export function desfaseDelReloj(ahoraServidor: string, ahoraCliente: number): number {
-  return ahoraCliente - Date.parse(ahoraServidor)
+/**
+ * Lo que quedaba cuando llegó la respuesta del servidor, y cuándo llegó según
+ * el reloj monotónico. `recibidoEn` debe ser el de la llegada, no el de la
+ * lectura: un dato de la caché ya envejeció.
+ */
+export interface AnclaDelReloj {
+  restanteMs: number
+  recibidoEn: number
 }
 
-/** Segundos que quedan hasta `fechaLimite`, nunca negativos. */
-export function segundosRestantes(fechaLimite: string, desfaseMs: number, ahoraCliente: number): number {
-  const restanteMs = Date.parse(fechaLimite) - (ahoraCliente - desfaseMs)
+export function anclaDelReloj(fechaLimite: string, ahoraServidor: string, recibidoEn: number): AnclaDelReloj {
+  return { restanteMs: Date.parse(fechaLimite) - Date.parse(ahoraServidor), recibidoEn }
+}
+
+/** Segundos que quedan, nunca negativos. `ahoraMonotonico` es `performance.now()`. */
+export function segundosRestantes(ancla: AnclaDelReloj, ahoraMonotonico: number): number {
+  const restanteMs = ancla.restanteMs - (ahoraMonotonico - ancla.recibidoEn)
   return Math.max(0, Math.ceil(restanteMs / 1000))
 }
 

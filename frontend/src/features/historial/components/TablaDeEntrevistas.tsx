@@ -13,6 +13,7 @@ import Tarjeta from '@/components/ui/Tarjeta'
 import type { FiltrosDeHistorial } from '@/features/historial/hooks/useFiltrosDeHistorial'
 import { usePaginaEnLaUrl } from '@/hooks/usePaginaEnLaUrl'
 import { TONO_POR_ESTADO } from '@/lib/estados'
+import { fechaNumerica } from '@/lib/fechas'
 import type { Entrevista } from '@/types/entrevista'
 
 const POR_PAGINA = 10
@@ -25,11 +26,7 @@ interface Props {
 }
 
 function fecha(entrevista: Entrevista): string {
-  return new Date(entrevista.fecha_inicio).toLocaleDateString('es-BO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  return fechaNumerica(entrevista.fecha_inicio)
 }
 
 function Puntuacion({ entrevista }: { entrevista: Entrevista }) {

@@ -1,7 +1,7 @@
 import Icono from '@/components/ui/Icono'
 import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
 import Tarjeta from '@/components/ui/Tarjeta'
-import BurbujaPregunta from '@/features/entrevista/components/BurbujaPregunta'
+import BurbujaPregunta from '@/components/ui/BurbujaPregunta'
 import { operacion } from '@/features/resultados/formula'
 import { tieneNota } from '@/features/resultados/reporte'
 import { NIVEL_MAXIMO_POR_DEFECTO, NOMBRE_EN_PANTALLA, ORDEN_DE_CRITERIOS } from '@/features/resultados/rubricaPorDefecto'

@@ -5,13 +5,8 @@
  */
 import type { Entrevista } from '@/types/entrevista'
 
-/** Fecha de un punto del gráfico: dd/mm/aaaa, igual que en la tabla. */
-export function fechaDelPunto(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 /** Más de esto entre dos entrevistas de un mismo puesto se marca en el gráfico. */
-export const DIAS_DE_SALTO = 90
+const DIAS_DE_SALTO = 90
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000
 

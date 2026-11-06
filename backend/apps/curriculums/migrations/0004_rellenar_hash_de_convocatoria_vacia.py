@@ -3,7 +3,7 @@
 La `0002` creó la columna con `default=""`, así que las filas existentes quedaron
 con la cadena vacía en lugar del **hash** de la cadena vacía. Eso rompe el caché
 de forma silenciosa: al resubir ese mismo CV sin convocatoria, el servicio calcula
-`hash_de_texto("")` —un sha256— no encuentra coincidencia, y crea una fila nueva.
+`hash_de_texto("")` (`apps/common/textos.py`) —un sha256— no encuentra coincidencia, y crea una fila nueva.
 La restricción de unicidad no lo impide, porque para ella son valores distintos.
 
 Es un no-op en una base nueva: sin filas previas no hay nada que rellenar. Va en
@@ -15,7 +15,7 @@ import hashlib
 
 from django.db import migrations
 
-#: El mismo valor que produce `models.hash_de_texto("")`. Se calcula aquí en lugar
+#: El mismo valor que produce `apps.common.textos.hash_de_texto("")`. Se calcula aquí en lugar
 #: de importar la función del modelo: una migración no debe depender del código de
 #: la aplicación, que cambia, sino del estado que le toca dejar.
 HASH_DE_VACIO = hashlib.sha256(b"").hexdigest()

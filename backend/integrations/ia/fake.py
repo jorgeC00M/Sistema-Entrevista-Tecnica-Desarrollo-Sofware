@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import time
 from collections.abc import Sequence
 
 from .base import ProveedorIA
@@ -63,8 +65,13 @@ class FakeProveedorIA(ProveedorIA):
     def __init__(self, fallar_en: int | None = None):
         self._fallar_en = fallar_en
         self._llamadas = 0
+        # Solo para la prueba de carga (`tests/carga/`): imita lo que tarda una
+        # IA real sin gastar cuota. Sin la variable es 0 y todo sigue instantáneo.
+        self._latencia_s = int(os.environ.get("IA_FAKE_LATENCIA_MS") or 0) / 1000
 
     def _contar_llamada(self) -> None:
+        if self._latencia_s:
+            time.sleep(self._latencia_s)
         self._llamadas += 1
         if self._fallar_en is not None and self._llamadas == self._fallar_en:
             raise ErrorTransitorio(f"Fallo simulado en la llamada #{self._llamadas}")

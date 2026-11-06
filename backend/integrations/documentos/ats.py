@@ -26,9 +26,20 @@ from datetime import date
 
 from integrations.documentos import fechas, ubicaciones
 from integrations.documentos.contacto import CORREO, detectar_nombre, detectar_telefono
-# Se reexportan: los detectores vivían aquí y hay código que aún los busca en `ats`.
-from integrations.documentos.contacto import URL, telefonos  # noqa: F401
 from integrations.documentos.extractor import DocumentoExtraido
+# Los ejemplos y los tipos del resultado viven aparte; se importan aquí (y se
+# reexportan) para que `from integrations.documentos.ats import …` siga igual.
+from integrations.documentos.ejemplos_ats import (  # noqa: F401
+    EJEMPLO_DE_CONTACTO,
+    EJEMPLO_DE_SECCIONES,
+    EJEMPLO_DE_PERIODO,
+    EJEMPLO_DE_FECHAS,
+    EJEMPLO_DE_HABILIDADES,
+    EJEMPLO_DE_UNA_COLUMNA,
+    EJEMPLO_SIN_TABLAS,
+    EJEMPLO_DE_SIGLA,
+)
+from integrations.documentos.modelos_ats import SEVERIDADES, Analisis, Campo, Hallazgo  # noqa: F401
 from integrations.documentos.geometria import hay_dos_columnas
 from integrations.documentos.secciones import SECCIONES_CRITICAS, encabezado_del_cv, titulo_de
 from integrations.documentos.terminos import escritos_de_una_sola_forma
@@ -53,99 +64,10 @@ CAMPOS_DE_LA_FICHA = (
     "Antigüedad",
 )
 
-# Severidades, de mayor a menor. `critica` es "el ATS no te ve"; `alta` es "pierde
-# parte de tu información"; `media` es "puede revolverla"; `info` no es un
-# problema, solo contexto.
-SEVERIDADES = ("critica", "alta", "media", "info")
-
 MAXIMO_PAGINAS_RECOMENDADO = 2
 
 #: Menos que esto puede ser un espacio o un punto blanco suelto de la plantilla.
 MINIMO_CARACTERES_OCULTOS = 20
-
-
-@dataclass(frozen=True)
-class Hallazgo:
-    """Una observación sobre el documento.
-
-    `favorable` separa las fortalezas de las debilidades. Se reportan las dos:
-    decirle al usuario solo lo que está mal no le dice qué conservar al corregir.
-
-    En una debilidad, `accion` es lo que hay que hacer, en imperativo («Pásalo a
-    una sola columna»), y es el título que ve el usuario; `titulo` queda como el
-    diagnóstico («Tu CV está maquetado a dos columnas») y `detalle` explica qué le
-    pasa al CV dentro del ATS y cómo arreglarlo. Las fortalezas no llevan acción.
-
-    `ejemplo` muestra cómo debe quedar, en texto fijo con datos inventados —nunca
-    copiado del CV— y que pasa las propias reglas del módulo (`EjemploTest`).
-    Vacío donde un ejemplo no ayuda, y siempre en las fortalezas.
-    """
-
-    codigo: str
-    severidad: str
-    titulo: str
-    detalle: str
-    favorable: bool = False
-    accion: str = ""
-    ejemplo: str = ""
-
-
-# Los ejemplos de las correcciones. Comparten datos para que se lean como un
-# mismo CV, y un test los pasa por los detectores: un ejemplo que el módulo
-# marcara como error sería peor que no darlo.
-EJEMPLO_DE_CONTACTO = "Ana Quispe\nana.quispe@gmail.com · +591 70000000 · Cochabamba, Bolivia"
-EJEMPLO_DE_SECCIONES = "Experiencia laboral\nEducación\nHabilidades técnicas"
-EJEMPLO_DE_PERIODO = "Desarrolladora Backend, Jalasoft\nEne 2022 – Actualidad"
-EJEMPLO_DE_FECHAS = "Ene 2020 – Mar 2022\nAbr 2022 – Actualidad"
-EJEMPLO_DE_HABILIDADES = "Habilidades\nPython (avanzado), Django (intermedio), PostgreSQL"
-EJEMPLO_DE_UNA_COLUMNA = (
-    f"{EJEMPLO_DE_CONTACTO}\n\n"
-    f"Experiencia\n{EJEMPLO_DE_PERIODO}\n\n"
-    "Educación\nIngeniería de Sistemas, UMSS\n\n"
-    "Habilidades\nPython, Django, PostgreSQL"
-)
-EJEMPLO_SIN_TABLAS = "Desarrolladora Backend, Jalasoft · Ene 2022 – Actualidad\nPython, Django, PostgreSQL"
-EJEMPLO_DE_SIGLA = "Amazon Web Services (AWS)"
-
-
-@dataclass(frozen=True)
-class Campo:
-    """Un campo de la ficha que el ATS armaría, y si se pudo llenar.
-
-    `incompleto` marca un campo que sí se llenó pero que un hallazgo ya medido
-    dice que llega dañado (fechas mezcladas, dos columnas); su `nota` dice por
-    qué. Nunca es verdadero en un campo sin detectar.
-    """
-
-    nombre: str
-    detectado: bool
-    valor: str = ""
-    nota: str = ""
-    incompleto: bool = False
-
-
-@dataclass
-class Analisis:
-    """El resultado completo: la ficha que vería el ATS más lo que la rompió."""
-
-    campos: list[Campo] = field(default_factory=list)
-    hallazgos: list[Hallazgo] = field(default_factory=list)
-
-    @property
-    def campos_detectados(self) -> int:
-        return sum(1 for campo in self.campos if campo.detectado)
-
-    @property
-    def debilidades(self) -> list[Hallazgo]:
-        orden = {severidad: indice for indice, severidad in enumerate(SEVERIDADES)}
-        return sorted(
-            (h for h in self.hallazgos if not h.favorable),
-            key=lambda h: orden.get(h.severidad, len(SEVERIDADES)),
-        )
-
-    @property
-    def fortalezas(self) -> list[Hallazgo]:
-        return [h for h in self.hallazgos if h.favorable]
 
 
 @dataclass

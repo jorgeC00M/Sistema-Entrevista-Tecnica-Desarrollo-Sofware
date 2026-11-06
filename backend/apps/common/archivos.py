@@ -1,15 +1,16 @@
-"""Validación de documentos subidos (PDF/DOCX), compartida por las apps.
+"""Validación de documentos subidos (PDF/DOCX).
 
-La usan el módulo de CV (el currículum y la convocatoria contra la que medirlo)
-y la pantalla Simular entrevista (la convocatoria a la que se postula). Vive
-aquí y no en una de ellas para que ninguna importe de la otra.
+Hoy solo la usa el módulo de CV: la convocatoria, en el CV y al simular una
+entrevista, se pega como texto (`comparar-con-oferta-en-dos-pasos`,
+`convocatoria-de-entrevista-solo-texto`). Sigue en `common` porque es la regla
+de qué archivo se acepta, no lógica del CV, y la próxima subida la reutiliza.
 """
 
 from __future__ import annotations
 
 from rest_framework import serializers
 
-from integrations.documentos.extractor import EXTENSIONES_SOPORTADAS, extraer
+from integrations.documentos.extractor import EXTENSIONES_SOPORTADAS
 
 #: Tope de tamaño del archivo, verificado **antes** de parsearlo. Un CV de dos
 #: páginas pesa unos cientos de kilobytes; dos megas admiten con holgura uno con
@@ -37,22 +38,3 @@ def validar_archivo(archivo):
             f"{MAXIMO_BYTES // 1024} KB."
         )
     return archivo
-
-
-def texto_de_convocatoria(archivo, campo: str) -> str:
-    """El texto de una convocatoria subida como archivo.
-
-    Un escaneado (sin capa de texto) se rechaza con un 400 que pide pegar el
-    texto: aquí no hay nada que medir del documento en sí, a diferencia del CV.
-    """
-    documento = extraer(archivo.read(), archivo.name)
-    if not documento.tiene_capa_de_texto:
-        raise serializers.ValidationError(
-            {
-                campo: (
-                    "No se pudo leer texto del archivo de la convocatoria: "
-                    "parece ser una imagen escaneada. Pega el texto en su lugar."
-                )
-            }
-        )
-    return documento.texto

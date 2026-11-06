@@ -31,7 +31,13 @@ export default function VistaPreviaEntrevista() {
   useEffect(() => {
     const reducido = prefiereMovimientoReducido()
     let cancelado = false
-    const temporizadores: number[] = []
+    // Los pasos van encadenados: solo hay un temporizador pendiente a la vez.
+    // Guardarlos todos en un arreglo lo hacía crecer sin fin (uno por letra,
+    // cada 7 s) mientras la landing estaba abierta.
+    let pendiente = 0
+    const programar = (paso: () => void, ms: number) => {
+      pendiente = window.setTimeout(paso, ms)
+    }
 
     function reproducir() {
       if (cancelado) return
@@ -50,24 +56,22 @@ export default function VistaPreviaEntrevista() {
         i += 1
         setTexto(RESPUESTA.slice(0, i))
         if (i < RESPUESTA.length) {
-          temporizadores.push(window.setTimeout(escribir, 30))
+          programar(escribir, 30)
         } else {
-          temporizadores.push(
-            window.setTimeout(() => {
-              if (cancelado) return
-              setTerminado(true)
-              temporizadores.push(window.setTimeout(reproducir, 7000))
-            }, 500),
-          )
+          programar(() => {
+            if (cancelado) return
+            setTerminado(true)
+            programar(reproducir, 7000)
+          }, 500)
         }
       }
-      temporizadores.push(window.setTimeout(escribir, 1200))
+      programar(escribir, 1200)
     }
 
     reproducir()
     return () => {
       cancelado = true
-      temporizadores.forEach((t) => window.clearTimeout(t))
+      window.clearTimeout(pendiente)
     }
   }, [])
 

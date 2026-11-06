@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 
 import Boton from '@/components/ui/Boton'
-import CampoAuth from '@/features/auth/components/CampoAuth'
+import CampoAuth from '@/components/ui/CampoAuth'
 import Icono from '@/components/ui/Icono'
 
 interface Props {

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { clasesDeBoton } from '@/components/ui/estilosDeBoton'
 import Tarjeta from '@/components/ui/Tarjeta'
-import { tramoDelReloj } from '@/features/entrevista/tiempo'
+import { tramoDelReloj } from '@/lib/tiempo'
 import type { SiguientePaso as Paso } from '@/features/inicio/inicio'
 
 interface Props {

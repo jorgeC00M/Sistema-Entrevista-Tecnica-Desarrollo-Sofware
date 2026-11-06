@@ -7,7 +7,7 @@ from django.core.management import CommandError, call_command
 from django.test import TestCase
 
 from apps.entrevistas.models import Entrevista
-from apps.evaluaciones.consistencia import cargar_casos, medir
+from apps.evaluaciones.consistencia.medicion import cargar_casos, medir
 from apps.evaluaciones.models import Evaluacion
 from apps.evaluaciones.rubricas import BANDAS
 from integrations.ia.fake import FakeProveedorIA

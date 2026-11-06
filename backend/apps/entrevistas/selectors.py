@@ -12,10 +12,54 @@ from statistics import fmean
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 
+from apps.catalogos.models import Nivel, Puesto, Tecnologia
 from apps.evaluaciones.rubricas import CRITERIOS, NOMBRES_DE_CRITERIOS, banda_de
-from integrations.ia.prompts.schemas import TemaEvaluado
+from integrations.ia.prompts.schemas import ContextoDeEntrevista, TemaEvaluado
 
 from .models import Entrevista
+
+
+def contexto_de(entrevista) -> ContextoDeEntrevista:
+    """El encuadre de la postulación, que no cambia durante la entrevista.
+
+    Lo leen el entrevistador, el evaluador y el redactor del veredicto.
+    """
+    return ContextoDeEntrevista(
+        puesto=entrevista.puesto_enum,
+        nivel=entrevista.nivel_enum,
+        tecnologia=entrevista.tecnologia_nombre,
+        # Solo el entrevistador los usa; el evaluador no los recibe.
+        requisitos=entrevista.convocatoria.requisitos if entrevista.convocatoria_id else (),
+    )
+
+
+def catalogo_del_perfil(puesto: str | None, tecnologias: list[str], nivel: str | None):
+    """Las filas del catálogo que nombra un perfil detectado en una convocatoria.
+
+    Devuelve `(puesto | None, {codigo: Tecnologia}, nivel | None)`. Incluye las
+    inactivas a propósito: un perfil guardado sigue diciendo lo que detectó,
+    aunque el catálogo haya retirado después alguna de sus filas.
+    """
+    return (
+        Puesto.objects.filter(codigo=puesto).first(),
+        Tecnologia.objects.in_bulk(tecnologias, field_name="codigo"),
+        Nivel.objects.filter(codigo=nivel).first(),
+    )
+
+
+def visibilidad_de_la_evaluacion(entrevista: Entrevista) -> str | None:
+    """Cuánto de cada evaluación publica el reporte, según el estado.
+
+    `"completa"` solo si está finalizada (la única con nota); `None` en curso
+    —este mismo endpoint reconstruye el chat al recargar, y devolverla filtraría
+    la nota a mitad de entrevista—; `"sin_nota"` abandonada o con el tiempo
+    agotado: lo incompleto no se califica, pero se aprende de lo respondido.
+    """
+    if entrevista.estado == Entrevista.Estado.FINALIZADA:
+        return "completa"
+    if entrevista.estado == Entrevista.Estado.EN_PROGRESO:
+        return None
+    return "sin_nota"
 
 
 def entrevista_del_usuario(usuario, pk: int) -> Entrevista:
@@ -37,7 +81,10 @@ def _con_conteo(consulta):
     El desglose del reporte la usa para decir sobre cuántas respuestas se
     calculó cada criterio; anotarla evita una consulta por fila en el historial.
     """
-    return consulta.select_related("puesto", "nivel", "tecnologia", "segunda_tecnologia").annotate(
+    # `convocatoria` también: `contexto_de` la lee en cada respuesta.
+    return consulta.select_related(
+        "puesto", "nivel", "tecnologia", "segunda_tecnologia", "convocatoria"
+    ).annotate(
         preguntas_calificadas=Count("intercambios__evaluacion"),
     )
 

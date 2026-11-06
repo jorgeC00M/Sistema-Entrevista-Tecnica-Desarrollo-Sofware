@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 
 import Icono from '@/components/ui/Icono'
 import Boton from '@/components/ui/Boton'
-import CampoAuth from '@/features/auth/components/CampoAuth'
+import CampoAuth from '@/components/ui/CampoAuth'
 import type { DatosDeRegistro } from '@/types/usuario'
 
 type Campos = DatosDeRegistro

@@ -22,7 +22,9 @@ from integrations.documentos.extractor import DocumentoExtraido, extraer
 from integrations.documentos.terminos import encontrar
 
 from . import revision, selectors
-from .models import AnalisisATS, Curriculum, hash_de_texto
+from apps.common.textos import hash_de_texto
+
+from .models import AnalisisATS, Curriculum
 
 
 def analizar(
@@ -33,8 +35,8 @@ def analizar(
 ) -> Curriculum:
     """Extrae, verifica y guarda. Devuelve el currículum con su análisis.
 
-    La convocatoria llega ya como texto: quien la aporta como archivo la extrae
-    antes, en el serializer, porque es ahí donde se validan formato y tamaño.
+    La convocatoria llega como texto pegado: es la única vía que acepta el
+    serializer (`comparar-con-oferta-en-dos-pasos`).
 
     Si este usuario ya analizó el mismo documento contra la misma convocatoria, se
     devuelve el análisis existente sin repetir el trabajo — salvo que se hiciera

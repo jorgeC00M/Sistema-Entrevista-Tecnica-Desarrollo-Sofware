@@ -112,7 +112,12 @@ ASGI_APPLICATION = "config.asgi.application"
 # nada que toque ese campo probándolo únicamente en SQLite.
 _database_url = os.environ.get("DATABASE_URL", "").strip()
 if _database_url:
-    DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
+    # Conexiones persistentes (una por hilo de gunicorn: hasta 16 con 2 x 8, por
+    # debajo del límite de Neon), con chequeo antes de reusarlas: Neon cierra
+    # las inactivas, y sin el chequeo la primera petición tras una pausa fallaba.
+    DATABASES = {
+        "default": dj_database_url.parse(_database_url, conn_max_age=600, conn_health_checks=True)
+    }
 else:
     DATABASES = {
         "default": {
@@ -147,10 +152,9 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "EXCEPTION_HANDLER": "apps.common.exceptions.manejador_de_excepciones",
-    # Un decimal se emite como número, no como cadena. Sin esto,
-    # `puntuacion_promedio` sale como "75.00" desde el serializer de entrevista
-    # y como 75.0 desde las estadísticas (que no pasa por serializer): el mismo
-    # concepto con dos tipos según el endpoint.
+    # Un decimal se emite como número, no como cadena: `puntuacion_promedio`
+    # sale como 75.0 y no como "75.00", el mismo tipo que el resto de notas que
+    # el frontend recibe.
     "COERCE_DECIMAL_TO_STRING": False,
     # Los límites se declaran por ámbito y no de forma global porque el coste
     # real de cada endpoint es distinto: evaluar una respuesta gasta una

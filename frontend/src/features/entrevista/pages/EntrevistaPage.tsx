@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { mensajeDeError } from '@/api/errores'
 import { abandonarEntrevista } from '@/api/entrevistas'
+import Alerta from '@/components/ui/Alerta'
+import AlertaDeIA from '@/components/ui/AlertaDeIA'
 import Boton from '@/components/ui/Boton'
 import EtiquetaMono from '@/components/ui/EtiquetaMono'
 import ModalDeConfirmacion from '@/components/ui/ModalDeConfirmacion'
@@ -27,6 +29,9 @@ export default function EntrevistaPage() {
     cargandoInicial,
     enviando,
     error,
+    esperandoEvaluacion,
+    fallo,
+    puedeReintentar,
     segundos,
     vencido,
     minutosDeEntrevista,
@@ -40,8 +45,13 @@ export default function EntrevistaPage() {
 
   if (cargandoInicial) return <Spinner texto="Cargando entrevista…" />
 
-  // La pregunta en pantalla todavía no se respondió.
-  const respondidas = Math.max(numeroActual - 1, 0)
+  // La pregunta en pantalla todavía no se respondió, salvo que su respuesta
+  // ya esté guardada (en evaluación o con la evaluación fallida).
+  const respuestaGuardada = esperandoEvaluacion || fallo !== null
+  const respondidas = Math.max(numeroActual - (respuestaGuardada ? 0 : 1), 0)
+  // Mientras la IA trabaja nada se puede enviar ni abandonar: abandonar a
+  // mitad de esa llamada dejaría su resultado en el aire.
+  const ocupado = enviando || esperandoEvaluacion
 
   const abandonar = async () => {
     setErrorAbandono('')
@@ -87,12 +97,10 @@ export default function EntrevistaPage() {
               </p>
             </div>
             {segundos !== null && <RelojDeEntrevista segundos={segundos} />}
-            {/* Deshabilitado mientras se evalúa una respuesta: abandonar a
-                mitad de esa llamada dejaría su resultado en el aire. */}
             <Boton
               variante="peligro"
               tamano="sm"
-              disabled={enviando}
+              disabled={ocupado}
               onClick={() => setConfirmandoAbandono(true)}
             >
               Abandonar
@@ -114,20 +122,37 @@ export default function EntrevistaPage() {
 
       <ChatEntrevista
         mensajes={mensajes}
-        evaluando={enviando}
+        evaluando={ocupado}
         esLaUltima={totalPreguntas > 0 && numeroActual === totalPreguntas}
       />
 
-      {error && (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-vidrio bg-error-fondo px-4 py-3 text-sm text-error-texto ring-1 ring-error-texto/20">
-          <span>{error}</span>
-          <Boton variante="texto" tamano="sm" onClick={reintentar}>
-            Reintentar
-          </Boton>
+      {fallo && (
+        <div className="mt-3">
+          <AlertaDeIA
+            titulo={fallo.titulo}
+            detalle="Tu respuesta está guardada; no la pierdes."
+            accion={{ texto: 'Reintentar', onClick: reintentar, deshabilitada: enviando }}
+          />
         </div>
       )}
 
-      <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={enviando || vencido} />
+      {error && (
+        <div className="mt-3">
+          <Alerta>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>{error}</span>
+              {puedeReintentar && (
+                <Boton variante="texto" tamano="sm" onClick={reintentar}>
+                  Reintentar
+                </Boton>
+              )}
+            </div>
+          </Alerta>
+        </div>
+      )}
+
+      {/* Con la respuesta guardada no se escribe otra: se espera o se reintenta. */}
+      <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={ocupado || vencido || respuestaGuardada} />
 
       {confirmandoAbandono && (
         <ModalDeConfirmacion

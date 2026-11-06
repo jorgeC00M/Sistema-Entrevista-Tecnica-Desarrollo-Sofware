@@ -1,8 +1,8 @@
-"""Escrituras de la calificación de una respuesta.
+"""Escrituras de la calificación de una respuesta: pedirla a la IA y guardarla.
 
-Las lecturas agregadas (estadísticas y retroalimentación acumulada) viven en
-`selectors.py`, siguiendo la misma separación que el resto del proyecto:
-services escribe, selectors lee.
+No hay lecturas agregadas: las estadísticas y la retroalimentación acumulada se
+retiraron, y cada reporte lee sus propias evaluaciones desde
+`apps/entrevistas/selectors.py`.
 """
 
 from __future__ import annotations

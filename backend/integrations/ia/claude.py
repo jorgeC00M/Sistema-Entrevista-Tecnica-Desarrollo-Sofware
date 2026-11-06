@@ -18,7 +18,7 @@ from typing import Any
 
 import anthropic
 
-from .base import ProveedorIAporJSON
+from .base import MAX_REINTENTOS, TIMEOUT_SEGUNDOS, ProveedorIAporJSON
 from .exceptions import (
     ErrorPermanente,
     ErrorTransitorio,
@@ -28,7 +28,6 @@ from .exceptions import (
 
 MODELO_POR_DEFECTO = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1024
-TIMEOUT_SEGUNDOS = 30.0
 
 # Códigos de estado que vale la pena reintentar (red, límite de tasa, servicio
 # caído o sobrecargado). El resto (400, 401, 403...) no se arregla reintentando.
@@ -52,7 +51,7 @@ class AnthropicProveedorIA(ProveedorIAporJSON):
         self._cliente = anthropic.Anthropic(
             api_key=api_key,
             timeout=TIMEOUT_SEGUNDOS,
-            max_retries=2,
+            max_retries=MAX_REINTENTOS,
         )
 
     def _pedir_json(self, sistema: str, entrada: str, esquema: dict[str, Any]) -> dict[str, Any]:

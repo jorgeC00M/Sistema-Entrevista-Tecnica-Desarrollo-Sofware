@@ -32,10 +32,20 @@ from .serializers import (
 )
 
 
-def _pregunta_dict(intercambio) -> dict | None:
+def _pregunta_dict(intercambio, con_estado: bool = False) -> dict | None:
+    """La pregunta para el chat. `con_estado` (solo el detalle) suma si ya tiene
+    respuesta guardada y si su evaluación falló: con eso el chat recargado no
+    vuelve a pedirla, espera la evaluación o ofrece «Reintentar»."""
     if intercambio is None:
         return None
-    return {"numero": intercambio.numero, "texto": intercambio.pregunta}
+    datos = {"numero": intercambio.numero, "texto": intercambio.pregunta}
+    if con_estado:
+        datos |= {
+            "respuesta": intercambio.respuesta,
+            "respondido_en": intercambio.respondido_en.isoformat() if intercambio.respondido_en else None,
+            "evaluacion_fallida": intercambio.evaluacion_fallida_en is not None,
+        }
+    return datos
 
 
 class EntrevistaListCreateView(APIView):
@@ -102,7 +112,7 @@ class EntrevistaDetailView(APIView):
         return Response(
             {
                 "entrevista": EntrevistaSerializer(entrevista).data,
-                "pregunta_pendiente": _pregunta_dict(selectors.intercambio_pendiente(entrevista)),
+                "pregunta_pendiente": _pregunta_dict(selectors.intercambio_pendiente(entrevista), con_estado=True),
                 "total_preguntas": PREGUNTAS_POR_ENTREVISTA,
             }
         )
@@ -128,22 +138,17 @@ class ResponderView(APIView):
         entrada = ResponderSerializer(data=request.data)
         entrada.is_valid(raise_exception=True)
 
-        try:
-            # El valor de retorno se descarta a propósito: la calificación no se
-            # publica hasta que la entrevista termina. Se sigue calculando y
-            # guardando — es lo que alimenta la adaptatividad de las preguntas
-            # siguientes y lo que luego muestra el módulo de resultados.
-            services.responder(entrevista, entrada.validated_data["respuesta"])
-        except services.TiempoAgotado as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
-        except services.SinIntercambioPendiente as exc:
-            # No debería ocurrir dado el chequeo de estado de arriba; queda
-            # como red de seguridad ante una condición de carrera. Se captura
-            # el tipo exacto: cualquier otro ValueError (por ejemplo, un área
-            # sin miembro en el enum) es un fallo real y debe subir.
-            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+        # El valor de retorno se descarta a propósito: la calificación no se
+        # publica hasta que la entrevista termina. Se sigue calculando y
+        # guardando — es lo que alimenta la adaptatividad de las preguntas
+        # siguientes y lo que luego muestra el módulo de resultados.
+        # `TiempoAgotado` y `SinIntercambioPendiente` (una carrera) son 409 por
+        # el manejador central; cualquier otro `ValueError` sube como fallo real.
+        services.responder(entrevista, entrada.validated_data["respuesta"])
 
-        entrevista.refresh_from_db()
+        # Se vuelve a pedir, no `refresh_from_db()`: ese no recalcula la
+        # anotación `preguntas_calificadas`, que quedaba con una de menos.
+        entrevista = selectors.entrevista_del_usuario(request.user, pk)
         # Una respuesta guardada a tiempo puede terminar de evaluarse ya vencido
         # el límite: entonces la entrevista quedó cerrada y no hay siguiente,
         # aunque exista la de calentamiento sin responder.
@@ -165,19 +170,8 @@ class ResultadosView(APIView):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
         services.cerrar_si_vencio(entrevista)
 
-        # Solo una finalizada tiene nota. En curso no se publica ninguna
-        # evaluación: este mismo endpoint es el que usa el chat para
-        # reconstruirse al recargar, así que devolverlas filtraría la nota a
-        # mitad de entrevista. Abandonada o con el tiempo agotado se publica la
-        # retroalimentación sin puntajes ni niveles: lo incompleto no se
-        # califica, pero se aprende de lo que sí se respondió.
-        finalizada = entrevista.estado == Entrevista.Estado.FINALIZADA
-        if finalizada:
-            evaluacion = "completa"
-        elif entrevista.estado == Entrevista.Estado.EN_PROGRESO:
-            evaluacion = None
-        else:
-            evaluacion = "sin_nota"
+        evaluacion = selectors.visibilidad_de_la_evaluacion(entrevista)
+        finalizada = evaluacion == "completa"
 
         intercambios = list(selectors.intercambios_de(entrevista))
         return Response(
@@ -207,11 +201,7 @@ class VeredictoView(APIView):
     throttle_scope = "veredicto"
 
     def post(self, request, pk):
-        try:
-            veredicto = services.pedir_veredicto(request.user, pk)
-        except services.EntrevistaNoFinalizada as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
-        return Response(veredicto)
+        return Response(services.pedir_veredicto(request.user, pk))
 
 
 class UltimaConfiguracionView(APIView):
@@ -241,19 +231,16 @@ class AbandonarView(APIView):
 
     def post(self, request, pk):
         entrevista = selectors.entrevista_del_usuario(request.user, pk)
-        try:
-            services.abandonar(entrevista)
-        except services.EntrevistaNoEnCurso as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+        services.abandonar(entrevista)
         return Response(EntrevistaSerializer(entrevista).data)
 
 
 class AnalizarConvocatoriaView(APIView):
-    """`POST /api/entrevistas/convocatoria/`: pegar o subir el aviso y detectar su perfil.
+    """`POST /api/entrevistas/convocatoria/`: el aviso pegado y su perfil detectado.
 
     201 con `{id, perfil}`; 422 si no parece un puesto de desarrollo de software
-    (no se inventa uno); 400 si el archivo no sirve. Los fallos de la IA los
-    traduce el manejador central (503/502).
+    (no se inventa uno); 400 si el texto es demasiado corto o largo. Los fallos
+    de la IA los traduce el manejador central (503/502).
     """
 
     permission_classes = [IsAuthenticated]

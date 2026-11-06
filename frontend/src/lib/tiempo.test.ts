@@ -1,38 +1,45 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  desfaseDelReloj,
+  anclaDelReloj,
   etiquetaDeContinuar,
   formatoReloj,
   minutosRestantes,
   segundosRestantes,
   tramoDelReloj,
-} from '@/features/entrevista/tiempo'
+} from '@/lib/tiempo'
 
 const SERVIDOR = '2026-11-04T10:00:00Z'
 const LIMITE = '2026-11-04T10:30:00Z'
-const MS_SERVIDOR = Date.parse(SERVIDOR)
+// Un `performance.now()` cualquiera: no guarda relación con la hora del día.
+const LLEGADA = 12_345
 
 describe('segundosRestantes', () => {
-  it('con los relojes de acuerdo, cuenta desde la hora del servidor', () => {
-    const desfase = desfaseDelReloj(SERVIDOR, MS_SERVIDOR)
-    expect(segundosRestantes(LIMITE, desfase, MS_SERVIDOR)).toBe(30 * 60)
+  it('al llegar, quedan límite menos hora del servidor', () => {
+    const ancla = anclaDelReloj(LIMITE, SERVIDOR, LLEGADA)
+    expect(segundosRestantes(ancla, LLEGADA)).toBe(30 * 60)
   })
 
-  it('un dispositivo adelantado 10 minutos no pierde esos minutos', () => {
-    const adelantado = MS_SERVIDOR + 10 * 60_000
-    const desfase = desfaseDelReloj(SERVIDOR, adelantado)
-    expect(segundosRestantes(LIMITE, desfase, adelantado)).toBe(30 * 60)
-    // Y sigue contando con el paso del tiempo del propio dispositivo.
-    expect(segundosRestantes(LIMITE, desfase, adelantado + 61_000)).toBe(30 * 60 - 61)
+  it('descuenta lo que pasó desde la llegada, no desde la lectura', () => {
+    // Un dato de la caché que llegó hace 25 s ya perdió esos 25 s.
+    const ancla = anclaDelReloj(LIMITE, SERVIDOR, LLEGADA)
+    expect(segundosRestantes(ancla, LLEGADA + 25_000)).toBe(30 * 60 - 25)
+  })
+
+  it('no usa la hora del dispositivo: solo horas del servidor y un reloj monotónico', () => {
+    // Con el dispositivo adelantado o atrasado, el ancla es la misma.
+    const ancla = anclaDelReloj(LIMITE, '2026-11-04T10:20:00Z', 0)
+    expect(segundosRestantes(ancla, 61_000)).toBe(10 * 60 - 61)
   })
 
   it('nunca es negativo', () => {
-    expect(segundosRestantes(LIMITE, 0, MS_SERVIDOR + 45 * 60_000)).toBe(0)
+    const ancla = anclaDelReloj(LIMITE, SERVIDOR, LLEGADA)
+    expect(segundosRestantes(ancla, LLEGADA + 45 * 60_000)).toBe(0)
   })
 
   it('redondea hacia arriba: con medio segundo todavía no venció', () => {
-    expect(segundosRestantes(LIMITE, 0, Date.parse(LIMITE) - 500)).toBe(1)
+    const ancla = anclaDelReloj(LIMITE, '2026-11-04T10:29:59.500Z', 0)
+    expect(segundosRestantes(ancla, 0)).toBe(1)
   })
 })
 

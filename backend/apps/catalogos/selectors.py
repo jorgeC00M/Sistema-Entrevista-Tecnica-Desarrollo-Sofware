@@ -20,10 +20,16 @@ def niveles_activos() -> QuerySet[Nivel]:
     return Nivel.objects.filter(activo=True)
 
 
+def tecnologias_activas() -> QuerySet[Tecnologia]:
+    """Tecnologías que se pueden elegir hoy (las retiradas siguen en la tabla
+    porque entrevistas antiguas las referencian)."""
+    return Tecnologia.objects.filter(activo=True)
+
+
 def areas_activas() -> QuerySet[Area]:
     """Áreas vigentes. Ya no se eligen al iniciar una entrevista —eso lo decide
     el puesto— pero se siguen publicando: la pantalla de selección muestra qué
-    áreas cubre cada puesto, y las estadísticas se agrupan por ellas."""
+    áreas cubre cada puesto, y cada pregunta del reporte dice la suya."""
     return Area.objects.filter(activo=True)
 
 
@@ -44,7 +50,7 @@ def puestos_con_tecnologias() -> QuerySet[Puesto]:
     return puestos_activos().prefetch_related(
         Prefetch(
             "tecnologias",
-            queryset=Tecnologia.objects.filter(activo=True).order_by("orden", "nombre"),
+            queryset=tecnologias_activas().order_by("orden", "nombre"),
             to_attr="tecnologias_activas",
         )
     )

@@ -10,7 +10,7 @@ from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types
 
-from .base import ProveedorIAporJSON
+from .base import MAX_REINTENTOS, TIMEOUT_SEGUNDOS, ProveedorIAporJSON
 from .exceptions import (
     ErrorPermanente,
     ErrorTransitorio,
@@ -25,12 +25,9 @@ from .exceptions import (
 # alta demanda dura semanas tras cada lanzamiento.
 MODELO_POR_DEFECTO = "gemini-3.5-flash-lite"
 
-# Mismo tope que el adaptador de Claude: sin timeout, una llamada colgada
-# retiene el worker que la atiende, y en el plan gratuito de Render un worker
-# retenido es el servicio caído. Ojo: es por intento, no por petición —
-# con REINTENTOS el peor caso se multiplica.
-TIMEOUT_SEGUNDOS = 30.0
-
+# `TIMEOUT_SEGUNDOS` y `MAX_REINTENTOS` vienen de `base.py`, iguales para todos
+# los adaptadores.
+#
 # El SDK NO reintenta si no se le configura: con `retry_options=None` aplica
 # la estrategia "un solo intento". Eso dejaba que un 503 puntual de Google
 # ("este modelo tiene mucha demanda, reintenta más tarde") llegara tal cual al
@@ -38,10 +35,9 @@ TIMEOUT_SEGUNDOS = 30.0
 # justo los transitorios, y el retroceso exponencial con jitter es lo que
 # Google mismo recomienda para no formar una estampida de reintentos.
 #
-# Existe por simetría con `max_retries=2` del adaptador de Claude: que uno
-# reintentara y el otro no era precisamente la divergencia que `base.py` vino
-# a eliminar.
-REINTENTOS = types.HttpRetryOptions(attempts=3, initial_delay=1.0, max_delay=8.0)
+# `attempts` cuenta el primer intento: 1 + `MAX_REINTENTOS`, lo mismo que los
+# demás adaptadores.
+REINTENTOS = types.HttpRetryOptions(attempts=1 + MAX_REINTENTOS, initial_delay=1.0, max_delay=8.0)
 
 # Los modelos recientes razonan antes de responder, y ese paso domina el
 # tiempo de respuesta: en pruebas, pedir `{"ok": true}` tardaba ~17 s. Aquí no

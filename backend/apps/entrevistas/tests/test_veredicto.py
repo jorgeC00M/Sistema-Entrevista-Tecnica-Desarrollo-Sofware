@@ -100,7 +100,7 @@ class VeredictoTest(APITestCase):
         entrevista = self._completa(Redactor())
         prohibido = mock.Mock(side_effect=AssertionError("No debe llamar a la IA"))
 
-        with mock.patch("apps.entrevistas.services.get_redactor_de_veredicto", prohibido):
+        with mock.patch("apps.entrevistas.veredicto.get_redactor_de_veredicto", prohibido):
             respuesta = self.client.post(f"/api/entrevistas/{entrevista.pk}/veredicto/")
 
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
@@ -111,7 +111,7 @@ class VeredictoTest(APITestCase):
         entrevista = self._completa(Redactor(fallar=True))
         redactor = Redactor()
 
-        with mock.patch("apps.entrevistas.services.get_redactor_de_veredicto", return_value=redactor):
+        with mock.patch("apps.entrevistas.veredicto.get_redactor_de_veredicto", return_value=redactor):
             respuesta = self.client.post(f"/api/entrevistas/{entrevista.pk}/veredicto/")
 
         self.assertEqual(respuesta.data["estado"], "ok")
@@ -132,7 +132,7 @@ class VeredictoTest(APITestCase):
         servicio.abandonar(entrevista)
         prohibido = mock.Mock(side_effect=AssertionError("No debe llamar a la IA"))
 
-        with mock.patch("apps.entrevistas.services.get_redactor_de_veredicto", prohibido):
+        with mock.patch("apps.entrevistas.veredicto.get_redactor_de_veredicto", prohibido):
             respuesta = self.client.post(f"/api/entrevistas/{entrevista.pk}/veredicto/")
 
         self.assertEqual(respuesta.status_code, status.HTTP_409_CONFLICT)

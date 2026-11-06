@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 
 import { LimiteDeErrorDeRuta } from '@/components/LimiteDeError'
@@ -116,7 +117,11 @@ export default function RutaProtegida() {
         <main className="px-4 py-6 sm:px-6 lg:px-8">
           <div className="max-w-7xl">
             <LimiteDeErrorDeRuta>
-              <Outlet />
+              {/* Aquí y no solo en el router: mientras llega el código de la
+                  página siguiente, el sidebar y la cabecera siguen en pantalla. */}
+              <Suspense fallback={<Spinner />}>
+                <Outlet />
+              </Suspense>
             </LimiteDeErrorDeRuta>
           </div>
         </main>

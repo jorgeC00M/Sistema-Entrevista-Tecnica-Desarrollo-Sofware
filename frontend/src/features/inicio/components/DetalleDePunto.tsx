@@ -1,4 +1,4 @@
-import { fechaDelPunto } from '@/features/inicio/evolucion'
+import { fechaNumerica } from '@/lib/fechas'
 
 interface Props {
   /** Posición del punto dentro del gráfico, en porcentaje del ancho y del alto. */
@@ -32,7 +32,7 @@ export default function DetalleDePunto({ izquierda, arriba, fecha, puesto, tecno
     >
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
         <dt className="text-vidrio-sidebar-muted">Fecha</dt>
-        <dd className="font-mono-vidrio">{fechaDelPunto(fecha)}</dd>
+        <dd className="font-mono-vidrio">{fechaNumerica(fecha)}</dd>
         <dt className="text-vidrio-sidebar-muted">Puesto</dt>
         <dd>{puesto}</dd>
         <dt className="text-vidrio-sidebar-muted">Tecnología</dt>

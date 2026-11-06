@@ -15,7 +15,7 @@ import type { Catalogos } from '@/types/catalogos'
 import type { Curriculum, CurriculumEnLista } from '@/types/curriculum'
 import type { Entrevista, ResumenEntrevista } from '@/types/entrevista'
 
-export interface DatosDelInicio {
+interface DatosDelInicio {
   entrevistas: Entrevista[]
   cifras: CifrasDeResumen
   siguiente: SiguientePaso
@@ -52,6 +52,10 @@ function ultimoAnalisis(curriculums: CurriculumEnLista[]): CurriculumEnLista | n
  * Un fallo de esos dos no rompe la pantalla: su tarjeta no se muestra y el
  * siguiente paso cae en su variante sin ese dato. Solo bloquean el historial y
  * la lista de CV, sin los que no hay nada que resumir.
+ *
+ * Es la única feature que importa de otras (`resultados`, `curriculum`) a
+ * propósito: el Inicio resume esas pantallas, y reusar sus hooks y reglas evita
+ * que el resumen y la pantalla de detalle digan cosas distintas.
  */
 export function useInicio(): Estado {
   const historial = usePeticion<Entrevista[]>('historial', (signal) => obtenerHistorial(signal), {

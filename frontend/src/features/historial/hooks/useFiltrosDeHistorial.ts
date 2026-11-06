@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { type FiltroDeNivel, filtrarEntrevistas, nivelDesdeURL } from '@/features/historial/historial'
 import type { Entrevista } from '@/types/entrevista'
 
-export type ClaveDeFiltro = 'q' | 'nivel'
+type ClaveDeFiltro = 'q' | 'nivel'
 
 /** Valor de cada filtro que equivale a "sin filtrar": no se escribe en la URL. */
 const SIN_FILTRO: Record<ClaveDeFiltro, string> = { q: '', nivel: 'todos' }

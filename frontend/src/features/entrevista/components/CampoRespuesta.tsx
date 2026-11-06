@@ -4,7 +4,9 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import Boton from '@/components/ui/Boton'
 import Textarea from '@/components/ui/Textarea'
 
-const MAXIMO_CARACTERES = 1000
+// Igual que `MAXIMO_CARACTERES_RESPUESTA` del backend: con 1000 se cortaba a
+// la mitad una respuesta técnica que el servidor sí aceptaba.
+const MAXIMO_CARACTERES = 2000
 
 interface Props {
   onEnviar: (texto: string) => void

@@ -49,15 +49,14 @@ export default function CurriculumPage() {
   const tipo: TipoDeAnalisis = matchPath('/mi-cv/oferta/*', pathname) ? 'dirigido' : 'general'
   const [archivo, setArchivo] = useState<File | null>(null)
   const [convocatoria, setConvocatoria] = useState('')
-  const [archivoConvocatoria, setArchivoConvocatoria] = useState<File | null>(null)
   const [resultado, setResultado] = useState<Curriculum | null>(null)
   const [analizando, setAnalizando] = useState(false)
   // El error de analizar va junto al botón que lo causó, no arriba de la página.
   const [errorAlAnalizar, setErrorAlAnalizar] = useState('')
   // El id de un análisis que no se pudo cargar (ajeno, inexistente, sin red).
   const [noEncontrado, setNoEncontrado] = useState<number | null>(null)
-  // Por campo del formulario (archivo, convocatoria, archivoConvocatoria),
-  // igual que en el registro: cada mensaje va junto al control que lo causó.
+  // Por campo del formulario (archivo, convocatoria), igual que en el
+  // registro: cada mensaje va junto al control que lo causó.
   const [erroresPorCampo, setErroresPorCampo] = useState<Record<string, string>>({})
   const zonaDelCv = useRef<HTMLDivElement>(null)
   const zonaDeConvocatoria = useRef<HTMLDivElement>(null)
@@ -116,7 +115,7 @@ export default function CurriculumPage() {
     try {
       // En el general la convocatoria se conserva para volver al dirigido, pero no se envía.
       const nuevo = await analizarCurriculum(
-        tipo === 'dirigido' ? { archivo, convocatoria, archivoConvocatoria } : { archivo },
+        tipo === 'dirigido' ? { archivo, convocatoria } : { archivo },
       )
       setResultado(nuevo)
       setNoEncontrado(null)
@@ -209,7 +208,6 @@ export default function CurriculumPage() {
             tipo={tipo}
             archivo={archivo}
             convocatoria={convocatoria}
-            archivoConvocatoria={archivoConvocatoria}
             analizando={analizando}
             errores={erroresPorCampo}
             errorGeneral={errorAlAnalizar}
@@ -220,10 +218,6 @@ export default function CurriculumPage() {
             onConvocatoria={(valor) => {
               setConvocatoria(valor)
               limpiarErrorDeCampo('convocatoria')
-            }}
-            onArchivoConvocatoria={(valor) => {
-              setArchivoConvocatoria(valor)
-              limpiarErrorDeCampo('archivoConvocatoria')
             }}
             onAnalizar={() => void analizar()}
             refZonaDelCv={zonaDelCv}

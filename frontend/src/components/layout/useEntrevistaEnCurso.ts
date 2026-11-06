@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { obtenerHistorial } from '@/api/entrevistas'
-import { desfaseDelReloj, segundosRestantes } from '@/features/entrevista/tiempo'
+import { anclaDelReloj, segundosRestantes } from '@/lib/tiempo'
 import { usePeticion } from '@/hooks/usePeticion'
 import type { Entrevista } from '@/types/entrevista'
 
@@ -31,21 +31,22 @@ const REFRESCO_MS = 60_000
  * algo falla, el botón simplemente no aparece.
  */
 export function useEntrevistaEnCurso(): EntrevistaEnCurso | null {
-  const { datos: historial } = usePeticion<Entrevista[]>('historial', (signal) =>
+  const { datos: historial, recibidoEn } = usePeticion<Entrevista[]>('historial', (signal) =>
     obtenerHistorial(signal),
   )
   const pendiente = historial?.find((e) => e.estado === 'en_progreso') ?? null
 
-  // El desfase se toma al llegar el dato; el instante, en el efecto.
+  // El ancla es el momento en que la fila llegó del servidor, no el de
+  // leerla de la caché: una fila de hace 25 s ya perdió esos 25 s.
   const [segundos, setSegundos] = useState<number | null>(null)
   useEffect(() => {
-    if (!pendiente) return
-    const desfase = desfaseDelReloj(pendiente.ahora, Date.now())
-    const contar = () => setSegundos(segundosRestantes(pendiente.fecha_limite, desfase, Date.now()))
+    if (!pendiente || recibidoEn === null) return
+    const ancla = anclaDelReloj(pendiente.fecha_limite, pendiente.ahora, recibidoEn)
+    const contar = () => setSegundos(segundosRestantes(ancla, performance.now()))
     contar()
     const intervalo = window.setInterval(contar, REFRESCO_MS)
     return () => window.clearInterval(intervalo)
-  }, [pendiente])
+  }, [pendiente, recibidoEn])
 
   if (!pendiente || !segundos) return null
   return { id: pendiente.id, puestoDisplay: pendiente.puesto_display, segundosRestantes: segundos }

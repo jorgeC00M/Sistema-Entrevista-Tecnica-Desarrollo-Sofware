@@ -33,6 +33,19 @@ if not CORS_ALLOWED_ORIGINS:
 # vive en un disco efímero y se perdería en cada despliegue.
 variable_obligatoria("DATABASE_URL")
 
+# --- Caché (límites de peticiones) --------------------------------------
+# Los throttles de DRF cuentan en la caché. La de por defecto vive en la memoria
+# de cada proceso: con gunicorn a 2 workers cada uno llevaba su propia cuenta
+# (el límite real era el doble) y un reinicio la ponía en cero. En la base de
+# datos la cuenta es una para todos y sobrevive al reinicio, sin pagar Redis.
+# La tabla la crea `python manage.py createcachetable` (en build.sh).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "cache_entradas",
+    }
+}
+
 # --- Estáticos ----------------------------------------------------------
 # Render no sirve archivos estáticos por sí solo. Whitenoise los entrega
 # comprimidos y con hash desde el propio proceso de Gunicorn; solo hacen

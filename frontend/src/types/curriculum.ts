@@ -73,7 +73,7 @@ export interface GrupoDeRequisitos {
 /** Los años que pide la convocatoria frente a los que el ATS calcula. */
 export type EstadoDeExperiencia = 'cumple' | 'no_alcanza' | 'no_calculable'
 
-export interface RequisitoDeExperiencia {
+interface RequisitoDeExperiencia {
   requeridos: number
   /** Nulo cuando el CV no tiene periodos legibles, que no es lo mismo que cero. */
   calculados_meses: number | null

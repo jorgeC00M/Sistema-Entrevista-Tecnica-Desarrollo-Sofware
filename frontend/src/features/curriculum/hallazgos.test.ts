@@ -163,22 +163,20 @@ describe('rutaDelAnalisis', () => {
 
 describe('puedeAnalizar', () => {
   const cv = new File(['%PDF'], 'cv.pdf')
-  const aviso = new File(['%PDF'], 'aviso.pdf')
 
   it('sin CV no se puede, ni en el dirigido sin aviso', () => {
-    expect(puedeAnalizar('general', null, '', null)).toBe(false)
-    expect(puedeAnalizar('dirigido', null, 'Backend Django', aviso)).toBe(false)
-    expect(puedeAnalizar('dirigido', cv, '   ', null)).toBe(false)
+    expect(puedeAnalizar('general', null, '')).toBe(false)
+    expect(puedeAnalizar('dirigido', null, 'Backend Django')).toBe(false)
+    expect(puedeAnalizar('dirigido', cv, '   ')).toBe(false)
   })
 
-  it('en el general basta el CV, aunque haya un aviso cargado', () => {
-    expect(puedeAnalizar('general', cv, '', null)).toBe(true)
-    expect(puedeAnalizar('general', cv, 'Backend Django', aviso)).toBe(true)
+  it('en el general basta el CV, aunque haya un aviso escrito', () => {
+    expect(puedeAnalizar('general', cv, '')).toBe(true)
+    expect(puedeAnalizar('general', cv, 'Backend Django')).toBe(true)
   })
 
-  it('en el dirigido vale el texto o el archivo del aviso', () => {
-    expect(puedeAnalizar('dirigido', cv, 'Backend Django', null)).toBe(true)
-    expect(puedeAnalizar('dirigido', cv, '', aviso)).toBe(true)
+  it('en el dirigido hace falta el texto del aviso', () => {
+    expect(puedeAnalizar('dirigido', cv, 'Backend Django')).toBe(true)
   })
 })
 

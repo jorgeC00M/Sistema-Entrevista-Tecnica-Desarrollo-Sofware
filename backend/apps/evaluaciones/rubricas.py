@@ -85,3 +85,23 @@ def puntuacion_de(niveles: Niveles | dict[str, int], pesos: dict[str, int] | Non
     valores = niveles.como_dict() if isinstance(niveles, Niveles) else niveles
     ponderada = sum(pesos[c] * valores[c] for c in CRITERIOS)
     return round(100 * ponderada / (NIVEL_MAXIMO * sum(pesos[c] for c in CRITERIOS)))
+
+
+def rubrica_publica() -> dict:
+    """La rúbrica con la que se califica, tal como la recibe el evaluador.
+
+    Se publica en el catálogo para que el reporte explique cada nota con los
+    mismos descriptores que leyó el modelo, sin copiarlos en el frontend.
+    """
+    return {
+        "nivel_maximo": NIVEL_MAXIMO,
+        "criterios": [
+            {
+                "codigo": criterio,
+                "nombre": NOMBRES_DE_CRITERIOS[criterio],
+                "peso": PESOS[criterio],
+                "descriptores": list(DESCRIPTORES[criterio]),
+            }
+            for criterio in CRITERIOS
+        ],
+    }

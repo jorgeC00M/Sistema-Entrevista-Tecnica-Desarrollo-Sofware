@@ -6,7 +6,7 @@
  */
 
 /** Como máximo cuántos números se ven a la vez; el resto se alcanza con ‹ y ›. */
-export const MAXIMO_NUMEROS = 3
+const MAXIMO_NUMEROS = 3
 
 /**
  * Una ventana de hasta `MAXIMO_NUMEROS` páginas consecutivas, con la actual en

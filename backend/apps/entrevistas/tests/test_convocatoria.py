@@ -5,7 +5,6 @@ espía registra lo que recibe cada operación.
 """
 
 import io
-from pathlib import Path
 from unittest import mock
 
 import docx
@@ -20,7 +19,6 @@ from integrations.ia.fake import FakeProveedorIA
 from tests.conftest import crear_usuario, nivel_de, puesto_de, tecnologia_de
 
 URL = "/api/entrevistas/convocatoria/"
-FIXTURES = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "cv"
 
 AVISO_BACKEND = (
     "Empresa de software en Cochabamba busca Desarrollador Backend Junior. Requisitos: "
@@ -113,8 +111,9 @@ class AnalizarConvocatoriaAPITest(APITestCase):
     def setUp(self):
         self.usuario = crear_usuario()
         self.client.force_authenticate(self.usuario)
+        self.espia = Espia()
         self.enterContext(
-            mock.patch("apps.entrevistas.convocatorias.get_analizador_de_convocatoria", return_value=Espia())
+            mock.patch("apps.entrevistas.convocatorias.get_analizador_de_convocatoria", return_value=self.espia)
         )
 
     def test_texto_pegado_devuelve_el_perfil(self):
@@ -153,24 +152,14 @@ class AnalizarConvocatoriaAPITest(APITestCase):
         self.assertEqual(perfil["tecnologias_nombres"], ["Django"])
         self.assertNotIn("tecnologia", perfil)
 
-    def test_archivo_docx(self):
+    def test_un_archivo_se_ignora_y_no_llama_a_la_ia(self):
+        """Solo texto (`convocatoria-de-entrevista-solo-texto`): un archivo que
+        mande un cliente viejo no cuenta como aviso, y no se gasta la IA."""
         respuesta = self.client.post(URL, {"archivo": _docx(AVISO_BACKEND)}, format="multipart")
 
-        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(respuesta.data["perfil"]["puesto"], "backend")
-
-    def test_pdf_escaneado(self):
-        archivo = SimpleUploadedFile("aviso.pdf", (FIXTURES / "escaneado.pdf").read_bytes(), "application/pdf")
-
-        respuesta = self.client.post(URL, {"archivo": archivo}, format="multipart")
-
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Pega el texto", str(respuesta.data))
-
-    def test_texto_y_archivo_a_la_vez(self):
-        respuesta = self.client.post(URL, {"texto": AVISO_BACKEND, "archivo": _docx(AVISO_BACKEND)}, format="multipart")
-
-        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Pega el aviso completo", str(respuesta.data))
+        self.assertEqual(self.espia.entradas, [])
 
     def test_texto_demasiado_corto(self):
         respuesta = self.client.post(URL, {"texto": "Backend"}, format="json")
