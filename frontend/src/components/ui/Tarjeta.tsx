@@ -1,8 +1,7 @@
 import type { ElementType, ReactNode } from 'react'
 
-/** El vidrio: fondo translúcido, filete claro y desenfoque de fondo. */
-const CLASES_TARJETA =
-  'rounded-vidrio border border-vidrio-borde bg-vidrio-card backdrop-blur-[18px]'
+/** Blanca, muy redonda y sin borde: la separa del fondo una sombra amplia. */
+const CLASES_TARJETA = 'rounded-superficie bg-vidrio-card shadow-superficie'
 
 interface Props {
   children: ReactNode
@@ -13,7 +12,7 @@ interface Props {
 }
 
 /**
- * Superficie de contenido del sistema "vidrio".
+ * Superficie de contenido del sistema.
  *
  * La cadena de clases estaba repetida en una veintena de sitios, ya copiada a
  * mano con variaciones (una sección la tenía extraída en una constante local

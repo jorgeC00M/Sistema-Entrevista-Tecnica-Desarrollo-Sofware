@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import BurbujaPregunta from '@/components/ui/BurbujaPregunta'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import type { MensajeDeChat } from '@/features/entrevista/chat'
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 export default function ChatEntrevista({ mensajes, evaluando, esLaUltima }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null)
+  const { usuario } = useAuth()
 
   // A partir de la 3.ª pregunta el hilo ya no cabe en pantalla: sin esto,
   // cada pregunta o evaluación nueva llegaba fuera de la vista y había que
@@ -36,7 +38,9 @@ export default function ChatEntrevista({ mensajes, evaluando, esLaUltima }: Prop
         // El índice sirve de clave porque la lista solo crece por el final:
         // nunca se reordena ni se inserta en medio.
         <div key={indice} className="flex flex-col gap-1.5">
-          <BurbujaPregunta autor={mensaje.autor}>{mensaje.texto}</BurbujaPregunta>
+          <BurbujaPregunta autor={mensaje.autor} nombreUsuario={usuario?.nombre_completo}>
+            {mensaje.texto}
+          </BurbujaPregunta>
         </div>
       ))}
 

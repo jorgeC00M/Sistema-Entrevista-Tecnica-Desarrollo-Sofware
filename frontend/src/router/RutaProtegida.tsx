@@ -106,24 +106,23 @@ export default function RutaProtegida() {
         }`}
       >
         <Header ref={disparadorRef} onAbrirMenu={alternar} menuAbierto={abierto} />
-        {/* Un solo contenedor para todas las pantallas: hasta 1280 px y sin
-            `mx-auto`, pegado al sidebar. Antes cada página se centraba en su
-            propio ancho (672 a 1024 px) y dejaba franjas vacías a ambos lados.
-            Lo que no debe estirarse (un formulario, el chat, un párrafo) se
-            limita a sí mismo, alineado a la izquierda con el título. */}
+        {/* Un solo contenedor para todas las pantallas: sin ancho máximo ni
+            `mx-auto`, ocupa todo lo que deja el sidebar, abierto o plegado.
+            Con un tope de 1280 px quedaba una franja vacía a la derecha al
+            plegarlo. Lo que no debe estirarse (una burbuja del chat, un
+            párrafo) se limita a sí mismo, alineado a la izquierda con el
+            título. */}
         {/* Dentro del layout, no envolviéndolo: si una pantalla revienta, la
             barra lateral y la cabecera siguen en pie y el usuario puede irse a
             otra sección en vez de quedarse sin navegación. */}
         <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <div className="max-w-7xl">
-            <LimiteDeErrorDeRuta>
-              {/* Aquí y no solo en el router: mientras llega el código de la
-                  página siguiente, el sidebar y la cabecera siguen en pantalla. */}
-              <Suspense fallback={<Spinner />}>
-                <Outlet />
-              </Suspense>
-            </LimiteDeErrorDeRuta>
-          </div>
+          <LimiteDeErrorDeRuta>
+            {/* Aquí y no solo en el router: mientras llega el código de la
+                página siguiente, el sidebar y la cabecera siguen en pantalla. */}
+            <Suspense fallback={<Spinner />}>
+              <Outlet />
+            </Suspense>
+          </LimiteDeErrorDeRuta>
         </main>
       </div>
     </div>

@@ -121,10 +121,8 @@ export default function CarruselDeTarjetas<T>({
             return (
               <article
                 key={clave(elemento)}
-                className={`relative shrink-0 overflow-hidden rounded-vidrio border bg-vidrio-card p-7 backdrop-blur-[18px] transition-all duration-500 ${
-                  actual
-                    ? '-translate-y-1.5 border-vidrio-acento/45 bg-white/80 shadow-flotante'
-                    : 'border-vidrio-borde'
+                className={`relative shrink-0 overflow-hidden rounded-superficie bg-vidrio-card p-7 transition-all duration-500 ${
+                  actual ? '-translate-y-1.5 shadow-flotante' : 'shadow-superficie'
                 }`}
                 style={{ width: anchoTarjeta > 0 ? `${anchoTarjeta}px` : undefined }}
               >

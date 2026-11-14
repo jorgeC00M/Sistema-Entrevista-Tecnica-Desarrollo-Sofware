@@ -6,6 +6,7 @@ import { obtenerUltimaConfiguracion } from '@/api/entrevistas'
 import Alerta from '@/components/ui/Alerta'
 import Pestanas from '@/components/ui/Pestanas'
 import Spinner from '@/components/ui/Spinner'
+import Tarjeta from '@/components/ui/Tarjeta'
 import AvisoDeEntrevistaEnCurso from '@/features/seleccion/components/AvisoDeEntrevistaEnCurso'
 import FormularioDeEntrevista from '@/features/seleccion/components/FormularioDeEntrevista'
 import ModalDeInicio from '@/features/seleccion/components/ModalDeInicio'
@@ -232,7 +233,7 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
 
       {/* Un contenedor y no un <form>: un <form> haría que cualquier botón interno
           sin `type` (como "Analizar convocatoria") lo enviara. */}
-      <div className="flex flex-col gap-6 rounded-control border border-vidrio-borde bg-white px-4 py-5 sm:px-6 sm:py-6">
+      <Tarjeta className="flex flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6">
         <Pestanas
           etiqueta="Cómo configurar la entrevista"
           pestanas={MODOS}
@@ -294,7 +295,7 @@ function ConfiguracionDeEntrevista({ catalogo, ultima }: PropsDeConfiguracion) {
             </>
           )}
         </div>
-      </div>
+      </Tarjeta>
 
       {inicio.confirmando && puesto && nivel && (
         <ModalDeInicio

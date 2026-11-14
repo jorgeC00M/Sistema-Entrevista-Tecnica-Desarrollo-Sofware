@@ -12,17 +12,24 @@ const TAMANOS = {
   md: 'h-9 w-9 text-sm',
 } as const
 
+const TONOS = {
+  /** Sobre el sidebar oscuro. */
+  oscuro: 'bg-white/15 text-white',
+  /** Sobre superficies claras: junto a las burbujas del chat. */
+  claro: 'bg-vidrio-acento-suave text-vidrio-acento',
+} as const
+
 interface Props {
   nombre: string
   tamano?: keyof typeof TAMANOS
+  tono?: keyof typeof TONOS
 }
 
-// Su único sitio es el bloque de perfil del sidebar, siempre oscuro: la
-// variante clara nunca se renderizó.
-export default function Avatar({ nombre, tamano = 'md' }: Props) {
+/** Las iniciales del usuario: en el sidebar y junto a sus mensajes del chat. */
+export default function Avatar({ nombre, tamano = 'md', tono = 'oscuro' }: Props) {
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full bg-white/15 font-semibold text-white ${TAMANOS[tamano]}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${TONOS[tono]} ${TAMANOS[tamano]}`}
     >
       {iniciales(nombre)}
     </span>

@@ -8,6 +8,7 @@ import { alPerderSesion, haySesion } from '@/api/client'
 import { AuthContext } from '@/features/auth/context/contexto'
 import type { ContextoDeAuth } from '@/features/auth/context/contexto'
 import { invalidarCache } from '@/hooks/usePeticion'
+import { borrarTodosLosBorradores } from '@/lib/borrador'
 import type { Credenciales, DatosDeRegistro, Usuario } from '@/types/usuario'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -84,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const cerrarSesion = useCallback(() => {
     authApi.cerrarSesion()
+    // Solo al salir a mano: si la sesión vence, es el mismo usuario y vuelve.
+    borrarTodosLosBorradores()
     terminarSesion()
   }, [terminarSesion])
 

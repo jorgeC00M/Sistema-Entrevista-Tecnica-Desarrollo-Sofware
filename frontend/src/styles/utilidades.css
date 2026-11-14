@@ -24,7 +24,7 @@
    del texto los pone cada campo (un textarea no mide 44 px; un select vacío
    se ve atenuado): así no compiten dos utilidades por la misma propiedad. */
 @utility campo {
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-campo);
   border: 1px solid var(--color-vidrio-borde);
   background-color: #fff;
   transition:
@@ -35,11 +35,14 @@
     border-color: var(--color-vidrio-tenue);
   }
 
+  /* Una sola línea gruesa: el anillo cubre el borde (offset -1px) en vez de
+     dibujarse separado de él, que dejaba una línea fina y otra gruesa. Es un
+     outline y no una sombra para que siga visible en alto contraste. */
   &:focus-visible,
   &:focus-within {
     border-color: var(--color-vidrio-acento);
     outline: 2px solid var(--color-vidrio-acento);
-    outline-offset: 2px;
+    outline-offset: -1px;
   }
 
   &:disabled {

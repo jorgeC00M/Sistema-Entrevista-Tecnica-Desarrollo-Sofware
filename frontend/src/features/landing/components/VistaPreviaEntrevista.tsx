@@ -98,11 +98,11 @@ export default function VistaPreviaEntrevista() {
           <div className="mb-1 font-mono-vidrio text-label-mono text-white/70 uppercase">
             IA · Entrevistador
           </div>
-          <div className="max-w-[92%] rounded-burbuja rounded-tl-sm bg-white px-3.5 py-2.5 text-sm leading-normal text-vidrio-ink">
+          <div className="max-w-[92%] rounded-burbuja rounded-bl-sm bg-white px-3.5 py-2.5 text-sm leading-normal text-vidrio-ink">
             {PREGUNTA}
           </div>
         </div>
-        <div className="min-h-10 max-w-[92%] self-end rounded-burbuja rounded-tr-sm bg-vidrio-ink px-3.5 py-2.5 text-sm leading-normal text-white">
+        <div className="min-h-10 max-w-[92%] self-end rounded-burbuja rounded-br-sm bg-vidrio-ink px-3.5 py-2.5 text-sm leading-normal text-white">
           {texto}
           <span
             aria-hidden="true"

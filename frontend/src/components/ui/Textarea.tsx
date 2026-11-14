@@ -1,7 +1,9 @@
-import type { TextareaHTMLAttributes, ReactNode } from 'react'
+import type { ReactNode, Ref, TextareaHTMLAttributes } from 'react'
 
 interface Props extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id' | 'className'> {
   id?: string
+  /** Para devolverle el foco (React 19: `ref` es una prop más). */
+  ref?: Ref<HTMLTextAreaElement>
   etiqueta?: ReactNode
   /** Máximo a mostrar en el contador; no trunca el valor, solo lo informa. */
   maximoCaracteres?: number
@@ -10,6 +12,7 @@ interface Props extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id' |
 
 export default function Textarea({
   id,
+  ref,
   etiqueta,
   maximoCaracteres,
   value,
@@ -27,6 +30,7 @@ export default function Textarea({
       )}
       <textarea
         id={id}
+        ref={ref}
         value={value}
         className="campo w-full resize-none px-3 py-2 text-sm text-vidrio-ink"
         {...props}

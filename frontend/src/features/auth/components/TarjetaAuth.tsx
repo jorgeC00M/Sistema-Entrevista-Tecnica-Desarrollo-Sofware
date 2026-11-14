@@ -19,9 +19,9 @@ interface Props {
 }
 
 /**
- * Chrome compartido de login/registro: tarjeta de vidrio con titular serif,
- * sobre los mismos tokens que el resto del producto (`shadow-tarjeta`,
- * `rounded-tarjeta`, `text-titulo-auth`). Antes copiaba el mockup con valores
+ * Chrome compartido de login/registro: la misma tarjeta opaca del resto del
+ * producto con titular serif, sobre sus tokens (`shadow-superficie`,
+ * `rounded-superficie`, `text-titulo-auth`). Antes copiaba el mockup con valores
  * escritos a mano; ahora un cambio de paleta en `styles/tokens.css` la
  * alcanza como a cualquier otra pantalla.
  *
@@ -43,7 +43,7 @@ export default function TarjetaAuth({
 }: Props) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-vidrio-bg p-4 sm:p-6">
-      <div className="w-full max-w-[440px] rounded-tarjeta border border-vidrio-borde bg-vidrio-card px-6 pt-9 pb-8 text-center text-vidrio-texto shadow-tarjeta backdrop-blur-[18px] backdrop-saturate-[1.4] sm:px-10">
+      <div className="w-full max-w-[440px] rounded-superficie bg-vidrio-card px-6 pt-9 pb-8 text-center text-vidrio-texto shadow-superficie sm:px-10">
         <Icono nombre="marca" className="mx-auto mb-[14px] h-9 w-9 text-vidrio-acento" />
 
         <h1 className="font-serif text-titulo-auth text-vidrio-ink">{titulo}</h1>

@@ -1,6 +1,6 @@
 /* Tokens del sistema: la única fuente de colores, radios, sombras, tipografía
    y velos. Tailwind v4 los convierte en clases (bg-vidrio-acento,
-   rounded-control, shadow-tarjeta, text-meta...). Cambiar un valor aquí lo
+   rounded-control, shadow-superficie, text-meta...). Cambiar un valor aquí lo
    cambia en toda la app; un valor que se repite y no está aquí es deriva. */
 @theme {
   /* Figtree para texto, Fraunces para títulos, JetBrains Mono para datos
@@ -48,7 +48,10 @@
   /* Solo para lo que no es texto: iconos decorativos, marcas, bordes. */
   --color-vidrio-tenue: #8a93a8;
   --color-vidrio-bg: #eef2f8;
-  --color-vidrio-card: rgba(255, 255, 255, 0.78);
+  /* Tarjetas opacas: sobre un fondo plano el desenfoque no tenía nada que
+     desenfocar. El vidrio queda solo donde hay contenido detrás (hero,
+     cabeceras fijas, velo de los modales). */
+  --color-vidrio-card: #ffffff;
   --color-vidrio-field: rgba(255, 255, 255, 0.72);
   --color-vidrio-linea: rgba(28, 47, 94, 0.12);
   /* Borde de tarjetas y campos: un hilo de la misma tinta, un punto más
@@ -66,19 +69,26 @@
   --color-seleccion: rgba(43, 85, 163, 0.18);
 
   /* Regla de forma: las ACCIONES (botones con texto) son píldora
-     (rounded-full); los CONTROLES (botones de icono, campos) usan control.
-     chip: etiquetas de metadato. vidrio: tarjetas y paneles. tarjeta: la de
-     auth. burbuja: mensajes del chat y la vista previa de la landing. */
+     (rounded-full); los botones de icono usan control y los campos, campo.
+     superficie: las tarjetas (Tarjeta, la de auth, el carrusel). vidrio: los
+     paneles dentro de una tarjeta, más chicos que ella para que los radios
+     sean concéntricos. chip: etiquetas de metadato. burbuja: mensajes del
+     chat y la vista previa de la landing. */
   --radius-control: 8px;
+  --radius-campo: 14px;
   --radius-chip: 4px;
   --radius-vidrio: 12px;
-  --radius-burbuja: 16px;
-  --radius-tarjeta: 22px;
+  --radius-superficie: 24px;
+  --radius-burbuja: 24px;
 
   /* Sombras: antes eran shadow-[...] escritas a mano en cada componente.
      Tintadas con la tinta del producto, salvo las que caen sobre el fondo
      oscuro del hero. */
-  --shadow-tarjeta: 0 20px 50px -20px rgba(28, 47, 94, 0.25);
+  /* Separa la tarjeta sin borde del fondo: amplia, suave y con extensión
+     negativa para no invadir a la vecina. */
+  --shadow-superficie: 0 18px 44px -22px rgba(28, 47, 94, 0.28);
+  /* Solo el botón principal: tintada con el acento. */
+  --shadow-accion: 0 10px 22px -10px rgba(43, 85, 163, 0.55);
   --shadow-flotante: 0 26px 50px -24px rgba(28, 47, 94, 0.45);
   --shadow-cabecera: 0 8px 24px -18px rgba(28, 47, 94, 0.25);
   --shadow-modal: 0 24px 60px -24px rgba(28, 47, 94, 0.45);

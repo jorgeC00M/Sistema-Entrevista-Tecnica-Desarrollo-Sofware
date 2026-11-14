@@ -16,6 +16,7 @@ import ChatEntrevista from '@/features/entrevista/components/ChatEntrevista'
 import RelojDeEntrevista from '@/features/entrevista/components/RelojDeEntrevista'
 import { useEntrevista } from '@/features/entrevista/hooks/useEntrevista'
 import { invalidarCache } from '@/hooks/usePeticion'
+import { claveDeBorrador } from '@/lib/borrador'
 
 export default function EntrevistaPage() {
   const { id } = useParams<{ id: string }>()
@@ -75,8 +76,10 @@ export default function EntrevistaPage() {
 
   return (
     // `dvh` y no `vh`: en el móvil `100vh` incluye la barra del navegador y
-    // dejaba el campo de respuesta debajo del borde visible.
-    <div className="flex h-[calc(100dvh-8rem)] max-w-3xl flex-col">
+    // dejaba el campo de respuesta debajo del borde visible. Sin ancho propio:
+    // ocupa el contenedor de todas las pantallas; la que limita la línea es
+    // cada burbuja (`BurbujaPregunta`).
+    <div className="flex h-[calc(100dvh-8rem)] flex-col">
       <Tarjeta className="mb-4 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -152,7 +155,11 @@ export default function EntrevistaPage() {
       )}
 
       {/* Con la respuesta guardada no se escribe otra: se espera o se reintenta. */}
-      <CampoRespuesta onEnviar={enviarRespuesta} deshabilitado={ocupado || vencido || respuestaGuardada} />
+      <CampoRespuesta
+        onEnviar={enviarRespuesta}
+        deshabilitado={ocupado || vencido || respuestaGuardada}
+        claveBorrador={claveDeBorrador(id ?? '', numeroActual)}
+      />
 
       {confirmandoAbandono && (
         <ModalDeConfirmacion

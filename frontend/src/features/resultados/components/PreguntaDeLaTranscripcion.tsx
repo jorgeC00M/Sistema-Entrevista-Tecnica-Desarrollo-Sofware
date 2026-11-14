@@ -2,6 +2,7 @@ import Icono from '@/components/ui/Icono'
 import ListaRetroalimentacion from '@/components/ui/ListaRetroalimentacion'
 import Tarjeta from '@/components/ui/Tarjeta'
 import BurbujaPregunta from '@/components/ui/BurbujaPregunta'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { operacion } from '@/features/resultados/formula'
 import { tieneNota } from '@/features/resultados/reporte'
 import { NIVEL_MAXIMO_POR_DEFECTO, NOMBRE_EN_PANTALLA, ORDEN_DE_CRITERIOS } from '@/features/resultados/rubricaPorDefecto'
@@ -27,6 +28,7 @@ interface Props {
  */
 export default function PreguntaDeLaTranscripcion({ intercambio, rubrica }: Props) {
   const { numero, area_display, pregunta, respuesta, evaluacion, tiempo_respuesta } = intercambio
+  const { usuario } = useAuth()
   const conNota = evaluacion && tieneNota(evaluacion) ? evaluacion : null
   const marca = !respuesta ? '(Sin responder)' : conNota ? `(Puntaje: ${conNota.puntuacion}/100)` : null
 
@@ -44,7 +46,9 @@ export default function PreguntaDeLaTranscripcion({ intercambio, rubrica }: Prop
         <div className="flex flex-col gap-4 border-t border-vidrio-linea px-4 py-4 sm:px-5">
           <BurbujaPregunta autor="sistema">{pregunta}</BurbujaPregunta>
           {respuesta ? (
-            <BurbujaPregunta autor="usuario">{respuesta}</BurbujaPregunta>
+            <BurbujaPregunta autor="usuario" nombreUsuario={usuario?.nombre_completo}>
+              {respuesta}
+            </BurbujaPregunta>
           ) : (
             <p className="text-sm text-vidrio-muted">Esta pregunta quedó sin responder.</p>
           )}
